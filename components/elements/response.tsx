@@ -11,6 +11,17 @@ type ResponseProps = ComponentProps<typeof Streamdown>;
 // Note: Use non-global for .test(), create new global instance for .exec() loop
 const INLINE_MEDIA_PATTERN_SOURCE = /\[\[([^|\]]+)\|(\d+)(?:\|(movie|tv))?\]\]/;
 
+// Pattern to strip ** bold markers around media links (AI sometimes wraps links in bold)
+const BOLD_MEDIA_LINK_PATTERN = /\*\*(\[\[[^\]]+\]\])\*\*/g;
+
+/**
+ * Strip ** bold markers from around media links
+ * Converts **[[Title|123]]** to [[Title|123]]
+ */
+function stripBoldFromMediaLinks(text: string): string {
+  return text.replace(BOLD_MEDIA_LINK_PATTERN, "$1");
+}
+
 /**
  * Check if text contains inline media links
  */
@@ -189,6 +200,8 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
 export function Response({ className, children, ...props }: ResponseProps) {
   // Check if children is a string with inline media links
   if (typeof children === "string" && hasInlineMediaLinks(children)) {
+    // Strip ** bold markers from around media links before processing
+    const processedText = stripBoldFromMediaLinks(children);
     return (
       <div
         className={cn(
@@ -196,7 +209,7 @@ export function Response({ className, children, ...props }: ResponseProps) {
           className
         )}
       >
-        {renderWithMediaLinks(children, "response")}
+        {renderWithMediaLinks(processedText, "response")}
       </div>
     );
   }

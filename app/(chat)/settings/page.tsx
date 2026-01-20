@@ -76,14 +76,16 @@ function ServiceCard({
 }) {
   const [baseUrl, setBaseUrl] = useState(config?.baseUrl || "");
   const [apiKey, setApiKey] = useState(config?.apiKey || "");
-  const [isEnabled, setIsEnabled] = useState(config?.isEnabled ?? true);
+  // Services should be disabled by default until configured
+  const [isEnabled, setIsEnabled] = useState(config?.isEnabled ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setBaseUrl(config?.baseUrl || "");
     setApiKey(config?.apiKey || "");
-    setIsEnabled(config?.isEnabled ?? true);
+    // Default to disabled if no config exists
+    setIsEnabled(config?.isEnabled ?? false);
   }, [config]);
 
   const handleSave = async () => {

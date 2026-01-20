@@ -22,7 +22,10 @@ export type ToolCategory =
   | "request"
   | "discovery"
   | "playback"
-  | "management";
+  | "management"
+  | "history"
+  | "blocklist"
+  | "import";
 
 /**
  * Metadata for a single tool, defined alongside the tool implementation
@@ -103,6 +106,16 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   getRadarrReleases: "Get Releases (Radarr)",
   grabRadarrRelease: "Grab Release (Radarr)",
   removeFromRadarrQueue: "Remove from Queue (Radarr)",
+  getRadarrManualImport: "Get Manual Import (Radarr)",
+  executeRadarrManualImport: "Execute Manual Import (Radarr)",
+  scanRadarrDownloadedMovies: "Scan Downloaded Movies (Radarr)",
+  getRadarrMovieFiles: "Get Movie Files (Radarr)",
+  renameRadarrMovieFiles: "Rename Movie Files (Radarr)",
+  deleteRadarrMovieFile: "Delete Movie File (Radarr)",
+  getRadarrHistory: "Get History (Radarr)",
+  markRadarrFailed: "Mark Failed (Radarr)",
+  getRadarrBlocklist: "Get Blocklist (Radarr)",
+  deleteRadarrBlocklist: "Remove from Blocklist (Radarr)",
   // Sonarr
   getSonarrLibrary: "Get Library (Sonarr)",
   getSonarrQualityProfiles: "List Quality Profiles (Sonarr)",
@@ -110,6 +123,10 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   getSonarrCalendar: "View Calendar (Sonarr)",
   searchSonarrSeries: "Search TV (Sonarr)",
   getSonarrReleases: "Get Releases (Sonarr)",
+  getSonarrHistory: "View History (Sonarr)",
+  getSonarrBlocklist: "View Blocklist (Sonarr)",
+  getSonarrEpisodeFiles: "Get Episode Files (Sonarr)",
+  getSonarrManualImport: "Get Manual Import (Sonarr)",
   addSonarrSeries: "Add Series",
   editSonarrSeries: "Edit Series",
   deleteSonarrSeries: "Delete Series",
@@ -117,6 +134,13 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   refreshSonarrSeries: "Refresh Series (Sonarr)",
   grabSonarrRelease: "Grab Release (Sonarr)",
   removeFromSonarrQueue: "Remove from Queue (Sonarr)",
+  executeSonarrManualImport: "Execute Manual Import (Sonarr)",
+  scanSonarrDownloadedEpisodes: "Scan Downloaded Episodes (Sonarr)",
+  renameSonarrEpisodeFiles: "Rename Episode Files (Sonarr)",
+  deleteSonarrEpisodeFile: "Delete Episode File (Sonarr)",
+  markSonarrFailed: "Mark Failed (Sonarr)",
+  deleteSonarrBlocklist: "Remove from Blocklist (Sonarr)",
+  searchSonarrMissingEpisodes: "Search Missing Episodes (Sonarr)",
   // Jellyseerr
   searchContent: "Search Media (Jellyseerr)",
   requestMedia: "Request Media",
