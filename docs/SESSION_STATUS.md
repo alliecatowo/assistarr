@@ -1,6 +1,10 @@
 # Assistarr Session Status
 
-## Last Updated: Session End
+## Last Updated: Session End - CHAT FIXED
+
+## Critical Fix Applied
+- **ServiceConfig table was missing** - Migration generated and applied
+- Chat should now work - refresh the page at localhost:3000
 
 ## Completed Work
 

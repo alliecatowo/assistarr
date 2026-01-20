@@ -1,4 +1,5 @@
 import type { ServiceDefinition } from "../base";
+import { deleteRequest } from "./delete-request";
 import { getRequests } from "./get-requests";
 import { requestMedia } from "./request-media";
 import { searchContent } from "./search-content";
@@ -16,6 +17,7 @@ export const jellyseerrService: ServiceDefinition = {
     searchContent,
     requestMedia,
     getRequests,
+    deleteRequest,
   },
   healthCheck: async ({ config }) => {
     try {

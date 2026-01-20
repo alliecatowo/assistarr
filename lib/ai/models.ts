@@ -49,6 +49,12 @@ export const chatModels: ChatModel[] = [
     description: "Ultra fast and affordable",
   },
   {
+    id: "google/gemini-2.5-pro",
+    name: "Gemini 2.5 Pro",
+    provider: "google",
+    description: "Balanced performance and reasoning",
+  },
+  {
     id: "google/gemini-3-pro-preview",
     name: "Gemini 3 Pro",
     provider: "google",

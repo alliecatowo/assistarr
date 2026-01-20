@@ -176,14 +176,17 @@ export async function POST(request: Request) {
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
-          experimental_activeTools: isReasoningModel ? [] : allToolNames,
-          providerOptions: isReasoningModel
-            ? {
-                anthropic: {
-                  thinking: { type: "enabled", budgetTokens: 10_000 },
-                },
-              }
-            : undefined,
+          experimental_activeTools: allToolNames, // Allow tools for all models, including thinking ones (hybrid)
+          providerOptions: {
+            anthropic:
+              isReasoningModel && selectedChatModel.includes("claude")
+                ? { thinking: { type: "enabled", budgetTokens: 10_000 } }
+                : undefined,
+            google:
+              isReasoningModel && selectedChatModel.includes("gemini")
+                ? { thinking: { type: "enabled", budgetTokens: 10_000 } } // Simulate generic thinking param if supported by gateway/provider
+                : undefined,
+          },
           tools: allTools,
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,

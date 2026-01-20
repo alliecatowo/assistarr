@@ -1,5 +1,7 @@
 import type { ServiceDefinition } from "../base";
 import { addMovie } from "./add-movie";
+import { deleteMovie } from "./delete-movie";
+import { editMovie } from "./edit-movie";
 import { getCalendar } from "./get-calendar";
 import { getQueue } from "./get-queue";
 import { searchMovies } from "./search-movies";
@@ -18,6 +20,8 @@ export const radarrService: ServiceDefinition = {
     addMovie,
     getRadarrQueue: getQueue,
     getRadarrCalendar: getCalendar,
+    deleteMovie,
+    editMovie,
   },
   healthCheck: async ({ config }) => {
     try {
