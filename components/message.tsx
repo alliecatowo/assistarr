@@ -72,9 +72,7 @@ const PurePreviewMessage = ({
 
         <div
           className={cn("flex flex-col", {
-            "gap-2 md:gap-4": message.parts?.some(
-              (p) => p.type === "text" && p.text?.trim()
-            ),
+            "gap-2 md:gap-4": message.role === "assistant",
             "w-full":
               (message.role === "assistant" &&
                 (message.parts?.some(
@@ -485,7 +483,13 @@ const PurePreviewMessage = ({
           {!isReadonly && (
             <MessageActions
               chatId={chatId}
-              isLoading={isLoading}
+              isLoading={
+                isLoading ||
+                message.parts?.some(
+                  (part) =>
+                    "state" in part && part.state === "approval-requested"
+                )
+              }
               key={`action-${message.id}`}
               message={message}
               setMode={setMode}
