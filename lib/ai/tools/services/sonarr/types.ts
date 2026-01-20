@@ -210,3 +210,106 @@ export interface SonarrAddSeriesOptions {
   searchForMissingEpisodes?: boolean;
   searchForCutoffUnmetEpisodes?: boolean;
 }
+
+// Manual Import types
+export interface SonarrManualImportItem {
+  id: number;
+  path: string;
+  relativePath: string;
+  folderName: string;
+  name: string;
+  size: number;
+  series?: SonarrSeries;
+  seasonNumber?: number;
+  episodes?: SonarrEpisode[];
+  quality: SonarrQuality;
+  languages: Array<{ id: number; name: string }>;
+  releaseGroup?: string;
+  downloadId?: string;
+  rejections: Array<{ type: string; reason: string }>;
+}
+
+export interface SonarrManualImportRequest {
+  path: string;
+  seriesId: number;
+  seasonNumber: number;
+  episodeIds: number[];
+  quality: SonarrQuality;
+  languages: Array<{ id: number; name: string }>;
+  releaseGroup?: string;
+  downloadId?: string;
+  indexerFlags?: number;
+}
+
+// History types
+export interface SonarrHistoryRecord {
+  id: number;
+  seriesId: number;
+  episodeId: number;
+  series?: SonarrSeries;
+  episode?: SonarrEpisode;
+  sourceTitle: string;
+  quality: SonarrQuality;
+  qualityCutoffNotMet: boolean;
+  languages: Array<{ id: number; name: string }>;
+  date: string;
+  downloadId?: string;
+  eventType:
+    | "grabbed"
+    | "downloadFolderImported"
+    | "downloadFailed"
+    | "episodeFileDeleted"
+    | "episodeFileRenamed"
+    | "downloadIgnored";
+  data: Record<string, unknown>;
+}
+
+export interface SonarrHistoryResponse {
+  page: number;
+  pageSize: number;
+  sortKey: string;
+  sortDirection: "ascending" | "descending";
+  totalRecords: number;
+  records: SonarrHistoryRecord[];
+}
+
+// Blocklist types
+export interface SonarrBlocklistItem {
+  id: number;
+  seriesId: number;
+  episodeIds: number[];
+  series?: SonarrSeries;
+  sourceTitle: string;
+  quality: SonarrQuality;
+  languages: Array<{ id: number; name: string }>;
+  date: string;
+  protocol: "usenet" | "torrent";
+  indexer?: string;
+  message?: string;
+}
+
+export interface SonarrBlocklistResponse {
+  page: number;
+  pageSize: number;
+  sortKey: string;
+  sortDirection: "ascending" | "descending";
+  totalRecords: number;
+  records: SonarrBlocklistItem[];
+}
+
+// Command types
+export interface SonarrCommand {
+  id: number;
+  name: string;
+  commandName: string;
+  message?: string;
+  body: Record<string, unknown>;
+  priority: string;
+  status: "queued" | "started" | "completed" | "failed" | "aborted";
+  result: string;
+  queued: string;
+  started?: string;
+  ended?: string;
+  trigger: string;
+  stateChangeTime: string;
+}
