@@ -16,6 +16,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { getEnabledTools } from "@/lib/ai/tools/services/registry";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
@@ -24,12 +25,13 @@ import {
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getServiceConfigs,
   saveChat,
   saveMessages,
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
+import type { DBMessage, ServiceConfig } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -47,6 +49,17 @@ function getStreamContext() {
 }
 
 export { getStreamContext };
+
+/**
+ * Convert service configs array to a Map for efficient lookup
+ */
+function configsToMap(configs: ServiceConfig[]): Map<string, ServiceConfig> {
+  const map = new Map<string, ServiceConfig>();
+  for (const config of configs) {
+    map.set(config.serviceName, config);
+  }
+  return map;
+}
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -136,22 +149,34 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
 
+    // Get service configurations and build enabled tools from registry
+    const serviceConfigs = await getServiceConfigs({ userId: session.user.id });
+    const configsMap = configsToMap(serviceConfigs);
+    const { tools: serviceTools } = getEnabledTools(session, configsMap);
+
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        // Build the complete tools object
+        const allTools = {
+          // Core tools (always available)
+          getWeather,
+          createDocument: createDocument({ session, dataStream }),
+          updateDocument: updateDocument({ session, dataStream }),
+          requestSuggestions: requestSuggestions({ session, dataStream }),
+          // Service tools (from registry, filtered by enabled services)
+          ...serviceTools,
+        };
+
+        // Get all tool names from the combined tools object
+        const allToolNames = Object.keys(allTools) as (keyof typeof allTools)[];
+
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
-          experimental_activeTools: isReasoningModel
-            ? []
-            : [
-                "getWeather",
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ],
+          experimental_activeTools: isReasoningModel ? [] : allToolNames,
           providerOptions: isReasoningModel
             ? {
                 anthropic: {
@@ -159,12 +184,7 @@ export async function POST(request: Request) {
                 },
               }
             : undefined,
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({ session, dataStream }),
-          },
+          tools: allTools,
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",
