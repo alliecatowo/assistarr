@@ -341,9 +341,10 @@ const PurePreviewMessage = ({
                           )
                         }
                       />
-                    )}
                   </ToolContent>
                 </Tool>
+              </div>
+              )
             }
 
             // Generic handler for all other tools (Radarr, Sonarr, Jellyseerr, etc.)
