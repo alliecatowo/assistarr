@@ -347,6 +347,49 @@ const PurePreviewMessage = ({
               );
             }
 
+            // Generic handler for all other tools (Radarr, Sonarr, Jellyseerr, etc.)
+            if (type.startsWith("tool-")) {
+              const { toolCallId, state } = part;
+              const toolName = type.replace("tool-", "");
+
+              return (
+                <div className="w-[min(100%,450px)]" key={toolCallId}>
+                  <Tool className="w-full" defaultOpen={true}>
+                    <ToolHeader state={state} type={toolName} />
+                    <ToolContent>
+                      {(state === "input-available" ||
+                        state === "approval-requested") && (
+                        <ToolInput input={part.input} />
+                      )}
+
+                      {state === "output-available" && (
+                        <ToolOutput
+                          output={
+                            "error" in part.output ? (
+                              <div className="text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded text-xs border border-red-200 dark:border-red-900">
+                                <strong>Error:</strong>{" "}
+                                {String(part.output.error)}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/50 max-h-60 overflow-y-auto whitespace-pre-wrap font-mono">
+                                {JSON.stringify(part.output, null, 2)}
+                              </div>
+                            )
+                          }
+                        />
+                      )}
+
+                      {state === "output-denied" && (
+                        <div className="px-4 py-2 text-xs text-red-500">
+                          Tool execution denied.
+                        </div>
+                      )}
+                    </ToolContent>
+                  </Tool>
+                </div>
+              );
+            }
+
             return null;
           })}
 

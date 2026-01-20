@@ -3,8 +3,11 @@ import { addMovie } from "./add-movie";
 import { deleteMovie } from "./delete-movie";
 import { editMovie } from "./edit-movie";
 import { getCalendar } from "./get-calendar";
+import { getLibrary } from "./get-library";
+import { getQualityProfiles } from "./get-quality-profiles";
 import { getQueue } from "./get-queue";
 import { searchMovies } from "./search-movies";
+import { triggerSearch } from "./trigger-search";
 
 /**
  * Radarr service definition for the plugin system.
@@ -16,12 +19,17 @@ export const radarrService: ServiceDefinition = {
   description:
     "Movie collection manager for monitoring, downloading, and organizing movies. Integrates with download clients and media servers.",
   tools: {
-    searchMovies,
-    addMovie,
+    // Read operations
+    getRadarrLibrary: getLibrary,
+    getRadarrQualityProfiles: getQualityProfiles,
     getRadarrQueue: getQueue,
     getRadarrCalendar: getCalendar,
-    deleteMovie,
-    editMovie,
+    searchRadarrMovies: searchMovies,
+    // Write operations
+    addRadarrMovie: addMovie,
+    editRadarrMovie: editMovie,
+    deleteRadarrMovie: deleteMovie,
+    triggerRadarrSearch: triggerSearch,
   },
   healthCheck: async ({ config }) => {
     try {
