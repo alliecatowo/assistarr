@@ -106,10 +106,16 @@ export const searchContent = ({ session }: SearchContentProps) =>
         };
       } catch (error) {
         if (error instanceof JellyseerrClientError) {
+          console.error(`[Jellyseerr] Search failed: ${error.message}`, {
+            statusCode: error.statusCode,
+            query,
+            type,
+          });
           return {
             error: error.message,
           };
         }
+        console.error("[Jellyseerr] Unexpected error during search:", error);
         throw error;
       }
     },

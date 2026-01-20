@@ -1,5 +1,6 @@
 import type { ServiceDefinition } from "../base";
 import { deleteRequest } from "./delete-request";
+import { getDiscovery } from "./get-discovery";
 import { getRequests } from "./get-requests";
 import { requestMedia } from "./request-media";
 import { searchContent } from "./search-content";
@@ -12,12 +13,13 @@ export const jellyseerrService: ServiceDefinition = {
   name: "jellyseerr",
   displayName: "Jellyseerr",
   description:
-    "Media request management system. Search for movies and TV shows, submit requests, and track request status.",
+    "Media request system. Use this to check for pending requests, search for new content to request, and view what's trending. Use 'searchContent' to check availability before requests.",
   tools: {
     searchContent,
     requestMedia,
     getRequests,
     deleteRequest,
+    getDiscovery,
   },
   healthCheck: async ({ config }) => {
     try {

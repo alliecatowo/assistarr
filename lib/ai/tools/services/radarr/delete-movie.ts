@@ -11,7 +11,7 @@ export const deleteMovie = ({ session }: DeleteMovieProps) =>
   tool({
     description:
       "Delete a movie from Radarr. IMPORTANT: You must search for the movie first to get the correct 'movieId'. Do not guess the ID.",
-    parameters: z.object({
+    inputSchema: z.object({
       movieId: z.number().describe("The ID of the movie to delete"),
       deleteFiles: z
         .boolean()

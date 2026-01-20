@@ -5,15 +5,17 @@ import { createDocumentHandler } from "@/lib/artifacts/server";
 
 export const textDocumentHandler = createDocumentHandler<"text">({
   kind: "text",
-  onCreateDocument: async ({ title, dataStream }) => {
+  onCreateDocument: async ({ title, dataStream, initialContent }) => {
     let draftContent = "";
 
     const { fullStream } = streamText({
       model: getArtifactModel(),
       system:
-        "Write about the given topic. Markdown is supported. Use headings wherever appropriate.",
+        "Write about the given topic. Markdown is supported. Use headings wherever appropriate. If context is provided, use it to populate the document.",
       experimental_transform: smoothStream({ chunking: "word" }),
-      prompt: title,
+      prompt: initialContent
+        ? `Title: ${title}\n\nContext/Content:\n${initialContent}\n\nPlease generate the document content based on the title and provided context.`
+        : title,
     });
 
     for await (const delta of fullStream) {

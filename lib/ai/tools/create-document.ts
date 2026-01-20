@@ -20,8 +20,12 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
     inputSchema: z.object({
       title: z.string(),
       kind: z.enum(artifactKinds),
+      initialContent: z
+        .string()
+        .optional()
+        .describe("Initial content or context for the document generation."),
     }),
-    execute: async ({ title, kind }) => {
+    execute: async ({ title, kind, initialContent }) => {
       const id = generateUUID();
 
       dataStream.write({
@@ -62,6 +66,7 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
         title,
         dataStream,
         session,
+        initialContent,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });

@@ -11,7 +11,7 @@ export const editMovie = ({ session }: EditMovieProps) =>
   tool({
     description:
       "Edit a movie in Radarr. IMPORTANT: You must search for the movie first to get the correct 'movieId' and current details. do not guess.",
-    parameters: z.object({
+    inputSchema: z.object({
       movieId: z.number().describe("The ID of the movie to edit"),
       monitored: z
         .boolean()

@@ -175,7 +175,7 @@ export async function POST(request: Request) {
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
-          stopWhen: stepCountIs(5),
+          stopWhen: stepCountIs(8),
           experimental_activeTools: allToolNames,
           providerOptions: {
             ...(isReasoningModel && selectedChatModel.includes("claude")

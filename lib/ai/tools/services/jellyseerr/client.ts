@@ -47,7 +47,16 @@ export async function jellyseerrRequest<T>(
     );
   }
 
-  const url = `${config.baseUrl}/api/v1${endpoint}`;
+  // Validate API key is present
+  if (!config.apiKey || config.apiKey.trim() === "") {
+    throw new JellyseerrClientError(
+      "Jellyseerr API key is not configured. Please add your API key in settings."
+    );
+  }
+
+  // Normalize baseUrl - remove trailing slash if present
+  const baseUrl = config.baseUrl.replace(/\/+$/, "");
+  const url = `${baseUrl}/api/v1${endpoint}`;
 
   const response = await fetch(url, {
     ...options,

@@ -3,19 +3,19 @@ import type { Session } from "next-auth";
 import { z } from "zod";
 import { RadarrClientError, radarrRequest } from "./client";
 
-type TriggerSearchProps = {
+type RefreshMovieProps = {
   session: Session;
 };
 
-export const triggerSearch = ({ session }: TriggerSearchProps) =>
+export const refreshMovie = ({ session }: RefreshMovieProps) =>
   tool({
     description:
-      "Trigger a new search for a movie in Radarr. Use this when a movie is stuck in the queue or you want to find a better release. IMPORTANT: You must search for the movie first to get the correct 'movieId'.",
+      "Refresh a movie's metadata and scan for files in Radarr. Use this after changing configurations or if a movie seems outdated.",
     inputSchema: z.object({
       movieId: z
         .number()
         .describe(
-          "The Radarr movie ID to search for (get this from getLibrary or searchMovies)"
+          "The Radarr movie ID to refresh (get this from getLibrary or searchMovies)"
         ),
     }),
     execute: async ({ movieId }) => {
@@ -23,20 +23,20 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
         await radarrRequest(session.user.id, "/command", {
           method: "POST",
           body: JSON.stringify({
-            name: "MoviesSearch",
+            name: "RefreshMovie",
             movieIds: [movieId],
           }),
         });
 
         return {
           success: true,
-          message: `Search triggered for movie ID ${movieId}. Radarr will now look for available releases.`,
+          message: `Refresh triggered for movie ID ${movieId}. Metadata will be updated.`,
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
           return { error: error.message };
         }
-        return { error: "Failed to trigger search. Please try again." };
+        return { error: "Failed to refresh movie. Please try again." };
       }
     },
   });

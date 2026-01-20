@@ -1,8 +1,16 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
-import type { RadarrQualityProfile } from "./types";
+import { SonarrClientError, sonarrRequest } from "./client";
+
+// Using the same type structure as Radarr for ease, but Sonarr has specific fields too.
+// Assuming basic structure matches for QualityProfile.
+interface SonarrQualityProfile {
+  id: number;
+  name: string;
+  upgradeAllowed: boolean;
+  cutoff: number;
+}
 
 type GetQualityProfilesProps = {
   session: Session;
@@ -11,11 +19,11 @@ type GetQualityProfilesProps = {
 export const getQualityProfiles = ({ session }: GetQualityProfilesProps) =>
   tool({
     description:
-      "Get all quality profiles configured in Radarr. Use this to see available quality options and their IDs before adding or editing movies.",
+      "Get all quality profiles configured in Sonarr. Use this to see available quality options and their IDs before adding or editing series.",
     inputSchema: z.object({}),
     execute: async () => {
       try {
-        const profiles = await radarrRequest<RadarrQualityProfile[]>(
+        const profiles = await sonarrRequest<SonarrQualityProfile[]>(
           session.user.id,
           "/qualityprofile"
         );
@@ -30,7 +38,7 @@ export const getQualityProfiles = ({ session }: GetQualityProfilesProps) =>
           })),
         };
       } catch (error) {
-        if (error instanceof RadarrClientError) {
+        if (error instanceof SonarrClientError) {
           return { error: error.message };
         }
         return { error: "Failed to get quality profiles. Please try again." };

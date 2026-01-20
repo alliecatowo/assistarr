@@ -1,11 +1,11 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { sonarrRequest, SonarrClientError } from "./client";
+import { SonarrClientError, sonarrRequest } from "./client";
 import type {
-  SonarrSeries,
   SonarrQualityProfile,
   SonarrRootFolder,
+  SonarrSeries,
 } from "./types";
 
 type AddSeriesProps = {
@@ -23,20 +23,40 @@ export const addSeries = ({ session }: AddSeriesProps) =>
       qualityProfileId: z
         .number()
         .optional()
-        .describe("Optional quality profile ID. If not provided, uses the first available profile."),
+        .describe(
+          "Optional quality profile ID. If not provided, uses the first available profile."
+        ),
       monitor: z
-        .enum(["all", "future", "missing", "existing", "firstSeason", "lastSeason", "pilot", "none"])
+        .enum([
+          "all",
+          "future",
+          "missing",
+          "existing",
+          "firstSeason",
+          "lastSeason",
+          "pilot",
+          "none",
+        ])
         .optional()
         .default("all")
-        .describe("Which episodes to monitor: 'all' (default), 'future', 'missing', 'existing', 'firstSeason', 'lastSeason', 'pilot', or 'none'"),
+        .describe(
+          "Which episodes to monitor: 'all' (default), 'future', 'missing', 'existing', 'firstSeason', 'lastSeason', 'pilot', or 'none'"
+        ),
       searchForMissingEpisodes: z
         .boolean()
         .optional()
         .default(true)
-        .describe("Whether to search for missing episodes immediately (default: true)"),
+        .describe(
+          "Whether to search for missing episodes immediately (default: true)"
+        ),
     }),
     needsApproval: true,
-    execute: async ({ tvdbId, qualityProfileId, monitor, searchForMissingEpisodes }) => {
+    execute: async ({
+      tvdbId,
+      qualityProfileId,
+      monitor,
+      searchForMissingEpisodes,
+    }) => {
       try {
         // First, lookup the series to get full details
         const lookupResults = await sonarrRequest<SonarrSeries[]>(
@@ -101,9 +121,12 @@ export const addSeries = ({ session }: AddSeriesProps) =>
           images: seriesData.images,
           seasons: seriesData.seasons.map((season) => ({
             seasonNumber: season.seasonNumber,
-            monitored: monitor === "all" ||
+            monitored:
+              monitor === "all" ||
               (monitor === "firstSeason" && season.seasonNumber === 1) ||
-              (monitor === "lastSeason" && season.seasonNumber === seriesData.seasons.filter(s => s.seasonNumber > 0).length),
+              (monitor === "lastSeason" &&
+                season.seasonNumber ===
+                  seriesData.seasons.filter((s) => s.seasonNumber > 0).length),
           })),
           rootFolderPath,
           monitored: true,
@@ -134,7 +157,8 @@ export const addSeries = ({ session }: AddSeriesProps) =>
             year: addedSeries.year,
             path: addedSeries.path,
             monitored: addedSeries.monitored,
-            seasonCount: addedSeries.seasons.filter((s) => s.seasonNumber > 0).length,
+            seasonCount: addedSeries.seasons.filter((s) => s.seasonNumber > 0)
+              .length,
             searchingForEpisodes: searchForMissingEpisodes,
           },
         };

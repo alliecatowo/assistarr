@@ -11,7 +11,7 @@ export const deleteRequest = ({ session }: DeleteRequestProps) =>
   tool({
     description:
       "Delete/Cancel a request in Jellyseerr. IMPORTANT: You must get the requests list first to find the correct 'requestId'. Do not guess.",
-    parameters: z.object({
+    inputSchema: z.object({
       requestId: z.number().describe("The ID of the request to delete"),
     }),
     execute: async ({ requestId }: { requestId: number }) => {

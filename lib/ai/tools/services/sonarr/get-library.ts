@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
-import type { RadarrMovie } from "./types";
+import { SonarrClientError, sonarrRequest } from "./client";
+import type { SonarrSeries } from "./types";
 
 type GetLibraryProps = {
   session: Session;
@@ -11,7 +11,7 @@ type GetLibraryProps = {
 export const getLibrary = ({ session }: GetLibraryProps) =>
   tool({
     description:
-      "Get all movies currently in the Radarr library. Returns a list of all monitored and downloaded movies with their status, quality, and file info.",
+      "Get all series currently in the Sonarr library. Returns a list of all monitored and downloaded shows with their status, quality, and file info.",
     inputSchema: z.object({
       sortBy: z
         .enum(["title", "dateAdded", "year", "rating"])
@@ -22,17 +22,17 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
         .number()
         .optional()
         .default(50)
-        .describe("Maximum number of movies to return (default 50)"),
+        .describe("Maximum number of series to return (default 50)"),
     }),
     execute: async ({ sortBy, limit }) => {
       try {
-        const movies = await radarrRequest<RadarrMovie[]>(
+        const series = await sonarrRequest<SonarrSeries[]>(
           session.user.id,
-          "/movie"
+          "/series"
         );
 
-        // Sort movies
-        const sortedMovies = [...movies].sort((a, b) => {
+        // Sort series
+        const sortedSeries = [...series].sort((a, b) => {
           switch (sortBy) {
             case "dateAdded":
               return (
@@ -42,35 +42,33 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
             case "year":
               return (b.year || 0) - (a.year || 0);
             case "rating":
-              return (
-                (b.ratings?.imdb?.value || 0) - (a.ratings?.imdb?.value || 0)
-              );
+              return (b.ratings?.value || 0) - (a.ratings?.value || 0);
             default:
               return a.title.localeCompare(b.title);
           }
         });
 
         // Limit results
-        const limitedMovies = sortedMovies.slice(0, limit);
+        const limitedSeries = sortedSeries.slice(0, limit);
 
         return {
           success: true,
-          totalMovies: movies.length,
-          showing: limitedMovies.length,
-          movies: limitedMovies.map((movie) => ({
-            id: movie.id,
-            title: movie.title,
-            year: movie.year,
-            hasFile: movie.hasFile,
-            monitored: movie.monitored,
-            status: movie.status,
-            qualityProfileId: movie.qualityProfileId,
-            sizeOnDisk: movie.sizeOnDisk,
-            runtime: movie.runtime,
+          totalSeries: series.length,
+          showing: limitedSeries.length,
+          series: limitedSeries.map((show) => ({
+            id: show.id,
+            title: show.title,
+            year: show.year,
+            monitored: show.monitored,
+            status: show.status,
+            qualityProfileId: show.qualityProfileId,
+            episodeCount: show.statistics?.episodeCount,
+            episodeFileCount: show.statistics?.episodeFileCount,
+            network: show.network,
           })),
         };
       } catch (error) {
-        if (error instanceof RadarrClientError) {
+        if (error instanceof SonarrClientError) {
           return { error: error.message };
         }
         return { error: "Failed to get library. Please try again." };
