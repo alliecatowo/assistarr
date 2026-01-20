@@ -123,6 +123,11 @@ const PurePreviewMessage = ({
             }
 
             if (type === "text") {
+              // Skip empty text parts to avoid blank messages
+              if (!part.text?.trim()) {
+                return null;
+              }
+
               if (mode === "view") {
                 return (
                   <div key={key}>
