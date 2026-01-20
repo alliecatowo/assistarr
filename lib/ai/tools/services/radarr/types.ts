@@ -190,3 +190,103 @@ export interface RadarrAddMovieOptions {
   searchForMovie?: boolean;
   addMethod?: string;
 }
+
+// Manual Import types
+export interface RadarrManualImportItem {
+  id: number;
+  path: string;
+  relativePath: string;
+  folderName: string;
+  name: string;
+  size: number;
+  movie?: RadarrMovie;
+  quality: RadarrQuality;
+  languages: Array<{ id: number; name: string }>;
+  releaseGroup?: string;
+  downloadId?: string;
+  customFormats: unknown[];
+  customFormatScore: number;
+  rejections: Array<{ type: string; reason: string }>;
+}
+
+export interface RadarrManualImportRequest {
+  id?: number;
+  path: string;
+  movieId: number;
+  quality: RadarrQuality;
+  languages: Array<{ id: number; name: string }>;
+  releaseGroup?: string;
+  downloadId?: string;
+  indexerFlags?: number;
+}
+
+// History types
+export interface RadarrHistoryRecord {
+  id: number;
+  movieId: number;
+  movie?: RadarrMovie;
+  sourceTitle: string;
+  quality: RadarrQuality;
+  qualityCutoffNotMet: boolean;
+  languages: Array<{ id: number; name: string }>;
+  date: string;
+  downloadId?: string;
+  eventType:
+    | "grabbed"
+    | "downloadFolderImported"
+    | "downloadFailed"
+    | "movieFileDeleted"
+    | "movieFolderImported"
+    | "movieFileRenamed"
+    | "downloadIgnored";
+  data: Record<string, unknown>;
+}
+
+export interface RadarrHistoryResponse {
+  page: number;
+  pageSize: number;
+  sortKey: string;
+  sortDirection: "ascending" | "descending";
+  totalRecords: number;
+  records: RadarrHistoryRecord[];
+}
+
+// Blocklist types
+export interface RadarrBlocklistItem {
+  id: number;
+  movieId: number;
+  movie?: RadarrMovie;
+  sourceTitle: string;
+  quality: RadarrQuality;
+  languages: Array<{ id: number; name: string }>;
+  date: string;
+  protocol: "usenet" | "torrent";
+  indexer?: string;
+  message?: string;
+}
+
+export interface RadarrBlocklistResponse {
+  page: number;
+  pageSize: number;
+  sortKey: string;
+  sortDirection: "ascending" | "descending";
+  totalRecords: number;
+  records: RadarrBlocklistItem[];
+}
+
+// Command types
+export interface RadarrCommand {
+  id: number;
+  name: string;
+  commandName: string;
+  message?: string;
+  body: Record<string, unknown>;
+  priority: string;
+  status: "queued" | "started" | "completed" | "failed" | "aborted";
+  result: string;
+  queued: string;
+  started?: string;
+  ended?: string;
+  trigger: string;
+  stateChangeTime: string;
+}
