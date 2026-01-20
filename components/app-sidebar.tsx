@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
-import { PlusIcon, TrashIcon } from "@/components/icons";
+import { PlusIcon, SettingsIcon, TrashIcon } from "@/components/icons";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
@@ -72,7 +72,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 }}
               >
                 <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Chatbot
+                  Assistarr
                 </span>
               </Link>
               <div className="flex flex-row gap-1">
@@ -119,7 +119,21 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarContent>
           <SidebarHistory user={user} />
         </SidebarContent>
-        <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
+        <SidebarFooter>
+          {user && (
+            <div className="flex flex-col gap-2">
+              <Link
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                href="/settings"
+                onClick={() => setOpenMobile(false)}
+              >
+                <SettingsIcon />
+                <span>Settings</span>
+              </Link>
+              <SidebarUserNav user={user} />
+            </div>
+          )}
+        </SidebarFooter>
       </Sidebar>
 
       <AlertDialog

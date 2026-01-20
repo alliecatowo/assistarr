@@ -3,6 +3,7 @@ import {
   boolean,
   foreignKey,
   json,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -10,6 +11,14 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+
+// Enum for service operation modes
+// - read: Only read operations (search, get queue, calendar, etc.)
+// - write: Read + write operations (add movies, request media, etc.)
+// - yolo: All operations without confirmation prompts
+export const serviceModeEnum = pgEnum("service_mode", ["read", "write", "yolo"]);
+
+export type ServiceMode = "read" | "write" | "yolo";
 
 export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -168,3 +177,18 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const serviceConfig = pgTable("ServiceConfig", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  serviceName: varchar("serviceName", { length: 50 }).notNull(), // 'radarr', 'sonarr', 'jellyfin', 'jellyseerr'
+  baseUrl: text("baseUrl").notNull(),
+  apiKey: text("apiKey").notNull(),
+  isEnabled: boolean("isEnabled").notNull().default(true),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type ServiceConfig = InferSelectModel<typeof serviceConfig>;
