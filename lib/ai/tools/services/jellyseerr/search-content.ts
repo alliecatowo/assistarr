@@ -46,23 +46,28 @@ export const searchContent = ({ session }: SearchContentProps) =>
       }
 
       try {
-        // Determine the endpoint based on type filter
-        let endpoint: string;
-        if (type === "movie") {
-          endpoint = `/search/movie?query=${encodeURIComponent(query)}&page=${page}`;
-        } else if (type === "tv") {
-          endpoint = `/search/tv?query=${encodeURIComponent(query)}&page=${page}`;
-        } else {
-          endpoint = `/search?query=${encodeURIComponent(query)}&page=${page}`;
-        }
+        // Jellyseerr uses a single /search endpoint - filter results client-side
+        const endpoint = `/search?query=${encodeURIComponent(query)}&page=${page}`;
 
         const response = await jellyseerrRequest<SearchResponse>(
           userId,
           endpoint
         );
 
+        // Filter results by type if specified
+        let filteredResults = response.results;
+        if (type === "movie") {
+          filteredResults = response.results.filter(
+            (r: SearchResult) => r.mediaType === "movie"
+          );
+        } else if (type === "tv") {
+          filteredResults = response.results.filter(
+            (r: SearchResult) => r.mediaType === "tv"
+          );
+        }
+
         // Transform results into a more user-friendly format
-        const results = response.results.map((result: SearchResult) => {
+        const results = filteredResults.map((result: SearchResult) => {
           const title = getResultTitle(result);
           const year = getResultYear(result);
           const mediaType = result.mediaType;
@@ -97,12 +102,12 @@ export const searchContent = ({ session }: SearchContentProps) =>
         return {
           page: response.page,
           totalPages: response.totalPages,
-          totalResults: response.totalResults,
+          totalResults: results.length,
           results,
           message:
             results.length > 0
-              ? `Found ${response.totalResults} result(s) for "${query}".`
-              : `No results found for "${query}".`,
+              ? `Found ${results.length} result(s) for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`
+              : `No results found for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`,
         };
       } catch (error) {
         if (error instanceof JellyseerrClientError) {
