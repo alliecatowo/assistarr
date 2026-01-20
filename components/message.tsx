@@ -400,6 +400,42 @@ const PurePreviewMessage = ({
                         <ToolInput input={toolPart.input} />
                       )}
 
+                      {state === "approval-requested" &&
+                        (toolPart as { approval?: { id: string } }).approval
+                          ?.id && (
+                          <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+                            <button
+                              className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                              onClick={() => {
+                                addToolApprovalResponse({
+                                  id: (
+                                    toolPart as { approval?: { id: string } }
+                                  ).approval!.id,
+                                  approved: false,
+                                  reason: "User denied this action",
+                                });
+                              }}
+                              type="button"
+                            >
+                              Deny
+                            </button>
+                            <button
+                              className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                              onClick={() => {
+                                addToolApprovalResponse({
+                                  id: (
+                                    toolPart as { approval?: { id: string } }
+                                  ).approval!.id,
+                                  approved: true,
+                                });
+                              }}
+                              type="button"
+                            >
+                              Allow
+                            </button>
+                          </div>
+                        )}
+
                       {state === "output-available" && (
                         <ToolOutput
                           errorText={
