@@ -1,4 +1,4 @@
-import type { ServiceDefinition } from "../base";
+import { createHealthCheck, defineTool, type ServiceDefinition } from "../base";
 import { addSeries } from "./add-series";
 import { deleteSeries } from "./delete-series";
 import { editSeries } from "./edit-series";
@@ -20,35 +20,86 @@ import { triggerSearch } from "./trigger-search";
 export const sonarrService: ServiceDefinition = {
   name: "sonarr",
   displayName: "Sonarr",
+  iconId: "sonarr",
   description:
     "TV series collection manager. Use this to manage TV shows. ALWAYS search for a series first to get its ID before editing or deleting. Use 'getQualityProfiles' to see available options before adding shows. For stalled downloads, use 'getSonarrReleases' to find alternatives and 'grabSonarrRelease' to download them.",
   tools: {
     // Read operations
-    getSonarrLibrary: getLibrary,
-    getSonarrQualityProfiles: getQualityProfiles,
-    getSonarrQueue: getQueue,
-    getSonarrCalendar: getCalendar,
-    searchSonarrSeries: searchSeries,
-    getSonarrReleases: getReleases,
+    getSonarrLibrary: defineTool(getLibrary, {
+      displayName: "Get Library (Sonarr)",
+      category: "library",
+      description: "View TV series in the library",
+    }),
+    getSonarrQualityProfiles: defineTool(getQualityProfiles, {
+      displayName: "List Quality Profiles (Sonarr)",
+      category: "library",
+      description: "View available quality profiles",
+    }),
+    getSonarrQueue: defineTool(getQueue, {
+      displayName: "View Queue (Sonarr)",
+      category: "queue",
+      description: "View download queue",
+    }),
+    getSonarrCalendar: defineTool(getCalendar, {
+      displayName: "View Calendar (Sonarr)",
+      category: "calendar",
+      description: "View upcoming episodes",
+    }),
+    searchSonarrSeries: defineTool(searchSeries, {
+      displayName: "Search TV (Sonarr)",
+      category: "search",
+      description: "Search for TV series to add",
+    }),
+    getSonarrReleases: defineTool(getReleases, {
+      displayName: "Get Releases (Sonarr)",
+      category: "download",
+      description: "Find available releases for download",
+    }),
     // Write operations
-    addSonarrSeries: addSeries,
-    editSonarrSeries: editSeries,
-    deleteSonarrSeries: deleteSeries,
-    triggerSonarrSearch: triggerSearch,
-    refreshSonarrSeries: refreshSeries,
-    grabSonarrRelease: grabRelease,
-    removeFromSonarrQueue: removeFromQueue,
+    addSonarrSeries: defineTool(addSeries, {
+      displayName: "Add Series",
+      category: "management",
+      description: "Add a TV series to the library",
+      requiresApproval: true,
+    }),
+    editSonarrSeries: defineTool(editSeries, {
+      displayName: "Edit Series",
+      category: "management",
+      description: "Edit a series in the library",
+      requiresApproval: true,
+    }),
+    deleteSonarrSeries: defineTool(deleteSeries, {
+      displayName: "Delete Series",
+      category: "management",
+      description: "Remove a series from the library",
+      requiresApproval: true,
+    }),
+    triggerSonarrSearch: defineTool(triggerSearch, {
+      displayName: "Search Downloads (Sonarr)",
+      category: "download",
+      description: "Trigger a search for downloads",
+    }),
+    refreshSonarrSeries: defineTool(refreshSeries, {
+      displayName: "Refresh Series (Sonarr)",
+      category: "management",
+      description: "Refresh series metadata",
+    }),
+    grabSonarrRelease: defineTool(grabRelease, {
+      displayName: "Grab Release (Sonarr)",
+      category: "download",
+      description: "Download a specific release",
+      requiresApproval: true,
+    }),
+    removeFromSonarrQueue: defineTool(removeFromQueue, {
+      displayName: "Remove from Queue (Sonarr)",
+      category: "queue",
+      description: "Remove an item from the download queue",
+      requiresApproval: true,
+    }),
   },
-  healthCheck: async ({ config }) => {
-    try {
-      const response = await fetch(`${config.baseUrl}/api/v3/system/status`, {
-        headers: {
-          "X-Api-Key": config.apiKey,
-        },
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  },
+  healthCheck: createHealthCheck({
+    type: "api-key-header",
+    endpoint: "/api/v3/system/status",
+    headerName: "X-Api-Key",
+  }),
 };

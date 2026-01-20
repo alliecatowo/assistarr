@@ -1,7 +1,8 @@
-import type { ServiceDefinition } from "../base";
+import { createHealthCheck, defineTool, type ServiceDefinition } from "../base";
 import { addMovie } from "./add-movie";
 import { deleteMovie } from "./delete-movie";
 import { editMovie } from "./edit-movie";
+import { getCalendar } from "./get-calendar";
 import { getLibrary } from "./get-library";
 import { getQualityProfiles } from "./get-quality-profiles";
 import { getQueue } from "./get-queue";
@@ -19,33 +20,84 @@ import { triggerSearch } from "./trigger-search";
 export const radarrService: ServiceDefinition = {
   name: "radarr",
   displayName: "Radarr",
+  iconId: "radarr",
   description:
     "Movie collection manager. Use this to manage the user's movie library. ALWAYS use the search tools first to find IDs before performing actions like delete or edit. Use 'getLibrary' to see what is currently monitored. For stalled downloads, use 'getReleases' to find alternatives and 'grabRelease' to download them.",
   tools: {
-    searchRadarrMovies: searchMovies,
-    addRadarrMovie: addMovie,
-    editRadarrMovie: editMovie,
-    deleteRadarrMovie: deleteMovie,
-    triggerRadarrSearch: triggerSearch,
-    refreshRadarrMovie: refreshMovie,
-    getRadarrLibrary: getLibrary,
-    getRadarrQualityProfiles: getQualityProfiles,
-    getRadarrQueue: getQueue,
-    getRadarrReleases: getReleases,
-    grabRadarrRelease: grabRelease,
-    removeFromRadarrQueue: removeFromQueue,
+    searchRadarrMovies: defineTool(searchMovies, {
+      displayName: "Search Movies (Radarr)",
+      category: "search",
+      description: "Search for movies to add to Radarr",
+    }),
+    addRadarrMovie: defineTool(addMovie, {
+      displayName: "Add Movie",
+      category: "management",
+      description: "Add a movie to the Radarr library",
+      requiresApproval: true,
+    }),
+    editRadarrMovie: defineTool(editMovie, {
+      displayName: "Edit Movie",
+      category: "management",
+      description: "Edit a movie in the library",
+      requiresApproval: true,
+    }),
+    deleteRadarrMovie: defineTool(deleteMovie, {
+      displayName: "Delete Movie",
+      category: "management",
+      description: "Remove a movie from the library",
+      requiresApproval: true,
+    }),
+    triggerRadarrSearch: defineTool(triggerSearch, {
+      displayName: "Search Downloads (Radarr)",
+      category: "download",
+      description: "Trigger a search for downloads",
+    }),
+    refreshRadarrMovie: defineTool(refreshMovie, {
+      displayName: "Refresh Movie (Radarr)",
+      category: "management",
+      description: "Refresh movie metadata",
+    }),
+    getRadarrLibrary: defineTool(getLibrary, {
+      displayName: "Get Library (Radarr)",
+      category: "library",
+      description: "View movies in the library",
+    }),
+    getRadarrQualityProfiles: defineTool(getQualityProfiles, {
+      displayName: "List Quality Profiles (Radarr)",
+      category: "library",
+      description: "View available quality profiles",
+    }),
+    getRadarrQueue: defineTool(getQueue, {
+      displayName: "View Queue (Radarr)",
+      category: "queue",
+      description: "View download queue",
+    }),
+    getRadarrCalendar: defineTool(getCalendar, {
+      displayName: "View Calendar (Radarr)",
+      category: "calendar",
+      description: "View upcoming releases",
+    }),
+    getRadarrReleases: defineTool(getReleases, {
+      displayName: "Get Releases (Radarr)",
+      category: "download",
+      description: "Find available releases for download",
+    }),
+    grabRadarrRelease: defineTool(grabRelease, {
+      displayName: "Grab Release (Radarr)",
+      category: "download",
+      description: "Download a specific release",
+      requiresApproval: true,
+    }),
+    removeFromRadarrQueue: defineTool(removeFromQueue, {
+      displayName: "Remove from Queue (Radarr)",
+      category: "queue",
+      description: "Remove an item from the download queue",
+      requiresApproval: true,
+    }),
   },
-  healthCheck: async ({ config }) => {
-    try {
-      // Use the system/status endpoint to verify connectivity
-      const response = await fetch(`${config.baseUrl}/api/v3/system/status`, {
-        headers: {
-          "X-Api-Key": config.apiKey,
-        },
-      });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  },
+  healthCheck: createHealthCheck({
+    type: "api-key-header",
+    endpoint: "/api/v3/system/status",
+    headerName: "X-Api-Key",
+  }),
 };

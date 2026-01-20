@@ -1,6 +1,7 @@
 import type { Tool } from "ai";
 import type { Session } from "next-auth";
 import type { ServiceConfig } from "@/lib/db/schema";
+import type { ServiceIconId, ToolCategory, ToolMetadata } from "./metadata";
 
 /**
  * Props passed to tool factory functions
@@ -21,6 +22,32 @@ export type ToolFactory = (props: ToolFactoryProps) => Tool<any, any>;
  */
 export interface HealthCheckProps {
   config: ServiceConfig;
+}
+
+/**
+ * Tool definition that pairs a factory with its metadata
+ */
+export interface ToolDefinition {
+  /** Factory function to create the tool */
+  factory: ToolFactory;
+  /** Human-readable display name */
+  displayName: string;
+  /** Category for grouping in UI */
+  category: ToolCategory;
+  /** Brief description for tooltips */
+  description?: string;
+  /** Whether this tool requires approval */
+  requiresApproval?: boolean;
+}
+
+/**
+ * Helper to create a tool definition with metadata
+ */
+export function defineTool(
+  factory: ToolFactory,
+  metadata: ToolMetadata
+): ToolDefinition {
+  return { factory, ...metadata };
 }
 
 /**
@@ -46,16 +73,93 @@ export interface ServiceDefinition {
   description: string;
 
   /**
-   * Map of tool names to their factory functions
+   * Icon identifier for the polymorphic icon system
+   */
+  iconId: ServiceIconId;
+
+  /**
+   * Map of tool names to their definitions (factory + metadata)
    * The keys will be used as the tool identifiers in the AI system
    */
-  tools: Record<string, ToolFactory>;
+  tools: Record<string, ToolDefinition>;
 
   /**
    * Optional health check function to verify the service is reachable
    * Returns true if the service is healthy, false otherwise
    */
   healthCheck?: (props: HealthCheckProps) => Promise<boolean>;
+}
+
+/**
+ * Health check configuration for different authentication types
+ */
+export type HealthCheckConfig =
+  | { type: "api-key-header"; endpoint: string; headerName: string }
+  | { type: "bearer-token"; endpoint: string; tokenTemplate: string }
+  | { type: "basic-auth"; endpoint: string }
+  | { type: "form-login"; endpoint: string; successResponse: string };
+
+/**
+ * Create a health check function from configuration.
+ * Reduces boilerplate in service definitions by handling common patterns.
+ */
+export function createHealthCheck(
+  config: HealthCheckConfig
+): (props: HealthCheckProps) => Promise<boolean> {
+  return async ({ config: serviceConfig }) => {
+    try {
+      const baseUrl = serviceConfig.baseUrl.replace(/\/$/, "");
+
+      switch (config.type) {
+        case "api-key-header": {
+          const response = await fetch(`${baseUrl}${config.endpoint}`, {
+            headers: { [config.headerName]: serviceConfig.apiKey },
+          });
+          return response.ok;
+        }
+
+        case "bearer-token": {
+          const token = config.tokenTemplate.replace(
+            "{apiKey}",
+            serviceConfig.apiKey
+          );
+          const response = await fetch(`${baseUrl}${config.endpoint}`, {
+            headers: { Authorization: token },
+          });
+          return response.ok;
+        }
+
+        case "basic-auth": {
+          const credentials = Buffer.from(serviceConfig.apiKey).toString(
+            "base64"
+          );
+          const response = await fetch(`${baseUrl}${config.endpoint}`, {
+            headers: { Authorization: `Basic ${credentials}` },
+          });
+          return response.ok;
+        }
+
+        case "form-login": {
+          const colonIndex = serviceConfig.apiKey.indexOf(":");
+          if (colonIndex === -1) return false;
+
+          const username = serviceConfig.apiKey.substring(0, colonIndex);
+          const password = serviceConfig.apiKey.substring(colonIndex + 1);
+
+          const response = await fetch(`${baseUrl}${config.endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ username, password }),
+          });
+
+          const text = await response.text();
+          return text === config.successResponse;
+        }
+      }
+    } catch {
+      return false;
+    }
+  };
 }
 
 /**

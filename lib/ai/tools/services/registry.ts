@@ -4,6 +4,11 @@ import type { ServiceConfig } from "@/lib/db/schema";
 import type { EnabledToolsResult, ServiceDefinition } from "./base";
 import { jellyfinService } from "./jellyfin/definition";
 import { jellyseerrService } from "./jellyseerr/definition";
+import {
+  registerServiceMetadata,
+  registerToolsMetadata,
+  SERVICE_BRAND_COLORS,
+} from "./metadata";
 import { qbittorrentService } from "./qbittorrent/definition";
 // Import all service definitions
 import { radarrService } from "./radarr/definition";
@@ -23,6 +28,37 @@ const serviceRegistry: ServiceDefinition[] = [
   jellyseerrService,
   qbittorrentService,
 ];
+
+/**
+ * Initialize the metadata registry from service definitions.
+ * This runs once when the module is first imported.
+ */
+function initializeMetadataRegistry(): void {
+  for (const service of serviceRegistry) {
+    // Register service metadata
+    registerServiceMetadata({
+      name: service.name,
+      displayName: service.displayName,
+      iconId: service.iconId,
+      brandColor: SERVICE_BRAND_COLORS[service.iconId],
+    });
+
+    // Register tool metadata
+    const toolMetadata: Record<string, { displayName: string; category: any; description?: string; requiresApproval?: boolean }> = {};
+    for (const [toolName, toolDef] of Object.entries(service.tools)) {
+      toolMetadata[toolName] = {
+        displayName: toolDef.displayName,
+        category: toolDef.category,
+        description: toolDef.description,
+        requiresApproval: toolDef.requiresApproval,
+      };
+    }
+    registerToolsMetadata(service.name, toolMetadata);
+  }
+}
+
+// Initialize on module load
+initializeMetadataRegistry();
 
 /**
  * Get a service definition by name
@@ -81,8 +117,8 @@ export function getEnabledTools(
     }
 
     // Instantiate each tool for this service
-    for (const [toolName, toolFactory] of Object.entries(service.tools)) {
-      tools[toolName] = toolFactory({ session });
+    for (const [toolName, toolDef] of Object.entries(service.tools)) {
+      tools[toolName] = toolDef.factory({ session });
       toolNames.push(toolName);
     }
   }

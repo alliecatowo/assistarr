@@ -2,6 +2,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useState } from "react";
 import type { Vote } from "@/lib/db/schema";
+import { getToolDisplayName } from "@/lib/ai/tools/services/metadata";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
@@ -21,6 +22,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import { hasRichRenderer, ToolResultRenderer } from "./tool-results";
 import { Weather } from "./weather";
 
 const PurePreviewMessage = ({
@@ -351,42 +353,8 @@ const PurePreviewMessage = ({
               const { toolCallId, state } = toolPart;
               const rawToolName = type.replace("tool-", "");
 
-              const TOOL_DISPLAY_NAMES: Record<string, string> = {
-                // Radarr
-                getRadarrLibrary: "Get Library (Radarr)",
-                getRadarrQualityProfiles: "List Quality Profiles (Radarr)",
-                getRadarrQueue: "View Queue (Radarr)",
-                triggerRadarrSearch: "Search Movie (Radarr)",
-                refreshRadarrMovie: "Refresh Movie (Radarr)",
-                addRadarrMovie: "Add Movie",
-                editRadarrMovie: "Edit Movie",
-                deleteRadarrMovie: "Delete Movie",
-                getRadarrReleases: "Get Releases (Radarr)",
-                grabRadarrRelease: "Grab Release (Radarr)",
-                removeFromRadarrQueue: "Remove from Queue (Radarr)",
-                // Sonarr
-                getSonarrLibrary: "Get Library (Sonarr)",
-                getSonarrQualityProfiles: "List Quality Profiles (Sonarr)",
-                getSonarrQueue: "View Queue (Sonarr)",
-                triggerSonarrSearch: "Search Series (Sonarr)",
-                refreshSonarrSeries: "Refresh Series (Sonarr)",
-                addSonarrSeries: "Add Series",
-                editSonarrSeries: "Edit Series",
-                deleteSonarrSeries: "Delete Series",
-                searchSonarrSeries: "Search TV (Sonarr)",
-                getSonarrReleases: "Get Releases (Sonarr)",
-                grabSonarrRelease: "Grab Release (Sonarr)",
-                removeFromSonarrQueue: "Remove from Queue (Sonarr)",
-                // Jellyseerr
-                getRequests: "View Requests",
-                searchContent: "Search Media (Jellyseerr)",
-                getDiscovery: "Discover Content",
-                requestMedia: "Request Media",
-                deleteRequest: "Delete Request",
-              };
-
-              const displayName =
-                TOOL_DISPLAY_NAMES[rawToolName] || rawToolName;
+              // Use centralized tool metadata registry for display names
+              const displayName = getToolDisplayName(rawToolName);
 
               // Determine if tool returned an error in its output
               const hasError =
@@ -395,84 +363,112 @@ const PurePreviewMessage = ({
                 "error" in toolPart.output;
               const displayState = hasError ? "output-error" : state;
 
-              return (
-                <div className="w-[min(100%,450px)]" key={toolCallId}>
-                  <Tool className="w-full" defaultOpen={false}>
-                    <ToolHeader
-                      state={displayState as any}
-                      type={displayName as any}
-                    />
-                    <ToolContent>
-                      {(state === "input-available" ||
-                        state === "approval-requested") && (
-                        <ToolInput input={toolPart.input} />
-                      )}
+              const isApprovalRequested = state === "approval-requested";
+              const approvalId = (toolPart as { approval?: { id: string } })
+                .approval?.id;
 
-                      {state === "approval-requested" &&
-                        (toolPart as { approval?: { id: string } }).approval
-                          ?.id && (
-                          <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
-                            <button
-                              className="rounded-md px-3 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
-                              onClick={() => {
-                                addToolApprovalResponse({
-                                  id: (
-                                    toolPart as { approval?: { id: string } }
-                                  ).approval!.id,
-                                  approved: false,
-                                  reason: "User denied this action",
-                                });
-                              }}
-                              type="button"
-                            >
-                              Deny
-                            </button>
-                            <button
-                              className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
-                              onClick={() => {
-                                addToolApprovalResponse({
-                                  id: (
-                                    toolPart as { approval?: { id: string } }
-                                  ).approval!.id,
-                                  approved: true,
-                                });
-                              }}
-                              type="button"
-                            >
-                              Allow
-                            </button>
-                          </div>
+              // Rich inline results get full width, others are constrained
+              const isRichInline =
+                state === "output-available" &&
+                hasRichRenderer(toolPart.output) &&
+                !("error" in toolPart.output);
+              const widthClass = isRichInline
+                ? "w-full"
+                : "w-[min(100%,450px)]";
+
+              return (
+                <div className={widthClass} key={toolCallId}>
+                  {/* Approval requested: prominent display with buttons outside collapsible */}
+                  {isApprovalRequested && approvalId ? (
+                    <div className="rounded-md border-2 border-yellow-500/50 bg-yellow-500/5">
+                      <Tool className="w-full border-0" defaultOpen={true}>
+                        <ToolHeader
+                          state={displayState as any}
+                          type={displayName as any}
+                        />
+                        <ToolContent>
+                          <ToolInput input={toolPart.input} />
+                        </ToolContent>
+                      </Tool>
+                      {/* Approval buttons outside collapsible for visibility */}
+                      <div className="flex items-center justify-end gap-3 border-t border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
+                        <button
+                          className="rounded-md px-4 py-2 text-muted-foreground text-sm font-medium transition-colors hover:bg-muted hover:text-foreground"
+                          onClick={() => {
+                            addToolApprovalResponse({
+                              id: approvalId,
+                              approved: false,
+                              reason: "User denied this action",
+                            });
+                          }}
+                          type="button"
+                        >
+                          Deny Request
+                        </button>
+                        <button
+                          className="rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm font-medium transition-colors hover:bg-primary/90"
+                          onClick={() => {
+                            addToolApprovalResponse({
+                              id: approvalId,
+                              approved: true,
+                            });
+                          }}
+                          type="button"
+                        >
+                          Allow Request
+                        </button>
+                      </div>
+                    </div>
+                  ) : state === "output-available" &&
+                    hasRichRenderer(toolPart.output) &&
+                    !("error" in toolPart.output) ? (
+                    /* Rich results: render inline without Tool wrapper */
+                    <div className="w-full">
+                      <ToolResultRenderer
+                        input={toolPart.input}
+                        output={toolPart.output}
+                        state={state}
+                        toolName={rawToolName}
+                      />
+                    </div>
+                  ) : (
+                    /* Non-rich results: use collapsible Tool wrapper */
+                    <Tool className="w-full" defaultOpen={false}>
+                      <ToolHeader
+                        state={displayState as any}
+                        type={displayName as any}
+                      />
+                      <ToolContent>
+                        {state === "input-available" && (
+                          <ToolInput input={toolPart.input} />
                         )}
 
-                      {state === "output-available" && (
-                        <ToolOutput
-                          errorText={
-                            toolPart.output && "error" in toolPart.output
-                              ? String(toolPart.output.error)
-                              : undefined
-                          }
-                          output={
-                            toolPart.output && "error" in toolPart.output ? (
-                              <div className="text-red-400 text-xs py-1">
-                                <span className="font-medium">Error:</span>{" "}
-                                {String(toolPart.output.error)}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/50 max-h-60 overflow-y-auto whitespace-pre-wrap font-mono">
-                                {JSON.stringify(toolPart.output, null, 2)}
-                              </div>
-                            )
-                          }
-                        />
-                      )}
+                        {state === "output-available" && (
+                          <ToolOutput
+                            errorText={
+                              toolPart.output && "error" in toolPart.output
+                                ? String(toolPart.output.error)
+                                : undefined
+                            }
+                            output={
+                              <ToolResultRenderer
+                                input={toolPart.input}
+                                output={toolPart.output}
+                                state={state}
+                                toolName={rawToolName}
+                              />
+                            }
+                          />
+                        )}
 
-                      {state === "output-denied" && (
-                        <div className="px-4 py-2 text-xs text-red-500">
-                          Tool execution denied.
-                        </div>
-                      )}
-                    </ToolContent>
-                  </Tool>
+                        {state === "output-denied" && (
+                          <div className="px-4 py-2 text-xs text-red-500">
+                            Tool execution denied.
+                          </div>
+                        )}
+                      </ToolContent>
+                    </Tool>
+                  )}
                 </div>
               );
             }
