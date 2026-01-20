@@ -176,16 +176,34 @@ export async function POST(request: Request) {
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
-          experimental_activeTools: allToolNames, // Allow tools for all models, including thinking ones (hybrid)
+          experimental_activeTools: allToolNames,
           providerOptions: {
-            anthropic:
-              isReasoningModel && selectedChatModel.includes("claude")
-                ? { thinking: { type: "enabled", budgetTokens: 10_000 } }
-                : undefined,
-            google:
-              isReasoningModel && selectedChatModel.includes("gemini")
-                ? { thinking: { type: "enabled", budgetTokens: 10_000 } } // Simulate generic thinking param if supported by gateway/provider
-                : undefined,
+            ...(isReasoningModel && selectedChatModel.includes("claude")
+              ? {
+                  anthropic: {
+                    thinking: { type: "enabled", budgetTokens: 10_000 },
+                  },
+                }
+              : {}),
+            ...(selectedChatModel.includes("gemini")
+              ? {
+                  google: selectedChatModel.includes("gemini-3")
+                    ? {
+                        // Gemini 3 models use thinkingLevel
+                        thinkingConfig: {
+                          thinkingLevel: "high",
+                          includeThoughts: true,
+                        },
+                      }
+                    : {
+                        // Gemini 2.5 models use thinkingBudget
+                        thinkingConfig: {
+                          thinkingBudget: 8192,
+                          includeThoughts: true,
+                        },
+                      },
+                }
+              : {}),
           },
           tools: allTools,
           experimental_telemetry: {
