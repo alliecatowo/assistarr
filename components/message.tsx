@@ -341,6 +341,7 @@ const PurePreviewMessage = ({
                           )
                         }
                       />
+                    )}
                   </ToolContent>
                 </Tool>
               );
@@ -350,12 +351,49 @@ const PurePreviewMessage = ({
             if (type.startsWith("tool-")) {
               const toolPart = part as any;
               const { toolCallId, state } = toolPart;
-              const toolName = type.replace("tool-", "");
+              const rawToolName = type.replace("tool-", "");
+
+              const TOOL_DISPLAY_NAMES: Record<string, string> = {
+                // Radarr
+                getRadarrLibrary: "Get Library (Radarr)",
+                getRadarrQualityProfiles: "List Quality Profiles (Radarr)",
+                getRadarrQueue: "View Queue (Radarr)",
+                triggerRadarrSearch: "Search Movie (Radarr)",
+                refreshRadarrMovie: "Refresh Movie (Radarr)",
+                addRadarrMovie: "Add Movie",
+                editRadarrMovie: "Edit Movie",
+                deleteRadarrMovie: "Delete Movie",
+                getRadarrReleases: "Get Releases (Radarr)",
+                grabRadarrRelease: "Grab Release (Radarr)",
+                removeFromRadarrQueue: "Remove from Queue (Radarr)",
+                // Sonarr
+                getSonarrLibrary: "Get Library (Sonarr)",
+                getSonarrQualityProfiles: "List Quality Profiles (Sonarr)",
+                getSonarrQueue: "View Queue (Sonarr)",
+                triggerSonarrSearch: "Search Series (Sonarr)",
+                refreshSonarrSeries: "Refresh Series (Sonarr)",
+                addSonarrSeries: "Add Series",
+                editSonarrSeries: "Edit Series",
+                deleteSonarrSeries: "Delete Series",
+                searchSonarrSeries: "Search TV (Sonarr)",
+                getSonarrReleases: "Get Releases (Sonarr)",
+                grabSonarrRelease: "Grab Release (Sonarr)",
+                removeFromSonarrQueue: "Remove from Queue (Sonarr)",
+                // Jellyseerr
+                getRequests: "View Requests",
+                searchContent: "Search Media (Jellyseerr)",
+                getDiscovery: "Discover Content",
+                requestMedia: "Request Media",
+                deleteRequest: "Delete Request",
+              };
+
+              const displayName =
+                TOOL_DISPLAY_NAMES[rawToolName] || rawToolName;
 
               return (
                 <div className="w-[min(100%,450px)]" key={toolCallId}>
                   <Tool className="w-full" defaultOpen={true}>
-                    <ToolHeader state={state} type={toolName as any} />
+                    <ToolHeader state={state} type={displayName as any} />
                     <ToolContent>
                       {(state === "input-available" ||
                         state === "approval-requested") && (
@@ -371,8 +409,8 @@ const PurePreviewMessage = ({
                           }
                           output={
                             toolPart.output && "error" in toolPart.output ? (
-                              <div className="text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded text-xs border border-red-200 dark:border-900">
-                                <strong>Error:</strong>{" "}
+                              <div className="text-red-400 text-xs py-1">
+                                <span className="font-medium">Error:</span>{" "}
                                 {String(toolPart.output.error)}
                               </div>
                             ) : (
