@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  BarChart3Icon,
+  PlusIcon,
+  SettingsIcon,
+  Trash2Icon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
@@ -7,7 +13,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
-import { PlusIcon, SettingsIcon, TrashIcon } from "@/components/icons";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
@@ -85,7 +90,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                         type="button"
                         variant="ghost"
                       >
-                        <TrashIcon />
+                        <Trash2Icon size={16} />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent align="end" className="hidden md:block">
@@ -105,7 +110,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                       type="button"
                       variant="ghost"
                     >
-                      <PlusIcon />
+                      <PlusIcon size={16} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent align="end" className="hidden md:block">
@@ -124,10 +129,18 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             <div className="flex flex-col gap-2">
               <Link
                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                href="/monitor"
+                onClick={() => setOpenMobile(false)}
+              >
+                <BarChart3Icon size={16} />
+                <span>Monitor</span>
+              </Link>
+              <Link
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                 href="/settings"
                 onClick={() => setOpenMobile(false)}
               >
-                <SettingsIcon />
+                <SettingsIcon size={16} />
                 <span>Settings</span>
               </Link>
               <SidebarUserNav user={user} />

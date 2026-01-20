@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { useLocalStorage } from "usehooks-ts";
 import { ChatHeader } from "@/components/chat-header";
 import {
   AlertDialog,
@@ -77,6 +78,13 @@ export function Chat({
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
+  const [debugMode, setDebugMode] = useLocalStorage("debugMode", false);
+  const debugModeRef = useRef(debugMode);
+
+  useEffect(() => {
+    debugModeRef.current = debugMode;
+  }, [debugMode]);
+
   const {
     messages,
     setMessages,
@@ -126,6 +134,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            debugMode: debugModeRef.current,
             ...request.body,
           },
         };
@@ -212,8 +221,10 @@ export function Chat({
             <MultimodalInput
               attachments={attachments}
               chatId={id}
+              debugMode={debugMode}
               input={input}
               messages={messages}
+              onDebugModeChange={setDebugMode}
               onModelChange={setCurrentModelId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
@@ -232,9 +243,11 @@ export function Chat({
         addToolApprovalResponse={addToolApprovalResponse}
         attachments={attachments}
         chatId={id}
+        debugMode={debugMode}
         input={input}
         isReadonly={isReadonly}
         messages={messages}
+        onDebugModeChange={setDebugMode}
         regenerate={regenerate}
         selectedModelId={currentModelId}
         selectedVisibilityType={visibilityType}

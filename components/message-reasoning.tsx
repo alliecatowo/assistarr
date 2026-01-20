@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Reasoning,
   ReasoningContent,
@@ -12,22 +11,22 @@ type MessageReasoningProps = {
   reasoning: string;
 };
 
+/**
+ * MessageReasoning displays the AI's reasoning/thinking process.
+ * - Collapsed by default for historical messages
+ * - Opens only while actively streaming
+ * - Auto-closes after streaming completes
+ */
 export function MessageReasoning({
   isLoading,
   reasoning,
 }: MessageReasoningProps) {
-  const [hasBeenStreaming, setHasBeenStreaming] = useState(isLoading);
-
-  useEffect(() => {
-    if (isLoading) {
-      setHasBeenStreaming(true);
-    }
-  }, [isLoading]);
-
+  // Only open by default if actively streaming
+  // Historical messages (isLoading=false) will be collapsed
   return (
     <Reasoning
       data-testid="message-reasoning"
-      defaultOpen={hasBeenStreaming}
+      defaultOpen={isLoading}
       isStreaming={isLoading}
     >
       <ReasoningTrigger />

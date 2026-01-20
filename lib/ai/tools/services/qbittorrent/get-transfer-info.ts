@@ -40,19 +40,19 @@ export const getTransferInfo = ({ session }: GetTransferInfoProps) =>
 
         return {
           speeds: {
-            download: formatBytes(transferInfo.dl_info_speed) + "/s",
-            upload: formatBytes(transferInfo.up_info_speed) + "/s",
+            download: `${formatBytes(transferInfo.dl_info_speed)}/s`,
+            upload: `${formatBytes(transferInfo.up_info_speed)}/s`,
             downloadRaw: transferInfo.dl_info_speed,
             uploadRaw: transferInfo.up_info_speed,
           },
           limits: {
             download:
               transferInfo.dl_rate_limit > 0
-                ? formatBytes(transferInfo.dl_rate_limit) + "/s"
+                ? `${formatBytes(transferInfo.dl_rate_limit)}/s`
                 : "Unlimited",
             upload:
               transferInfo.up_rate_limit > 0
-                ? formatBytes(transferInfo.up_rate_limit) + "/s"
+                ? `${formatBytes(transferInfo.up_rate_limit)}/s`
                 : "Unlimited",
           },
           session: {
@@ -86,7 +86,8 @@ export const getTransferInfo = ({ session }: GetTransferInfoProps) =>
           return { error: error.message };
         }
         return {
-          error: "Failed to get transfer info from qBittorrent. Please try again.",
+          error:
+            "Failed to get transfer info from qBittorrent. Please try again.",
         };
       }
     },

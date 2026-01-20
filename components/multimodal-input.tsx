@@ -3,7 +3,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, WrenchIcon } from "lucide-react";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -68,6 +68,8 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
+  debugMode,
+  onDebugModeChange,
 }: {
   chatId: string;
   input: string;
@@ -83,6 +85,8 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  debugMode: boolean;
+  onDebugModeChange: (enabled: boolean) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -384,6 +388,10 @@ function PureMultimodalInput({
               selectedModelId={selectedModelId}
               status={status}
             />
+            <DebugModeButton
+              debugMode={debugMode}
+              onDebugModeChange={onDebugModeChange}
+            />
             <ModelSelectorCompact
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
@@ -426,6 +434,9 @@ export const MultimodalInput = memo(
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
       return false;
     }
+    if (prevProps.debugMode !== nextProps.debugMode) {
+      return false;
+    }
 
     return true;
   }
@@ -460,6 +471,35 @@ function PureAttachmentsButton({
 }
 
 const AttachmentsButton = memo(PureAttachmentsButton);
+
+function PureDebugModeButton({
+  debugMode,
+  onDebugModeChange,
+}: {
+  debugMode: boolean;
+  onDebugModeChange: (enabled: boolean) => void;
+}) {
+  return (
+    <Button
+      className={cn(
+        "aspect-square h-8 rounded-lg p-1 transition-colors",
+        debugMode
+          ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30"
+          : "hover:bg-accent"
+      )}
+      data-testid="debug-mode-button"
+      onClick={(event) => {
+        event.preventDefault();
+        onDebugModeChange(!debugMode);
+      }}
+      variant="ghost"
+    >
+      <WrenchIcon size={14} style={{ width: 14, height: 14 }} />
+    </Button>
+  );
+}
+
+const DebugModeButton = memo(PureDebugModeButton);
 
 function PureModelSelectorCompact({
   selectedModelId,

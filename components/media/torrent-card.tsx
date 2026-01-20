@@ -1,20 +1,20 @@
 "use client";
 
-import * as React from "react";
 import {
+  AlertCircleIcon,
   ArrowDownIcon,
   ArrowUpIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  HardDriveIcon,
   PauseIcon,
   PlayIcon,
   UsersIcon,
-  HardDriveIcon,
-  ClockIcon,
-  AlertCircleIcon,
-  CheckCircleIcon,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -70,11 +70,14 @@ function getStateConfig(state: TorrentState): {
   variant: "default" | "secondary" | "destructive" | "outline";
   icon: React.ReactNode;
 } {
-  const configs: Record<TorrentState, {
-    label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
-    icon: React.ReactNode;
-  }> = {
+  const configs: Record<
+    TorrentState,
+    {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+      icon: React.ReactNode;
+    }
+  > = {
     downloading: {
       label: "Downloading",
       variant: "default",
@@ -154,11 +157,14 @@ export function TorrentCard({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {category && (
-                <Badge variant="outline" className="text-xs">
+                <Badge className="text-xs" variant="outline">
                   {category}
                 </Badge>
               )}
-              <Badge variant={stateConfig.variant} className="flex items-center gap-1 text-xs">
+              <Badge
+                className="flex items-center gap-1 text-xs"
+                variant={stateConfig.variant}
+              >
                 {stateConfig.icon}
                 {stateConfig.label}
               </Badge>
@@ -168,11 +174,13 @@ export function TorrentCard({
           {/* Progress bar */}
           {showProgress && (
             <div className="space-y-1">
-              <Progress value={progress} className="h-2" />
+              <Progress className="h-2" value={progress} />
               <div className="flex items-center justify-between text-muted-foreground text-xs">
                 <span>{progress.toFixed(1)}%</span>
                 {downloaded && size && (
-                  <span>{downloaded} / {size}</span>
+                  <span>
+                    {downloaded} / {size}
+                  </span>
                 )}
               </div>
             </div>
@@ -223,10 +231,10 @@ export function TorrentCard({
             <div className="flex gap-2 pt-1">
               {isActive && onPause && (
                 <Button
+                  disabled={actionsDisabled}
+                  onClick={onPause}
                   size="sm"
                   variant="outline"
-                  onClick={onPause}
-                  disabled={actionsDisabled}
                 >
                   <PauseIcon className="mr-1 size-4" />
                   Pause
@@ -234,10 +242,10 @@ export function TorrentCard({
               )}
               {isPaused && onResume && (
                 <Button
+                  disabled={actionsDisabled}
+                  onClick={onResume}
                   size="sm"
                   variant="outline"
-                  onClick={onResume}
-                  disabled={actionsDisabled}
                 >
                   <PlayIcon className="mr-1 size-4" />
                   Resume

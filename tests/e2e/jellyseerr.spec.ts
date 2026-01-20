@@ -49,7 +49,11 @@ test.describe("Jellyseerr Integration - Chat Commands", () => {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            pageInfo: { pages: 1, page: 1, results: mockJellyseerrRequests.length },
+            pageInfo: {
+              pages: 1,
+              page: 1,
+              results: mockJellyseerrRequests.length,
+            },
             results: mockJellyseerrRequests,
           }),
         });
@@ -61,7 +65,7 @@ test.describe("Jellyseerr Integration - Chat Commands", () => {
             id: 2,
             status: 1, // pending
             media: {
-              tmdbId: 12345,
+              tmdbId: 12_345,
               mediaType: "movie",
             },
           }),
@@ -258,7 +262,11 @@ test.describe("Jellyseerr Integration - Request Management", () => {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            pageInfo: { pages: 1, page: 1, results: mockJellyseerrRequests.length },
+            pageInfo: {
+              pages: 1,
+              page: 1,
+              results: mockJellyseerrRequests.length,
+            },
             results: mockJellyseerrRequests,
           }),
         });
@@ -332,7 +340,7 @@ test.describe("Jellyseerr Integration - Tool Approval Flow", () => {
           body: JSON.stringify({
             id: 2,
             status: 1,
-            media: { tmdbId: 27205, mediaType: "movie" },
+            media: { tmdbId: 27_205, mediaType: "movie" },
           }),
         });
       } else {

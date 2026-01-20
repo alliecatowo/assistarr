@@ -16,7 +16,11 @@ import {
 // - read: Only read operations (search, get queue, calendar, etc.)
 // - write: Read + write operations (add movies, request media, etc.)
 // - yolo: All operations without confirmation prompts
-export const serviceModeEnum = pgEnum("service_mode", ["read", "write", "yolo"]);
+export const serviceModeEnum = pgEnum("service_mode", [
+  "read",
+  "write",
+  "yolo",
+]);
 
 export type ServiceMode = "read" | "write" | "yolo";
 

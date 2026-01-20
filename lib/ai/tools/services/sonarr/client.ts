@@ -31,7 +31,9 @@ export async function sonarrRequest<T>(
   }
 
   if (!config.isEnabled) {
-    throw new SonarrClientError("Sonarr is disabled. Please enable it in settings.");
+    throw new SonarrClientError(
+      "Sonarr is disabled. Please enable it in settings."
+    );
   }
 
   const url = `${config.baseUrl}/api/v3${endpoint}`;

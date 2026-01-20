@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const configs = await getServiceConfigs({ userId: session.user.id });
     return Response.json(configs);
-  } catch (error) {
+  } catch (_error) {
     return new ChatSDKError(
       "bad_request:settings",
       "Failed to fetch service configurations"
@@ -42,7 +42,14 @@ export async function POST(request: Request) {
       ).toResponse();
     }
 
-    const validServices = ["radarr", "sonarr", "jellyfin", "jellyseerr", "qbittorrent", "portainer"];
+    const validServices = [
+      "radarr",
+      "sonarr",
+      "jellyfin",
+      "jellyseerr",
+      "qbittorrent",
+      "portainer",
+    ];
     if (!validServices.includes(serviceName)) {
       return new ChatSDKError(
         "bad_request:settings",
@@ -59,7 +66,7 @@ export async function POST(request: Request) {
     });
 
     return Response.json(config);
-  } catch (error) {
+  } catch (_error) {
     return new ChatSDKError(
       "bad_request:settings",
       "Failed to save service configuration"
@@ -98,7 +105,7 @@ export async function DELETE(request: Request) {
     }
 
     return Response.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return new ChatSDKError(
       "bad_request:settings",
       "Failed to delete service configuration"

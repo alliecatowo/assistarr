@@ -141,7 +141,9 @@ export function createHealthCheck(
 
         case "form-login": {
           const colonIndex = serviceConfig.apiKey.indexOf(":");
-          if (colonIndex === -1) return false;
+          if (colonIndex === -1) {
+            return false;
+          }
 
           const username = serviceConfig.apiKey.substring(0, colonIndex);
           const password = serviceConfig.apiKey.substring(colonIndex + 1);

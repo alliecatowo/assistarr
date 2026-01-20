@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +55,12 @@ const SERVICES: ServiceInfo[] = [
     description: "Request management and media discovery tool",
     placeholder: "http://localhost:5055",
   },
+  {
+    name: "qBittorrent",
+    serviceName: "qbittorrent",
+    description: "BitTorrent client for managing your downloads",
+    placeholder: "http://localhost:8080",
+  },
 ];
 
 function ServiceCard({
@@ -95,7 +101,7 @@ function ServiceCard({
         isEnabled,
       });
       toast.success(`${service.name} configuration saved`);
-    } catch (error) {
+    } catch (_error) {
       toast.error(`Failed to save ${service.name} configuration`);
     } finally {
       setIsSaving(false);
@@ -103,7 +109,9 @@ function ServiceCard({
   };
 
   const handleDelete = async () => {
-    if (!config?.id) return;
+    if (!config?.id) {
+      return;
+    }
 
     setIsDeleting(true);
     try {
@@ -112,7 +120,7 @@ function ServiceCard({
       setApiKey("");
       setIsEnabled(true);
       toast.success(`${service.name} configuration removed`);
-    } catch (error) {
+    } catch (_error) {
       toast.error(`Failed to remove ${service.name} configuration`);
     } finally {
       setIsDeleting(false);
@@ -133,12 +141,15 @@ function ServiceCard({
             <CardDescription>{service.description}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Label htmlFor={`${service.serviceName}-enabled`} className="text-sm">
+            <Label
+              className="text-sm"
+              htmlFor={`${service.serviceName}-enabled`}
+            >
               Enabled
             </Label>
             <Switch
-              id={`${service.serviceName}-enabled`}
               checked={isEnabled}
+              id={`${service.serviceName}-enabled`}
               onCheckedChange={setIsEnabled}
             />
           </div>
@@ -149,32 +160,43 @@ function ServiceCard({
           <Label htmlFor={`${service.serviceName}-url`}>Base URL</Label>
           <Input
             id={`${service.serviceName}-url`}
-            type="url"
-            placeholder={service.placeholder}
-            value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder={service.placeholder}
+            type="url"
+            value={baseUrl}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`${service.serviceName}-key`}>API Key</Label>
+          <Label htmlFor={`${service.serviceName}-key`}>
+            {service.serviceName === "qbittorrent" ? "Credentials" : "API Key"}
+          </Label>
           <Input
             id={`${service.serviceName}-key`}
-            type="password"
-            placeholder="Enter your API key"
-            value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
+            placeholder={
+              service.serviceName === "qbittorrent"
+                ? "username:password"
+                : "Enter your API key"
+            }
+            type="password"
+            value={apiKey}
           />
+          {service.serviceName === "qbittorrent" && (
+            <p className="text-xs text-muted-foreground">
+              Format: username:password (e.g., admin:yourpassword)
+            </p>
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button
-          variant="destructive"
-          onClick={handleDelete}
           disabled={!config?.id || isDeleting}
+          onClick={handleDelete}
+          variant="destructive"
         >
           {isDeleting ? "Removing..." : "Remove"}
         </Button>
-        <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
+        <Button disabled={isSaving || !hasChanges} onClick={handleSave}>
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </CardFooter>
@@ -186,11 +208,7 @@ export default function SettingsPage() {
   const [configs, setConfigs] = useState<ServiceConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchConfigs();
-  }, []);
-
-  const fetchConfigs = async () => {
+  const fetchConfigs = useCallback(async () => {
     try {
       const response = await fetch("/api/settings");
       if (response.ok) {
@@ -202,7 +220,11 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchConfigs();
+  }, [fetchConfigs]);
 
   const handleSave = async (config: ServiceConfig) => {
     const response = await fetch("/api/settings", {
@@ -217,9 +239,7 @@ export default function SettingsPage() {
 
     const savedConfig = await response.json();
     setConfigs((prev) => {
-      const index = prev.findIndex(
-        (c) => c.serviceName === config.serviceName
-      );
+      const index = prev.findIndex((c) => c.serviceName === config.serviceName);
       if (index >= 0) {
         const updated = [...prev];
         updated[index] = savedConfig;
@@ -270,11 +290,11 @@ export default function SettingsPage() {
           <div className="grid gap-4">
             {SERVICES.map((service) => (
               <ServiceCard
-                key={service.serviceName}
-                service={service}
                 config={getConfigForService(service.serviceName)}
-                onSave={handleSave}
+                key={service.serviceName}
                 onDelete={handleDelete}
+                onSave={handleSave}
+                service={service}
               />
             ))}
           </div>

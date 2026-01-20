@@ -26,12 +26,12 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
     }),
     execute: async ({ seriesId, seasonNumber, episodeIds }) => {
       try {
-        let commandName = "SeriesSearch";
-        const body: any = { seriesId };
+        let _commandName = "SeriesSearch";
+        const _body: any = { seriesId };
 
         // Logic for different search commands in Sonarr
         if (episodeIds && episodeIds.length > 0) {
-          commandName = "EpisodeSearch";
+          _commandName = "EpisodeSearch";
           // EpisodeSearch takes episodeIds
           // SeriesSearch takes seriesId
           // SeasonSearch (if exists in v3) or just SeriesSearch with filtering?

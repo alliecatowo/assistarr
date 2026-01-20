@@ -112,7 +112,9 @@ export function calculateProgressPercentage(
   positionTicks: number,
   totalTicks: number
 ): number {
-  if (totalTicks === 0) return 0;
+  if (totalTicks === 0) {
+    return 0;
+  }
   return Math.round((positionTicks / totalTicks) * 100);
 }
 
@@ -125,6 +127,8 @@ export function getImageUrl(
   imageTag?: string,
   width = 300
 ): string | null {
-  if (!imageTag) return null;
+  if (!imageTag) {
+    return null;
+  }
   return `${baseUrl}/Items/${itemId}/Images/Primary?tag=${imageTag}&fillWidth=${width}`;
 }

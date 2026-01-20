@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import type { ServiceStatus } from "@/app/(monitor)/api/status/route";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface ServiceStatusCardProps {
   name: string;
@@ -13,7 +13,7 @@ interface ServiceStatusCardProps {
 function StatusIndicator({ status }: { status: ServiceStatus }) {
   if (!status.configured) {
     return (
-      <Badge variant="secondary" className="text-xs">
+      <Badge className="text-xs" variant="secondary">
         Not Configured
       </Badge>
     );
@@ -21,7 +21,7 @@ function StatusIndicator({ status }: { status: ServiceStatus }) {
 
   if (!status.enabled) {
     return (
-      <Badge variant="secondary" className="text-xs">
+      <Badge className="text-xs" variant="secondary">
         Disabled
       </Badge>
     );
@@ -36,7 +36,7 @@ function StatusIndicator({ status }: { status: ServiceStatus }) {
   }
 
   return (
-    <Badge variant="destructive" className="text-xs">
+    <Badge className="text-xs" variant="destructive">
       Offline
     </Badge>
   );
@@ -70,11 +70,13 @@ function StatusDot({ status }: { status: ServiceStatus }) {
 
 export function ServiceStatusCard({ name, status }: ServiceStatusCardProps) {
   return (
-    <Card className={cn(
-      "transition-colors",
-      !status.configured && "opacity-50",
-      !status.enabled && status.configured && "opacity-70"
-    )}>
+    <Card
+      className={cn(
+        "transition-colors",
+        !status.configured && "opacity-50",
+        !status.enabled && status.configured && "opacity-70"
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium capitalize">{name}</CardTitle>
         <StatusDot status={status} />
@@ -84,7 +86,10 @@ export function ServiceStatusCard({ name, status }: ServiceStatusCardProps) {
           <StatusIndicator status={status} />
         </div>
         {status.error && (
-          <p className="mt-2 text-xs text-muted-foreground truncate" title={status.error}>
+          <p
+            className="mt-2 text-xs text-muted-foreground truncate"
+            title={status.error}
+          >
             {status.error}
           </p>
         )}

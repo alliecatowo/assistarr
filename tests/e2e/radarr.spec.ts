@@ -296,7 +296,12 @@ test.describe("Radarr Integration - Tool Approval Flow", () => {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify([
-            { id: 1, path: "/movies", accessible: true, freeSpace: 500000000000 },
+            {
+              id: 1,
+              path: "/movies",
+              accessible: true,
+              freeSpace: 500_000_000_000,
+            },
           ]),
         });
       } else if (url.includes("qualityprofile")) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import {
   Carousel,
   CarouselContent,
@@ -15,7 +16,6 @@ import type {
   MediaResultsShape,
   ToolResultProps,
 } from "./types";
-import { toast } from "sonner";
 
 /**
  * Determine the media type from the item data or tool name hint
@@ -29,8 +29,12 @@ function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
   // Jellyfin format: type field with capitalized values ("Movie", "Episode", "Series")
   if ("type" in item) {
     const itemType = (item as any).type;
-    if (itemType === "Episode" || itemType === "Series") return "tv";
-    if (itemType === "Movie") return "movie";
+    if (itemType === "Episode" || itemType === "Series") {
+      return "tv";
+    }
+    if (itemType === "Movie") {
+      return "movie";
+    }
   }
 
   // Check for TV-specific fields
@@ -53,7 +57,9 @@ function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
       lower.includes("jellyfin")
     ) {
       // Jellyfin can be either, but if we're here it's likely episodes
-      if (lower.includes("jellyfin") && "seriesName" in item) return "tv";
+      if (lower.includes("jellyfin") && "seriesName" in item) {
+        return "tv";
+      }
     }
     if (
       lower.includes("sonarr") ||
@@ -90,7 +96,10 @@ function getPosterUrl(item: MediaItemShape): string | null | undefined {
  * Normalize status to MediaStatus enum.
  * Handles various status formats from different services.
  */
-function normalizeStatus(item: MediaItemShape, toolName?: string): MediaStatus {
+function normalizeStatus(
+  item: MediaItemShape,
+  _toolName?: string
+): MediaStatus {
   // Jellyseerr format: explicit boolean flags
   if ("isAvailable" in item && item.isAvailable === true) {
     return "available";
@@ -107,11 +116,18 @@ function normalizeStatus(item: MediaItemShape, toolName?: string): MediaStatus {
   // Check string status field
   if (item.status) {
     const statusLower = item.status.toLowerCase();
-    if (statusLower.includes("available") || statusLower.includes("downloaded"))
+    if (
+      statusLower.includes("available") ||
+      statusLower.includes("downloaded")
+    ) {
       return "available";
-    if (statusLower.includes("request")) return "requested";
-    if (statusLower.includes("pending") || statusLower.includes("process"))
+    }
+    if (statusLower.includes("request")) {
+      return "requested";
+    }
+    if (statusLower.includes("pending") || statusLower.includes("process")) {
       return "pending";
+    }
   }
 
   // Jellyfin items from library are already available (they exist in the library)
@@ -149,10 +165,18 @@ function getRating(item: MediaItemShape): number | undefined {
   // Radarr format
   if ("ratings" in item && typeof item === "object") {
     const ratings = (item as any).ratings;
-    if (ratings?.tmdb?.value) return ratings.tmdb.value;
-    if (ratings?.imdb?.value) return ratings.imdb.value;
-    if (ratings?.tmdb) return ratings.tmdb;
-    if (ratings?.imdb) return ratings.imdb;
+    if (ratings?.tmdb?.value) {
+      return ratings.tmdb.value;
+    }
+    if (ratings?.imdb?.value) {
+      return ratings.imdb.value;
+    }
+    if (ratings?.tmdb) {
+      return ratings.tmdb;
+    }
+    if (ratings?.imdb) {
+      return ratings.imdb;
+    }
   }
 
   return undefined;
@@ -193,10 +217,7 @@ function getImdbId(item: MediaItemShape): string | undefined {
  */
 function getJellyfinId(item: MediaItemShape): string | undefined {
   // Jellyfin items have a string ID and usually have 'type' or 'imageUrl' field
-  if (
-    typeof item.id === "string" &&
-    ("type" in item || "imageUrl" in item)
-  ) {
+  if (typeof item.id === "string" && ("type" in item || "imageUrl" in item)) {
     return item.id;
   }
   return undefined;
@@ -241,39 +262,44 @@ export function MediaResultsView({
 }: MediaResultsViewProps) {
   const [requestingIds, setRequestingIds] = useState<Set<number>>(new Set());
 
-  const handleRequest = useCallback(async (tmdbId: number, mediaType: "movie" | "tv") => {
-    if (requestingIds.has(tmdbId)) return;
-
-    setRequestingIds((prev) => new Set(prev).add(tmdbId));
-
-    try {
-      const response = await fetch("/api/media/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tmdbId, mediaType }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error(data.error || "Failed to request media");
+  const handleRequest = useCallback(
+    async (tmdbId: number, mediaType: "movie" | "tv") => {
+      if (requestingIds.has(tmdbId)) {
         return;
       }
 
-      toast.success(data.message || "Media requested successfully");
-    } catch (error) {
-      console.error("Error requesting media:", error);
-      toast.error("Failed to request media");
-    } finally {
-      setRequestingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(tmdbId);
-        return next;
-      });
-    }
-  }, [requestingIds]);
+      setRequestingIds((prev) => new Set(prev).add(tmdbId));
+
+      try {
+        const response = await fetch("/api/media/request", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tmdbId, mediaType }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          toast.error(data.error || "Failed to request media");
+          return;
+        }
+
+        toast.success(data.message || "Media requested successfully");
+      } catch (error) {
+        console.error("Error requesting media:", error);
+        toast.error("Failed to request media");
+      } finally {
+        setRequestingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tmdbId);
+          return next;
+        });
+      }
+    },
+    [requestingIds]
+  );
 
   if (!output || !output.results || output.results.length === 0) {
     return (
@@ -311,18 +337,18 @@ export function MediaResultsView({
 
     return (
       <MediaCard
+        imdbId={getImdbId(item)}
+        jellyfinBaseUrl={jellyfinBaseUrl}
+        jellyfinId={getJellyfinId(item)}
         key={item.id ?? index}
         mediaType={mediaType}
+        onRequest={handleRequest}
         posterUrl={getPosterUrl(item)}
         rating={getRating(item)}
         status={normalizeStatus(item, toolName)}
         title={item.title}
-        year={item.year}
         tmdbId={tmdbId}
-        imdbId={getImdbId(item)}
-        jellyfinId={getJellyfinId(item)}
-        jellyfinBaseUrl={jellyfinBaseUrl}
-        onRequest={handleRequest}
+        year={item.year}
       />
     );
   };

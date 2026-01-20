@@ -1,7 +1,7 @@
 "use client";
 
+import { CalendarIcon, DownloadIcon, FilmIcon, TvIcon } from "lucide-react";
 import * as React from "react";
-import { TvIcon, DownloadIcon, CalendarIcon, FilmIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { MediaCard, type MediaCardProps } from "./media-card";
@@ -14,7 +14,8 @@ export type SeriesDownloadStatus =
   | "partial"
   | "missing";
 
-export interface SeriesCardProps extends Omit<MediaCardProps, "badges" | "actions" | "children"> {
+export interface SeriesCardProps
+  extends Omit<MediaCardProps, "badges" | "actions" | "children"> {
   /** Total number of seasons */
   seasonCount?: number;
   /** Total number of episodes */
@@ -36,7 +37,13 @@ export interface SeriesCardProps extends Omit<MediaCardProps, "badges" | "action
 }
 
 function getStatusBadge(status: SeriesDownloadStatus) {
-  const config: Record<SeriesDownloadStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  const config: Record<
+    SeriesDownloadStatus,
+    {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+    }
+  > = {
     continuing: { label: "Continuing", variant: "default" },
     ended: { label: "Ended", variant: "secondary" },
     upcoming: { label: "Upcoming", variant: "outline" },
@@ -47,8 +54,10 @@ function getStatusBadge(status: SeriesDownloadStatus) {
 
   const { label, variant } = config[status];
   return (
-    <Badge variant={variant} className="text-xs">
-      {status === "continuing" || status === "ended" || status === "upcoming" ? (
+    <Badge className="text-xs" variant={variant}>
+      {status === "continuing" ||
+      status === "ended" ||
+      status === "upcoming" ? (
         <TvIcon className="mr-1 size-3" />
       ) : (
         <DownloadIcon className="mr-1 size-3" />
@@ -80,7 +89,11 @@ export function SeriesCard({
 
   // Calculate download progress text
   const progressText = React.useMemo(() => {
-    if (downloadedEpisodes !== undefined && episodeCount !== undefined && episodeCount > 0) {
+    if (
+      downloadedEpisodes !== undefined &&
+      episodeCount !== undefined &&
+      episodeCount > 0
+    ) {
       const percentage = Math.round((downloadedEpisodes / episodeCount) * 100);
       return `${downloadedEpisodes}/${episodeCount} episodes (${percentage}%)`;
     }
@@ -89,16 +102,16 @@ export function SeriesCard({
 
   return (
     <MediaCard
+      actions={actions}
+      badges={badges}
+      className={cn("", className)}
+      genres={genres}
+      overview={overview}
+      posterAlt={posterAlt}
+      posterUrl={posterUrl}
+      rating={rating}
       title={title}
       year={year}
-      rating={rating}
-      overview={overview}
-      posterUrl={posterUrl}
-      posterAlt={posterAlt}
-      genres={genres}
-      badges={badges}
-      actions={actions}
-      className={cn("", className)}
     >
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm">
@@ -115,7 +128,7 @@ export function SeriesCard({
             </span>
           )}
           {network && (
-            <Badge variant="outline" className="text-xs">
+            <Badge className="text-xs" variant="outline">
               {network}
             </Badge>
           )}
@@ -130,7 +143,7 @@ export function SeriesCard({
               </span>
             )}
             {quality && (
-              <Badge variant="outline" className="text-xs">
+              <Badge className="text-xs" variant="outline">
                 {quality}
               </Badge>
             )}

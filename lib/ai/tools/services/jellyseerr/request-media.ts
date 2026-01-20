@@ -4,11 +4,11 @@ import { z } from "zod";
 import { JellyseerrClientError, jellyseerrRequest } from "./client";
 import {
   type CreateRequestBody,
+  getRequestStatusText,
   type MediaRequest,
+  MediaStatus,
   type MovieDetails,
   type TvDetails,
-  MediaStatus,
-  getRequestStatusText,
 } from "./types";
 
 type RequestMediaProps = {

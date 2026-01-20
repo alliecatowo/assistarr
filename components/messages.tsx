@@ -62,7 +62,9 @@ function PureMessages({
                   (part.type === "reasoning" && part.text?.trim()) ||
                   part.type.startsWith("tool-")
               );
-              if (!hasVisibleContent) return null;
+              if (!hasVisibleContent) {
+                return null;
+              }
             }
 
             return (
@@ -91,7 +93,9 @@ function PureMessages({
 
           {(() => {
             // Show ThinkingMessage only when waiting for assistant response
-            if (status !== "submitted" && status !== "streaming") return null;
+            if (status !== "submitted" && status !== "streaming") {
+              return null;
+            }
 
             // Check if there's an approval flow in progress
             const hasApprovalResponded = messages.some((msg) =>
@@ -99,13 +103,17 @@ function PureMessages({
                 (part) => "state" in part && part.state === "approval-responded"
               )
             );
-            if (hasApprovalResponded) return null;
+            if (hasApprovalResponded) {
+              return null;
+            }
 
             // Get the last message
-            const lastMessage = messages[messages.length - 1];
+            const lastMessage = messages.at(-1);
 
             // If last message is from user, show thinking (waiting for assistant)
-            if (lastMessage?.role === "user") return <ThinkingMessage />;
+            if (lastMessage?.role === "user") {
+              return <ThinkingMessage />;
+            }
 
             // If last message is assistant, check if it has any visible content
             if (lastMessage?.role === "assistant") {
@@ -116,7 +124,9 @@ function PureMessages({
                   part.type.startsWith("tool-")
               );
               // Only show thinking if assistant message has no visible content yet
-              if (!hasVisibleContent) return <ThinkingMessage />;
+              if (!hasVisibleContent) {
+                return <ThinkingMessage />;
+              }
             }
 
             return null;

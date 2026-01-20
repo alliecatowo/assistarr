@@ -258,7 +258,9 @@ export function getRequestStatusText(status: RequestStatus): string {
 /**
  * Type guard to check if a search result is a movie
  */
-export function isMovieResult(result: SearchResult): result is MovieSearchResult {
+export function isMovieResult(
+  result: SearchResult
+): result is MovieSearchResult {
   return result.mediaType === "movie";
 }
 
@@ -288,7 +290,9 @@ export function getResultDate(result: SearchResult): string | undefined {
  */
 export function getResultYear(result: SearchResult): number | undefined {
   const date = getResultDate(result);
-  if (!date) return undefined;
+  if (!date) {
+    return undefined;
+  }
   const year = new Date(date).getFullYear();
   return Number.isNaN(year) ? undefined : year;
 }

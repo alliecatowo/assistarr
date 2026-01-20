@@ -31,15 +31,20 @@ export const getDiscovery = ({ session }: GetDiscoveryProps) =>
 
       try {
         let endpoint = "/discover/trending";
-        if (type === "popular")
+        if (type === "popular") {
           endpoint = "/discover/movies?sortBy=popularity.desc"; // Simplified mapping usually discovery API is complex
-        if (type === "upcoming") endpoint = "/discover/movies/upcoming";
+        }
+        if (type === "upcoming") {
+          endpoint = "/discover/movies/upcoming";
+        }
 
         // Jellyseerr Discovery API is a bit different. Let's use standard /discover/trending endpoint which covers most.
         // Actually Jellyseerr exposes /api/v1/discover/trending, /api/v1/discover/movies, etc.
         // Let's stick to /discover/trending which returns mixed content usually.
 
-        if (type === "trending") endpoint = "/discover/trending";
+        if (type === "trending") {
+          endpoint = "/discover/trending";
+        }
         // To be safe and simple: just trending for now.
 
         const response = await jellyseerrRequest<any>(userId, endpoint);

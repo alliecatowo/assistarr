@@ -24,7 +24,7 @@ function QueueWidgetSkeleton() {
       </CardHeader>
       <CardContent className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="space-y-2 py-3 border-b last:border-b-0">
+          <div className="space-y-2 py-3 border-b last:border-b-0" key={i}>
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1 flex-1">
                 <Skeleton className="h-4 w-48" />
@@ -56,7 +56,10 @@ function SidebarWidgetSkeleton() {
       </CardHeader>
       <CardContent className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between py-3 border-b last:border-b-0">
+          <div
+            className="flex items-center justify-between py-3 border-b last:border-b-0"
+            key={i}
+          >
             <div className="space-y-1 flex-1">
               <Skeleton className="h-4 w-40" />
               <Skeleton className="h-3 w-24" />

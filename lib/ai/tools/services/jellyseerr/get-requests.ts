@@ -1,13 +1,17 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { JellyseerrClientError, jellyseerrRequest, getPosterUrl } from "./client";
 import {
-  type RequestsResponse,
-  type MovieDetails,
-  type TvDetails,
-  getRequestStatusText,
+  getPosterUrl,
+  JellyseerrClientError,
+  jellyseerrRequest,
+} from "./client";
+import {
   getMediaStatusText,
+  getRequestStatusText,
+  type MovieDetails,
+  type RequestsResponse,
+  type TvDetails,
 } from "./types";
 
 type GetRequestsProps = {
@@ -20,7 +24,14 @@ export const getRequests = ({ session }: GetRequestsProps) =>
       "Get media requests from Jellyseerr. Shows pending, approved, or all requests with their status and details.",
     inputSchema: z.object({
       filter: z
-        .enum(["all", "pending", "approved", "available", "processing", "unavailable"])
+        .enum([
+          "all",
+          "pending",
+          "approved",
+          "available",
+          "processing",
+          "unavailable",
+        ])
         .optional()
         .default("all")
         .describe(
@@ -73,10 +84,9 @@ export const getRequests = ({ session }: GetRequestsProps) =>
                     ? `/movie/${request.media.tmdbId}`
                     : `/tv/${request.media.tmdbId}`;
 
-                const details = await jellyseerrRequest<MovieDetails | TvDetails>(
-                  userId,
-                  detailsEndpoint
-                );
+                const details = await jellyseerrRequest<
+                  MovieDetails | TvDetails
+                >(userId, detailsEndpoint);
 
                 title = "title" in details ? details.title : details.name;
                 posterUrl = getPosterUrl(details.posterPath);
@@ -110,7 +120,10 @@ export const getRequests = ({ session }: GetRequestsProps) =>
               requestStatus,
               mediaStatus,
               requestedAt: request.createdAt,
-              requestedBy: request.requestedBy?.displayName || request.requestedBy?.email || "Unknown",
+              requestedBy:
+                request.requestedBy?.displayName ||
+                request.requestedBy?.email ||
+                "Unknown",
               posterUrl,
               ...(request.type === "tv" &&
                 request.seasons && {
@@ -120,8 +133,7 @@ export const getRequests = ({ session }: GetRequestsProps) =>
           })
         );
 
-        const filterDescription =
-          filter === "all" ? "all" : filter;
+        const filterDescription = filter === "all" ? "all" : filter;
 
         return {
           totalRequests: response.pageInfo.results,

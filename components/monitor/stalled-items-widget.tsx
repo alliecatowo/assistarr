@@ -1,16 +1,22 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { StalledItem } from "@/app/(monitor)/api/status/route";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StalledItemsWidgetProps {
   stalled: StalledItem[];
   failed: StalledItem[];
 }
 
-function ItemRow({ item, type }: { item: StalledItem; type: "stalled" | "failed" }) {
+function ItemRow({
+  item,
+  type,
+}: {
+  item: StalledItem;
+  type: "stalled" | "failed";
+}) {
   return (
     <div className="py-3 border-b last:border-b-0">
       <div className="flex items-start justify-between gap-2">
@@ -19,19 +25,22 @@ function ItemRow({ item, type }: { item: StalledItem; type: "stalled" | "failed"
             {item.title}
           </p>
           {item.errorMessage && (
-            <p className="text-xs text-muted-foreground truncate mt-1" title={item.errorMessage}>
+            <p
+              className="text-xs text-muted-foreground truncate mt-1"
+              title={item.errorMessage}
+            >
               {item.errorMessage}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Badge
-            variant={type === "failed" ? "destructive" : "secondary"}
             className="text-xs capitalize"
+            variant={type === "failed" ? "destructive" : "secondary"}
           >
             {item.status}
           </Badge>
-          <Badge variant="outline" className="text-xs">
+          <Badge className="text-xs" variant="outline">
             {item.source}
           </Badge>
         </div>
@@ -40,7 +49,10 @@ function ItemRow({ item, type }: { item: StalledItem; type: "stalled" | "failed"
   );
 }
 
-export function StalledItemsWidget({ stalled, failed }: StalledItemsWidgetProps) {
+export function StalledItemsWidget({
+  stalled,
+  failed,
+}: StalledItemsWidgetProps) {
   const totalIssues = stalled.length + failed.length;
 
   return (
@@ -48,7 +60,7 @@ export function StalledItemsWidget({ stalled, failed }: StalledItemsWidgetProps)
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-medium">Issues</CardTitle>
         {totalIssues > 0 ? (
-          <Badge variant="destructive" className="text-xs">
+          <Badge className="text-xs" variant="destructive">
             {totalIssues} issue{totalIssues !== 1 ? "s" : ""}
           </Badge>
         ) : (
@@ -66,10 +78,18 @@ export function StalledItemsWidget({ stalled, failed }: StalledItemsWidgetProps)
           ) : (
             <>
               {failed.map((item, index) => (
-                <ItemRow key={`failed-${item.source}-${item.id}-${index}`} item={item} type="failed" />
+                <ItemRow
+                  item={item}
+                  key={`failed-${item.source}-${item.id}-${index}`}
+                  type="failed"
+                />
               ))}
               {stalled.map((item, index) => (
-                <ItemRow key={`stalled-${item.source}-${item.id}-${index}`} item={item} type="stalled" />
+                <ItemRow
+                  item={item}
+                  key={`stalled-${item.source}-${item.id}-${index}`}
+                  type="stalled"
+                />
               ))}
             </>
           )}

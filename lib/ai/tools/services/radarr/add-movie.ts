@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { radarrRequest, RadarrClientError } from "./client";
+import { RadarrClientError, radarrRequest } from "./client";
 import type {
   RadarrMovie,
   RadarrQualityProfile,
@@ -23,20 +23,31 @@ export const addMovie = ({ session }: AddMovieProps) =>
       qualityProfileId: z
         .number()
         .optional()
-        .describe("Optional quality profile ID. If not provided, uses the first available profile."),
+        .describe(
+          "Optional quality profile ID. If not provided, uses the first available profile."
+        ),
       minimumAvailability: z
         .enum(["announced", "inCinemas", "released"])
         .optional()
         .default("released")
-        .describe("When to consider the movie available: 'announced', 'inCinemas', or 'released' (default)"),
+        .describe(
+          "When to consider the movie available: 'announced', 'inCinemas', or 'released' (default)"
+        ),
       searchForMovie: z
         .boolean()
         .optional()
         .default(true)
-        .describe("Whether to search for the movie immediately (default: true)"),
+        .describe(
+          "Whether to search for the movie immediately (default: true)"
+        ),
     }),
     needsApproval: true,
-    execute: async ({ tmdbId, qualityProfileId, minimumAvailability, searchForMovie }) => {
+    execute: async ({
+      tmdbId,
+      qualityProfileId,
+      minimumAvailability,
+      searchForMovie,
+    }) => {
       try {
         // First, lookup the movie to get full details
         const lookupResults = await radarrRequest<RadarrMovie[]>(

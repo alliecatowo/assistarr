@@ -9,8 +9,8 @@ import {
   PlusIcon,
   StarIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TMDB_POSTER_W342 } from "./types";
 
@@ -110,11 +110,11 @@ export function MediaCard({
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
         {fullPosterUrl ? (
           <Image
-            src={fullPosterUrl}
             alt={`${title} poster`}
-            fill
             className="object-cover transition-transform duration-200 group-hover:scale-105"
+            fill
             sizes={posterSize}
+            src={fullPosterUrl}
             unoptimized // External URLs need this
           />
         ) : (
@@ -128,30 +128,39 @@ export function MediaCard({
       <div className={cn("flex flex-col gap-1.5", compact ? "p-1.5" : "p-2.5")}>
         {/* Title + Year */}
         <div className={compact ? "min-h-[2rem]" : "min-h-[2.75rem]"}>
-          <h4 className={cn(
-            "line-clamp-2 font-medium leading-tight",
-            compact ? "text-[10px]" : "text-xs"
-          )}>
-            {title}
-            {year && (
-              <span className="text-muted-foreground"> ({year})</span>
+          <h4
+            className={cn(
+              "line-clamp-2 font-medium leading-tight",
+              compact ? "text-[10px]" : "text-xs"
             )}
+          >
+            {title}
+            {year && <span className="text-muted-foreground"> ({year})</span>}
           </h4>
         </div>
 
         {/* Rating + Type */}
-        <div className={cn(
-          "flex items-center gap-1.5 text-muted-foreground",
-          compact ? "text-[9px]" : "text-[11px]"
-        )}>
+        <div
+          className={cn(
+            "flex items-center gap-1.5 text-muted-foreground",
+            compact ? "text-[9px]" : "text-[11px]"
+          )}
+        >
           {rating !== undefined && rating > 0 && (
             <>
-              <StarIcon className={cn("fill-yellow-500 text-yellow-500", compact ? "size-2.5" : "size-3")} />
+              <StarIcon
+                className={cn(
+                  "fill-yellow-500 text-yellow-500",
+                  compact ? "size-2.5" : "size-3"
+                )}
+              />
               <span>{rating.toFixed(1)}</span>
               <span className="text-border">|</span>
             </>
           )}
-          <span className="capitalize">{mediaType === "tv" ? "TV" : "Movie"}</span>
+          <span className="capitalize">
+            {mediaType === "tv" ? "TV" : "Movie"}
+          </span>
         </div>
 
         {/* Status Badge */}
@@ -167,60 +176,65 @@ export function MediaCard({
         </div>
 
         {/* Action Buttons */}
-        {!compact && (jellyfinId || imdbId || (tmdbId && status !== "available")) && (
-          <div className="mt-1.5 flex items-center justify-center gap-1">
-            {/* Watch Button - only show if jellyfinId is available */}
-            {jellyfinId && jellyfinBaseUrl && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                asChild
-              >
-                <a
-                  href={`${jellyfinBaseUrl}/web/index.html#!/details?id=${jellyfinId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+        {!compact &&
+          (jellyfinId || imdbId || (tmdbId && status !== "available")) && (
+            <div className="mt-1.5 flex items-center justify-center gap-1">
+              {/* Watch Button - only show if jellyfinId is available */}
+              {jellyfinId && jellyfinBaseUrl && (
+                <Button
+                  asChild
+                  className="h-6 px-2 text-[10px]"
+                  size="sm"
+                  variant="ghost"
                 >
-                  <PlayIcon className="size-3" />
-                  Watch
-                </a>
-              </Button>
-            )}
+                  <a
+                    href={`${jellyfinBaseUrl}/web/index.html#!/details?id=${jellyfinId}`}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <PlayIcon className="size-3" />
+                    Watch
+                  </a>
+                </Button>
+              )}
 
-            {/* IMDB Button - only show if imdbId is available */}
-            {imdbId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                asChild
-              >
-                <a
-                  href={`https://www.imdb.com/title/${imdbId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {/* IMDB Button - only show if imdbId is available */}
+              {imdbId && (
+                <Button
+                  asChild
+                  className="h-6 px-2 text-[10px]"
+                  size="sm"
+                  variant="ghost"
                 >
-                  <ExternalLinkIcon className="size-3" />
-                  IMDB
-                </a>
-              </Button>
-            )}
+                  <a
+                    href={`https://www.imdb.com/title/${imdbId}`}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    <ExternalLinkIcon className="size-3" />
+                    IMDB
+                  </a>
+                </Button>
+              )}
 
-            {/* Request Button - only show if tmdbId is available and not already available */}
-            {tmdbId && status !== "available" && status !== "requested" && status !== "pending" && onRequest && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => onRequest(tmdbId, mediaType)}
-              >
-                <PlusIcon className="size-3" />
-                Request
-              </Button>
-            )}
-          </div>
-        )}
+              {/* Request Button - only show if tmdbId is available and not already available */}
+              {tmdbId &&
+                status !== "available" &&
+                status !== "requested" &&
+                status !== "pending" &&
+                onRequest && (
+                  <Button
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => onRequest(tmdbId, mediaType)}
+                    size="sm"
+                    variant="ghost"
+                  >
+                    <PlusIcon className="size-3" />
+                    Request
+                  </Button>
+                )}
+            </div>
+          )}
       </div>
     </div>
   );

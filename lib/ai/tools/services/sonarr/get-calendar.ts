@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { sonarrRequest, SonarrClientError } from "./client";
+import { SonarrClientError, sonarrRequest } from "./client";
 import type { SonarrCalendarEpisode } from "./types";
 
 type GetCalendarProps = {
@@ -22,7 +22,9 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
         .boolean()
         .optional()
         .default(false)
-        .describe("Include episodes that aired in the past few days (default: false)"),
+        .describe(
+          "Include episodes that aired in the past few days (default: false)"
+        ),
     }),
     execute: async ({ days, includePast }) => {
       try {
@@ -61,7 +63,9 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
             network: episode.series?.network,
             hasFile: episode.hasFile,
             monitored: episode.monitored,
-            overview: episode.overview?.slice(0, 150) + (episode.overview && episode.overview.length > 150 ? "..." : ""),
+            overview:
+              episode.overview?.slice(0, 150) +
+              (episode.overview && episode.overview.length > 150 ? "..." : ""),
             status: isAired
               ? episode.hasFile
                 ? "downloaded"

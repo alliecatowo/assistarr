@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PendingRequest } from "@/app/(monitor)/api/status/route";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PendingRequestsWidgetProps {
   requests: PendingRequest[];
@@ -40,7 +40,7 @@ function RequestItem({ request }: { request: PendingRequest }) {
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Badge variant="outline" className="text-xs capitalize">
+        <Badge className="text-xs capitalize" variant="outline">
           {request.mediaType === "tv" ? "TV" : "Movie"}
         </Badge>
         <span className="text-xs text-muted-foreground">
@@ -51,12 +51,16 @@ function RequestItem({ request }: { request: PendingRequest }) {
   );
 }
 
-export function PendingRequestsWidget({ requests }: PendingRequestsWidgetProps) {
+export function PendingRequestsWidget({
+  requests,
+}: PendingRequestsWidgetProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium">Pending Requests</CardTitle>
-        <Badge variant="secondary" className="text-xs">
+        <CardTitle className="text-base font-medium">
+          Pending Requests
+        </CardTitle>
+        <Badge className="text-xs" variant="secondary">
           {requests.length} pending
         </Badge>
       </CardHeader>

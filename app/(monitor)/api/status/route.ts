@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { getServiceConfigs } from "@/lib/db/queries";
-import { getRadarrConfig, radarrRequest } from "@/lib/ai/tools/services/radarr/client";
-import { getSonarrConfig, sonarrRequest } from "@/lib/ai/tools/services/sonarr/client";
-import { getJellyfinConfig, jellyfinRequest } from "@/lib/ai/tools/services/jellyfin/client";
-import { getJellyseerrConfig, jellyseerrRequest } from "@/lib/ai/tools/services/jellyseerr/client";
-import { getQBittorrentConfig, qbittorrentRequest } from "@/lib/ai/tools/services/qbittorrent/client";
-import type { RadarrQueueResponse, RadarrQueueItem } from "@/lib/ai/tools/services/radarr/types";
-import type { SonarrQueueResponse, SonarrQueueItem } from "@/lib/ai/tools/services/sonarr/types";
-import type { RequestsResponse, MediaRequest, RequestStatus } from "@/lib/ai/tools/services/jellyseerr/types";
+import {
+  getJellyfinConfig,
+  jellyfinRequest,
+} from "@/lib/ai/tools/services/jellyfin/client";
+import {
+  getJellyseerrConfig,
+  jellyseerrRequest,
+} from "@/lib/ai/tools/services/jellyseerr/client";
+import type { RequestsResponse } from "@/lib/ai/tools/services/jellyseerr/types";
+import {
+  getQBittorrentConfig,
+  qbittorrentRequest,
+} from "@/lib/ai/tools/services/qbittorrent/client";
 import type { Torrent } from "@/lib/ai/tools/services/qbittorrent/types";
+import {
+  getRadarrConfig,
+  radarrRequest,
+} from "@/lib/ai/tools/services/radarr/client";
+import type { RadarrQueueResponse } from "@/lib/ai/tools/services/radarr/types";
+import {
+  getSonarrConfig,
+  sonarrRequest,
+} from "@/lib/ai/tools/services/sonarr/client";
+import type { SonarrQueueResponse } from "@/lib/ai/tools/services/sonarr/types";
 
 export interface ServiceStatus {
   online: boolean;
@@ -124,9 +138,10 @@ async function checkRadarrStatus(userId: string): Promise<{
     const failed: StalledItem[] = [];
 
     for (const item of queueResponse.records) {
-      const progress = item.size > 0
-        ? Math.round(((item.size - item.sizeleft) / item.size) * 100)
-        : 0;
+      const progress =
+        item.size > 0
+          ? Math.round(((item.size - item.sizeleft) / item.size) * 100)
+          : 0;
 
       const queueItem: QueueItem = {
         id: item.id,
@@ -146,13 +161,17 @@ async function checkRadarrStatus(userId: string): Promise<{
       queue.push(queueItem);
 
       // Check for stalled or failed items
-      if (item.status === "warning" || item.trackedDownloadStatus === "warning") {
+      if (
+        item.status === "warning" ||
+        item.trackedDownloadStatus === "warning"
+      ) {
         stalled.push({
           id: item.id,
           title: item.movie?.title ?? item.title,
           source: "radarr",
           status: item.status,
-          errorMessage: item.errorMessage || item.statusMessages?.[0]?.messages?.[0],
+          errorMessage:
+            item.errorMessage || item.statusMessages?.[0]?.messages?.[0],
         });
       } else if (item.status === "failed") {
         failed.push({
@@ -160,7 +179,8 @@ async function checkRadarrStatus(userId: string): Promise<{
           title: item.movie?.title ?? item.title,
           source: "radarr",
           status: item.status,
-          errorMessage: item.errorMessage || item.statusMessages?.[0]?.messages?.[0],
+          errorMessage:
+            item.errorMessage || item.statusMessages?.[0]?.messages?.[0],
         });
       }
     }
@@ -225,9 +245,10 @@ async function checkSonarrStatus(userId: string): Promise<{
     const failed: StalledItem[] = [];
 
     for (const item of queueResponse.records) {
-      const progress = item.size > 0
-        ? Math.round(((item.size - item.sizeleft) / item.size) * 100)
-        : 0;
+      const progress =
+        item.size > 0
+          ? Math.round(((item.size - item.sizeleft) / item.size) * 100)
+          : 0;
 
       const episodeInfo = item.episode
         ? `S${String(item.episode.seasonNumber).padStart(2, "0")}E${String(item.episode.episodeNumber).padStart(2, "0")}`
@@ -236,7 +257,9 @@ async function checkSonarrStatus(userId: string): Promise<{
       const queueItem: QueueItem = {
         id: item.id,
         title: item.series?.title ?? item.title,
-        subtitle: episodeInfo ? `${episodeInfo} - ${item.episode?.title ?? ""}` : undefined,
+        subtitle: episodeInfo
+          ? `${episodeInfo} - ${item.episode?.title ?? ""}`
+          : undefined,
         progress,
         status: item.status,
         size: item.size,
@@ -249,7 +272,10 @@ async function checkSonarrStatus(userId: string): Promise<{
 
       queue.push(queueItem);
 
-      if (item.status === "warning" || item.trackedDownloadStatus === "warning") {
+      if (
+        item.status === "warning" ||
+        item.trackedDownloadStatus === "warning"
+      ) {
         stalled.push({
           id: item.id,
           title: `${item.series?.title ?? item.title} ${episodeInfo}`.trim(),
@@ -346,14 +372,19 @@ async function checkJellyseerrStatus(userId: string): Promise<{
       "/request?take=20&skip=0&filter=pending&sort=added"
     );
 
-    const pendingRequests: PendingRequest[] = requestsResponse.results.map((request) => ({
-      id: request.id,
-      title: `Request #${request.id}`,
-      mediaType: request.type,
-      requestedBy: request.requestedBy?.displayName || request.requestedBy?.email || "Unknown",
-      requestedAt: request.createdAt,
-      tmdbId: request.media?.tmdbId,
-    }));
+    const pendingRequests: PendingRequest[] = requestsResponse.results.map(
+      (request) => ({
+        id: request.id,
+        title: `Request #${request.id}`,
+        mediaType: request.type,
+        requestedBy:
+          request.requestedBy?.displayName ||
+          request.requestedBy?.email ||
+          "Unknown",
+        requestedAt: request.createdAt,
+        tmdbId: request.media?.tmdbId,
+      })
+    );
 
     return {
       status: { online: true, configured: true, enabled: true },
@@ -417,7 +448,11 @@ async function checkQBittorrentStatus(userId: string): Promise<{
       });
 
       // Check for stalled torrents
-      if (torrent.state === "stalledDL" || torrent.state === "error" || torrent.state === "missingFiles") {
+      if (
+        torrent.state === "stalledDL" ||
+        torrent.state === "error" ||
+        torrent.state === "missingFiles"
+      ) {
         stalled.push({
           id: 0, // qBittorrent uses hash as identifier
           title: torrent.name,
@@ -456,14 +491,19 @@ export async function GET() {
   const userId = session.user.id;
 
   // Fetch all service statuses in parallel
-  const [radarrResult, sonarrResult, jellyfinStatus, jellyseerrResult, qbittorrentResult] =
-    await Promise.all([
-      checkRadarrStatus(userId),
-      checkSonarrStatus(userId),
-      checkJellyfinStatus(userId),
-      checkJellyseerrStatus(userId),
-      checkQBittorrentStatus(userId),
-    ]);
+  const [
+    radarrResult,
+    sonarrResult,
+    jellyfinStatus,
+    jellyseerrResult,
+    qbittorrentResult,
+  ] = await Promise.all([
+    checkRadarrStatus(userId),
+    checkSonarrStatus(userId),
+    checkJellyfinStatus(userId),
+    checkJellyseerrStatus(userId),
+    checkQBittorrentStatus(userId),
+  ]);
 
   const monitorStatus: MonitorStatus = {
     services: {

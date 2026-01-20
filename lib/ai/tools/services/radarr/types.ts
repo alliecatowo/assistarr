@@ -121,7 +121,15 @@ export interface RadarrQueueItem {
   sizeleft: number;
   timeleft?: string;
   estimatedCompletionTime?: string;
-  status: "downloading" | "paused" | "queued" | "completed" | "delay" | "downloadClientUnavailable" | "warning" | "failed";
+  status:
+    | "downloading"
+    | "paused"
+    | "queued"
+    | "completed"
+    | "delay"
+    | "downloadClientUnavailable"
+    | "warning"
+    | "failed";
   trackedDownloadStatus?: string;
   trackedDownloadState?: string;
   statusMessages: Array<{ title: string; messages: string[] }>;

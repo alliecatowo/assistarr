@@ -5,10 +5,7 @@ import { CalendarView } from "./calendar-view";
 import { ErrorResult, GenericResult } from "./generic-result";
 import { MediaResultsView } from "./media-results-view";
 import { QueueView } from "./queue-view";
-import {
-  detectResultType,
-  type ToolState,
-} from "./types";
+import { detectResultType, type ToolState } from "./types";
 
 interface ToolResultRendererProps {
   toolName: string;
@@ -74,7 +71,7 @@ export function ToolResultRenderer({
 
     default:
       // Fallback: show raw JSON
-      return <GenericResult output={output} state={state} input={input} />;
+      return <GenericResult input={input} output={output} state={state} />;
   }
 }
 

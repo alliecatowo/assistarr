@@ -6,15 +6,15 @@ export {
   type MovieRequestStatus,
 } from "./movie-card";
 export {
-  SeriesCard,
-  type SeriesCardProps,
-  type SeriesDownloadStatus,
-} from "./series-card";
-export {
   QueueItem,
   type QueueItemProps,
   type QueueItemStatus,
 } from "./queue-item";
+export {
+  SeriesCard,
+  type SeriesCardProps,
+  type SeriesDownloadStatus,
+} from "./series-card";
 export {
   TorrentCard,
   type TorrentCardProps,

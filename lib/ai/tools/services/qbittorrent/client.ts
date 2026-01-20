@@ -7,10 +7,7 @@ const SERVICE_NAME = "qbittorrent";
  * In-memory session cache to avoid re-authenticating on every request.
  * Maps baseUrl -> { sid, expiresAt }
  */
-const sessionCache = new Map<
-  string,
-  { sid: string; expiresAt: number }
->();
+const sessionCache = new Map<string, { sid: string; expiresAt: number }>();
 
 // Sessions expire after 55 minutes (qBittorrent default is 1 hour)
 const SESSION_TTL_MS = 55 * 60 * 1000;
@@ -40,7 +37,10 @@ export async function getQBittorrentConfig(
 /**
  * Parse credentials from apiKey field (format: "username:password")
  */
-function parseCredentials(apiKey: string): { username: string; password: string } {
+function parseCredentials(apiKey: string): {
+  username: string;
+  password: string;
+} {
   const colonIndex = apiKey.indexOf(":");
   if (colonIndex === -1) {
     throw new QBittorrentClientError(
@@ -158,7 +158,7 @@ export async function qbittorrentRequest<T>(
   const { username, password } = parseCredentials(config.apiKey);
 
   let sid = await getSessionId(baseUrl, username, password);
-  let url = `${baseUrl}/api/v2${endpoint}`;
+  const url = `${baseUrl}/api/v2${endpoint}`;
 
   const makeRequest = async (sessionId: string): Promise<Response> => {
     const headers: HeadersInit = {
@@ -236,11 +236,13 @@ export async function qbittorrentPostForm(
  * Format bytes to human-readable string
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) {
+    return "0 B";
+  }
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 /**
@@ -248,15 +250,23 @@ export function formatBytes(bytes: number): string {
  */
 export function formatEta(seconds: number): string {
   // 8640000 is qBittorrent's "infinity" value
-  if (seconds >= 8640000) return "Unknown";
-  if (seconds <= 0) return "Done";
+  if (seconds >= 8_640_000) {
+    return "Unknown";
+  }
+  if (seconds <= 0) {
+    return "Done";
+  }
 
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
+  const days = Math.floor(seconds / 86_400);
+  const hours = Math.floor((seconds % 86_400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
 
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
   return `${minutes}m`;
 }
 

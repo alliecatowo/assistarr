@@ -18,7 +18,14 @@ test.describe("App Navigation", () => {
     await expect(page.getByText("Assistarr")).toBeVisible();
 
     // Check new chat button exists
-    await expect(page.locator('[aria-label="New Chat"]').or(page.locator('button').filter({ has: page.locator('svg') }).first())).toBeVisible();
+    await expect(
+      page.locator('[aria-label="New Chat"]').or(
+        page
+          .locator("button")
+          .filter({ has: page.locator("svg") })
+          .first()
+      )
+    ).toBeVisible();
   });
 
   test("can navigate to settings from sidebar", async ({ page }) => {
@@ -55,7 +62,14 @@ test.describe("App Navigation", () => {
     await expect(page).toHaveURL(/\/chat\/[\w-]+/, { timeout: 10_000 });
 
     // Click new chat button (plus icon)
-    const newChatButton = page.locator('button').filter({ has: page.locator('svg[class*="lucide-plus"], [data-testid="plus-icon"]') }).first();
+    const newChatButton = page
+      .locator("button")
+      .filter({
+        has: page.locator(
+          'svg[class*="lucide-plus"], [data-testid="plus-icon"]'
+        ),
+      })
+      .first();
     if (await newChatButton.isVisible()) {
       await newChatButton.click();
       // Should navigate back to root
@@ -86,13 +100,15 @@ test.describe("Sidebar Chat History", () => {
     await expect(page).toHaveURL(/\/chat\/[\w-]+/, { timeout: 10_000 });
 
     // Get the chat ID from URL
-    const firstChatUrl = page.url();
+    const _firstChatUrl = page.url();
 
     // Go back home
     await page.goto("/");
 
     // Check if the chat appears in history
-    const historyItems = page.locator('[data-sidebar="content"] a[href^="/chat/"]');
+    const historyItems = page.locator(
+      '[data-sidebar="content"] a[href^="/chat/"]'
+    );
     const count = await historyItems.count();
 
     if (count > 0) {

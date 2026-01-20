@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { radarrRequest, RadarrClientError } from "./client";
+import { RadarrClientError, radarrRequest } from "./client";
 import type { RadarrCalendarMovie } from "./types";
 
 type GetCalendarProps = {
@@ -22,7 +22,9 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
         .boolean()
         .optional()
         .default(false)
-        .describe("Include movies that released in the past few days (default: false)"),
+        .describe(
+          "Include movies that released in the past few days (default: false)"
+        ),
     }),
     execute: async ({ days, includePast }) => {
       try {
@@ -46,18 +48,25 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
 
         const calendarItems = movies.map((movie) => {
           // Determine the most relevant release date
-          const releaseDate = movie.digitalRelease ?? movie.physicalRelease ?? movie.inCinemas;
+          const releaseDate =
+            movie.digitalRelease ?? movie.physicalRelease ?? movie.inCinemas;
           const releaseDateObj = releaseDate ? new Date(releaseDate) : null;
           const isReleased = releaseDateObj ? releaseDateObj < now : false;
           const daysUntil = releaseDateObj
-            ? Math.ceil((releaseDateObj.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+            ? Math.ceil(
+                (releaseDateObj.getTime() - now.getTime()) /
+                  (24 * 60 * 60 * 1000)
+              )
             : null;
 
           // Determine release type
           let releaseType = "unknown";
           if (movie.digitalRelease && movie.digitalRelease === releaseDate) {
             releaseType = "digital";
-          } else if (movie.physicalRelease && movie.physicalRelease === releaseDate) {
+          } else if (
+            movie.physicalRelease &&
+            movie.physicalRelease === releaseDate
+          ) {
             releaseType = "physical";
           } else if (movie.inCinemas && movie.inCinemas === releaseDate) {
             releaseType = "cinema";
@@ -74,7 +83,9 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
             physicalRelease: movie.physicalRelease,
             hasFile: movie.hasFile,
             monitored: movie.monitored,
-            overview: movie.overview?.slice(0, 150) + (movie.overview && movie.overview.length > 150 ? "..." : ""),
+            overview:
+              movie.overview?.slice(0, 150) +
+              (movie.overview && movie.overview.length > 150 ? "..." : ""),
             status: isReleased
               ? movie.hasFile
                 ? "downloaded"
@@ -93,9 +104,16 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
 
         // Sort by release date
         calendarItems.sort((a, b) => {
-          if (a.releaseDate === "Unknown") return 1;
-          if (b.releaseDate === "Unknown") return -1;
-          return new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime();
+          if (a.releaseDate === "Unknown") {
+            return 1;
+          }
+          if (b.releaseDate === "Unknown") {
+            return -1;
+          }
+          return (
+            new Date(a.releaseDate).getTime() -
+            new Date(b.releaseDate).getTime()
+          );
         });
 
         return {

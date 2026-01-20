@@ -256,26 +256,30 @@ test.describe("Sonarr Integration - Tool Approval Flow", () => {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify([
-            { id: 1, path: "/tv", accessible: true, freeSpace: 500000000000 },
+            {
+              id: 1,
+              path: "/tv",
+              accessible: true,
+              freeSpace: 500_000_000_000,
+            },
           ]),
         });
       } else if (url.includes("qualityprofile")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify([
-            { id: 1, name: "HD-1080p" },
-          ]),
+          body: JSON.stringify([{ id: 1, name: "HD-1080p" }]),
         });
       } else if (url.includes("languageprofile")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify([
-            { id: 1, name: "English" },
-          ]),
+          body: JSON.stringify([{ id: 1, name: "English" }]),
         });
-      } else if (route.request().method() === "POST" && url.includes("series")) {
+      } else if (
+        route.request().method() === "POST" &&
+        url.includes("series")
+      ) {
         await route.fulfill({
           status: 201,
           contentType: "application/json",

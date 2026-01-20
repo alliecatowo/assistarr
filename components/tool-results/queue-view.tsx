@@ -32,14 +32,27 @@ function parseProgress(progress: string): number {
  */
 function getStatusColor(status: string): string {
   const s = status.toLowerCase();
-  if (s.includes("download") || s.includes("dl")) return "text-blue-500";
-  if (s.includes("seed") || s.includes("upload") || s.includes("up"))
+  if (s.includes("download") || s.includes("dl")) {
+    return "text-blue-500";
+  }
+  if (s.includes("seed") || s.includes("upload") || s.includes("up")) {
     return "text-green-500";
-  if (s.includes("pause")) return "text-yellow-500";
-  if (s.includes("stall")) return "text-orange-400";
-  if (s.includes("error") || s.includes("warning")) return "text-red-500";
-  if (s.includes("complet") || s.includes("done")) return "text-green-500";
-  if (s.includes("queue") || s.includes("wait")) return "text-muted-foreground";
+  }
+  if (s.includes("pause")) {
+    return "text-yellow-500";
+  }
+  if (s.includes("stall")) {
+    return "text-orange-400";
+  }
+  if (s.includes("error") || s.includes("warning")) {
+    return "text-red-500";
+  }
+  if (s.includes("complet") || s.includes("done")) {
+    return "text-green-500";
+  }
+  if (s.includes("queue") || s.includes("wait")) {
+    return "text-muted-foreground";
+  }
   return "text-muted-foreground";
 }
 
@@ -48,10 +61,18 @@ function getStatusColor(status: string): string {
  */
 function getProgressColor(progress: number, status: string): string {
   const s = status.toLowerCase();
-  if (s.includes("error")) return "bg-red-500";
-  if (s.includes("stall")) return "bg-orange-400";
-  if (s.includes("pause")) return "bg-yellow-500";
-  if (progress >= 100) return "bg-green-500";
+  if (s.includes("error")) {
+    return "bg-red-500";
+  }
+  if (s.includes("stall")) {
+    return "bg-orange-400";
+  }
+  if (s.includes("pause")) {
+    return "bg-yellow-500";
+  }
+  if (progress >= 100) {
+    return "bg-green-500";
+  }
   return "bg-blue-500";
 }
 

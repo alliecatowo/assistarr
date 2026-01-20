@@ -141,7 +141,10 @@ const serviceMetadataRegistry = new Map<string, ServiceMetadata>();
 /**
  * Tool metadata registry - maps tool names to their metadata
  */
-const toolMetadataRegistry = new Map<string, ToolMetadata & { serviceName: string }>();
+const toolMetadataRegistry = new Map<
+  string,
+  ToolMetadata & { serviceName: string }
+>();
 
 /**
  * Register service metadata
@@ -203,7 +206,9 @@ export function getAllToolMetadata(): Record<
 /**
  * Get service metadata
  */
-export function getServiceMetadata(serviceName: string): ServiceMetadata | undefined {
+export function getServiceMetadata(
+  serviceName: string
+): ServiceMetadata | undefined {
   return serviceMetadataRegistry.get(serviceName);
 }
 

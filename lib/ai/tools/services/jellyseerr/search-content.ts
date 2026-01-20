@@ -1,14 +1,17 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { JellyseerrClientError, jellyseerrRequest, getPosterUrl } from "./client";
 import {
-  type SearchResponse,
-  type SearchResult,
+  getPosterUrl,
+  JellyseerrClientError,
+  jellyseerrRequest,
+} from "./client";
+import {
   getMediaStatusText,
   getResultTitle,
   getResultYear,
-  isMovieResult,
+  type SearchResponse,
+  type SearchResult,
 } from "./types";
 
 type SearchContentProps = {
@@ -20,9 +23,7 @@ export const searchContent = ({ session }: SearchContentProps) =>
     description:
       "Search for movies or TV shows in Jellyseerr. Returns results with title, year, type, and availability/request status. Use this to find content before requesting it.",
     inputSchema: z.object({
-      query: z
-        .string()
-        .describe("The search query (movie or TV show title)"),
+      query: z.string().describe("The search query (movie or TV show title)"),
       type: z
         .enum(["all", "movie", "tv"])
         .optional()
@@ -89,7 +90,9 @@ export const searchContent = ({ session }: SearchContentProps) =>
             title,
             year,
             mediaType,
-            overview: result.overview?.slice(0, 200) + (result.overview && result.overview.length > 200 ? "..." : ""),
+            overview:
+              result.overview?.slice(0, 200) +
+              (result.overview && result.overview.length > 200 ? "..." : ""),
             voteAverage: result.voteAverage,
             posterUrl: getPosterUrl(result.posterPath),
             status,

@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { sonarrRequest, SonarrClientError } from "./client";
+import { SonarrClientError, sonarrRequest } from "./client";
 import type { SonarrQueueResponse } from "./types";
 
 type GetQueueProps = {
@@ -35,9 +35,10 @@ export const getQueue = ({ session }: GetQueueProps) =>
         }
 
         const items = queue.records.map((item) => {
-          const progress = item.size > 0
-            ? Math.round(((item.size - item.sizeleft) / item.size) * 100)
-            : 0;
+          const progress =
+            item.size > 0
+              ? Math.round(((item.size - item.sizeleft) / item.size) * 100)
+              : 0;
 
           return {
             id: item.id,
@@ -71,7 +72,9 @@ export const getQueue = ({ session }: GetQueueProps) =>
   });
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) {
+    return "0 B";
+  }
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

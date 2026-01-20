@@ -1,7 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { StarIcon } from "lucide-react";
+import type * as React from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export interface MediaCardProps {
@@ -56,9 +56,9 @@ export function MediaCard({
         {posterUrl && (
           <div className="relative aspect-[2/3] w-full shrink-0 sm:w-32 md:w-40">
             <img
-              src={posterUrl}
               alt={posterAlt || title}
               className="h-full w-full object-cover"
+              src={posterUrl}
             />
           </div>
         )}
@@ -69,7 +69,9 @@ export function MediaCard({
                 <CardTitle className="truncate text-lg">{title}</CardTitle>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   {year && (
-                    <span className="text-muted-foreground text-sm">{year}</span>
+                    <span className="text-muted-foreground text-sm">
+                      {year}
+                    </span>
                   )}
                   {rating !== undefined && rating > 0 && (
                     <span className="flex items-center gap-1 text-sm">
@@ -88,12 +90,12 @@ export function MediaCard({
             {genres && genres.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {genres.slice(0, 4).map((genre) => (
-                  <Badge key={genre} variant="secondary" className="text-xs">
+                  <Badge className="text-xs" key={genre} variant="secondary">
                     {genre}
                   </Badge>
                 ))}
                 {genres.length > 4 && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge className="text-xs" variant="secondary">
                     +{genres.length - 4}
                   </Badge>
                 )}

@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { sonarrRequest, SonarrClientError } from "./client";
+import { SonarrClientError, sonarrRequest } from "./client";
 import type { SonarrSeries } from "./types";
 
 type SearchSeriesProps = {
@@ -15,7 +15,9 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
     inputSchema: z.object({
       query: z
         .string()
-        .describe("The TV series name to search for (e.g., 'Breaking Bad', 'The Office')"),
+        .describe(
+          "The TV series name to search for (e.g., 'Breaking Bad', 'The Office')"
+        ),
     }),
     execute: async ({ query }) => {
       try {
@@ -34,14 +36,21 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
         const series = results.slice(0, 10).map((s) => ({
           title: s.title,
           year: s.year,
-          overview: s.overview?.slice(0, 200) + (s.overview && s.overview.length > 200 ? "..." : ""),
+          overview:
+            s.overview?.slice(0, 200) +
+            (s.overview && s.overview.length > 200 ? "..." : ""),
           tvdbId: s.tvdbId,
           status: s.status,
           network: s.network,
           genres: s.genres,
           runtime: s.runtime,
-          seasonCount: s.statistics?.seasonCount ?? s.seasons?.filter(season => season.seasonNumber > 0).length ?? 0,
-          posterUrl: s.remotePoster ?? s.images.find((img) => img.coverType === "poster")?.remoteUrl,
+          seasonCount:
+            s.statistics?.seasonCount ??
+            s.seasons?.filter((season) => season.seasonNumber > 0).length ??
+            0,
+          posterUrl:
+            s.remotePoster ??
+            s.images.find((img) => img.coverType === "poster")?.remoteUrl,
         }));
 
         return {

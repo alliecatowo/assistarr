@@ -21,7 +21,10 @@ export interface ServiceIconProps {
 /**
  * Icon component for Radarr (movie manager)
  */
-function RadarrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
+function RadarrIcon({
+  size = 16,
+  className,
+}: Omit<ServiceIconProps, "iconId">) {
   return (
     <svg
       className={className}
@@ -39,7 +42,10 @@ function RadarrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) 
 /**
  * Icon component for Sonarr (TV manager)
  */
-function SonarrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
+function SonarrIcon({
+  size = 16,
+  className,
+}: Omit<ServiceIconProps, "iconId">) {
   return (
     <svg
       className={className}
@@ -49,7 +55,13 @@ function SonarrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) 
       width={size}
     >
       <path d="M504 256c0 137-111 248-248 248S8 393 8 256 119 8 256 8s248 111 248 248zm-448 0c0 110.5 89.5 200 200 200s200-89.5 200-200S366.5 56 256 56 56 145.5 56 256z" />
-      <path d="M256 128v128l85.333 85.333" fill="none" stroke="currentColor" strokeWidth="48" strokeLinecap="round" />
+      <path
+        d="M256 128v128l85.333 85.333"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="48"
+      />
     </svg>
   );
 }
@@ -57,7 +69,10 @@ function SonarrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) 
 /**
  * Icon component for Jellyfin (media server)
  */
-function JellyfinIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
+function JellyfinIcon({
+  size = 16,
+  className,
+}: Omit<ServiceIconProps, "iconId">) {
   return (
     <svg
       className={className}
@@ -75,7 +90,10 @@ function JellyfinIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">
 /**
  * Icon component for Jellyseerr (request manager)
  */
-function JellyseerrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
+function JellyseerrIcon({
+  size = 16,
+  className,
+}: Omit<ServiceIconProps, "iconId">) {
   return (
     <svg
       className={className}
@@ -92,7 +110,10 @@ function JellyseerrIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId
 /**
  * Icon component for qBittorrent (torrent client)
  */
-function QbittorrentIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
+function QbittorrentIcon({
+  size = 16,
+  className,
+}: Omit<ServiceIconProps, "iconId">) {
   return (
     <svg
       className={className}
@@ -103,7 +124,10 @@ function QbittorrentIcon({ size = 16, className }: Omit<ServiceIconProps, "iconI
     >
       <path d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200z" />
       <path d="M352 256c0-53-43-96-96-96v192c53 0 96-43 96-96z" />
-      <path d="M160 256c0 53 43 96 96 96V160c-53 0-96 43-96 96z" opacity="0.6" />
+      <path
+        d="M160 256c0 53 43 96 96 96V160c-53 0-96 43-96 96z"
+        opacity="0.6"
+      />
     </svg>
   );
 }
@@ -145,7 +169,10 @@ function EmbyIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
 /**
  * Generic fallback icon for unknown services
  */
-function GenericIcon({ size = 16, className }: Omit<ServiceIconProps, "iconId">) {
+function GenericIcon({
+  size = 16,
+  className,
+}: Omit<ServiceIconProps, "iconId">) {
   return (
     <svg
       className={className}
@@ -193,7 +220,11 @@ const ICON_COMPONENTS: Record<
  * // Direct usage
  * <ServiceIcon iconId="radarr" className="text-yellow-500" />
  */
-export function ServiceIcon({ iconId, size = 16, className }: ServiceIconProps) {
+export function ServiceIcon({
+  iconId,
+  size = 16,
+  className,
+}: ServiceIconProps) {
   const IconComponent = ICON_COMPONENTS[iconId] ?? ICON_COMPONENTS.generic;
   return <IconComponent className={cn("shrink-0", className)} size={size} />;
 }

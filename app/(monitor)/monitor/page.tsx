@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useState } from "react";
+import type { MonitorStatus } from "@/app/(monitor)/api/status/route";
 import {
-  ServiceStatusCard,
   DownloadQueueWidget,
   PendingRequestsWidget,
+  ServiceStatusCard,
   StalledItemsWidget,
 } from "@/components/monitor";
-import type { MonitorStatus } from "@/app/(monitor)/api/status/route";
+import { Button } from "@/components/ui/button";
 
 function RefreshIcon({ className }: { className?: string }) {
   return (
@@ -60,7 +60,7 @@ export default function MonitorPage() {
     fetchStatus();
 
     // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchStatus, 30000);
+    const interval = setInterval(fetchStatus, 30_000);
     return () => clearInterval(interval);
   }, [fetchStatus]);
 
@@ -76,11 +76,11 @@ export default function MonitorPage() {
           )}
         </div>
         <Button
-          onClick={fetchStatus}
+          className="gap-2"
           disabled={isLoading}
+          onClick={fetchStatus}
           size="sm"
           variant="outline"
-          className="gap-2"
         >
           <RefreshIcon className={isLoading ? "animate-spin" : ""} />
           Refresh
@@ -102,11 +102,26 @@ export default function MonitorPage() {
                 Services
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <ServiceStatusCard name="Radarr" status={status.services.radarr} />
-                <ServiceStatusCard name="Sonarr" status={status.services.sonarr} />
-                <ServiceStatusCard name="Jellyfin" status={status.services.jellyfin} />
-                <ServiceStatusCard name="Jellyseerr" status={status.services.jellyseerr} />
-                <ServiceStatusCard name="qBittorrent" status={status.services.qbittorrent} />
+                <ServiceStatusCard
+                  name="Radarr"
+                  status={status.services.radarr}
+                />
+                <ServiceStatusCard
+                  name="Sonarr"
+                  status={status.services.sonarr}
+                />
+                <ServiceStatusCard
+                  name="Jellyfin"
+                  status={status.services.jellyfin}
+                />
+                <ServiceStatusCard
+                  name="Jellyseerr"
+                  status={status.services.jellyseerr}
+                />
+                <ServiceStatusCard
+                  name="qBittorrent"
+                  status={status.services.qbittorrent}
+                />
               </div>
             </section>
 
@@ -123,8 +138,8 @@ export default function MonitorPage() {
               <div className="space-y-6">
                 <PendingRequestsWidget requests={status.requests.pending} />
                 <StalledItemsWidget
-                  stalled={status.errors.stalled}
                   failed={status.errors.failed}
+                  stalled={status.errors.stalled}
                 />
               </div>
             </div>

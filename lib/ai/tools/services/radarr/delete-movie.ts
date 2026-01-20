@@ -33,9 +33,12 @@ export const deleteMovie = ({ session }: DeleteMovieProps) =>
     }) => {
       try {
         const queryParams = new URLSearchParams();
-        if (deleteFiles) queryParams.append("deleteFiles", "true");
-        if (addImportListExclusion)
+        if (deleteFiles) {
+          queryParams.append("deleteFiles", "true");
+        }
+        if (addImportListExclusion) {
           queryParams.append("addImportListExclusion", "true");
+        }
 
         await radarrRequest(
           session.user.id,

@@ -75,7 +75,9 @@ export interface MediaResultsShape {
  * Type guard: Check if an item looks like a media item
  */
 export function isMediaItem(item: unknown): item is MediaItemShape {
-  if (!item || typeof item !== "object") return false;
+  if (!item || typeof item !== "object") {
+    return false;
+  }
   const obj = item as Record<string, unknown>;
   // Must have title at minimum
   return typeof obj.title === "string" && obj.title.length > 0;
@@ -87,13 +89,17 @@ export function isMediaItem(item: unknown): item is MediaItemShape {
 export function isMediaResultsShape(
   output: unknown
 ): output is MediaResultsShape {
-  if (!output || typeof output !== "object") return false;
+  if (!output || typeof output !== "object") {
+    return false;
+  }
   const obj = output as Record<string, unknown>;
 
   // Check for 'results' array with media items
   if (Array.isArray(obj.results)) {
     // Empty results array is valid
-    if (obj.results.length === 0) return true;
+    if (obj.results.length === 0) {
+      return true;
+    }
     // Check first item has title
     return isMediaItem(obj.results[0]);
   }
@@ -163,10 +169,16 @@ export interface EpisodeCalendarShape {
 export function isMovieCalendarShape(
   output: unknown
 ): output is MovieCalendarShape {
-  if (!output || typeof output !== "object") return false;
+  if (!output || typeof output !== "object") {
+    return false;
+  }
   const obj = output as Record<string, unknown>;
-  if (!Array.isArray(obj.movies)) return false;
-  if (obj.movies.length === 0) return true;
+  if (!Array.isArray(obj.movies)) {
+    return false;
+  }
+  if (obj.movies.length === 0) {
+    return true;
+  }
   const first = obj.movies[0] as Record<string, unknown>;
   return typeof first.title === "string" && "releaseDate" in first;
 }
@@ -177,10 +189,16 @@ export function isMovieCalendarShape(
 export function isEpisodeCalendarShape(
   output: unknown
 ): output is EpisodeCalendarShape {
-  if (!output || typeof output !== "object") return false;
+  if (!output || typeof output !== "object") {
+    return false;
+  }
   const obj = output as Record<string, unknown>;
-  if (!Array.isArray(obj.episodes)) return false;
-  if (obj.episodes.length === 0) return true;
+  if (!Array.isArray(obj.episodes)) {
+    return false;
+  }
+  if (obj.episodes.length === 0) {
+    return true;
+  }
   const first = obj.episodes[0] as Record<string, unknown>;
   return typeof first.seriesTitle === "string" && "airDate" in first;
 }
@@ -270,10 +288,16 @@ export interface TorrentQueueShape {
  * Type guard: Check if output is Radarr/Sonarr queue
  */
 export function isArrQueueShape(output: unknown): output is ArrQueueShape {
-  if (!output || typeof output !== "object") return false;
+  if (!output || typeof output !== "object") {
+    return false;
+  }
   const obj = output as Record<string, unknown>;
-  if (!Array.isArray(obj.items)) return false;
-  if (obj.items.length === 0) return "totalRecords" in obj;
+  if (!Array.isArray(obj.items)) {
+    return false;
+  }
+  if (obj.items.length === 0) {
+    return "totalRecords" in obj;
+  }
   const first = obj.items[0] as Record<string, unknown>;
   return (
     "status" in first &&
@@ -288,10 +312,16 @@ export function isArrQueueShape(output: unknown): output is ArrQueueShape {
 export function isTorrentQueueShape(
   output: unknown
 ): output is TorrentQueueShape {
-  if (!output || typeof output !== "object") return false;
+  if (!output || typeof output !== "object") {
+    return false;
+  }
   const obj = output as Record<string, unknown>;
-  if (!Array.isArray(obj.torrents)) return false;
-  if (obj.torrents.length === 0) return true;
+  if (!Array.isArray(obj.torrents)) {
+    return false;
+  }
+  if (obj.torrents.length === 0) {
+    return true;
+  }
   const first = obj.torrents[0] as Record<string, unknown>;
   return "hash" in first && "name" in first && "state" in first;
 }
@@ -329,10 +359,16 @@ export interface DiscoveryShape {
  * Type guard: Check if output is discovery shape
  */
 export function isDiscoveryShape(output: unknown): output is DiscoveryShape {
-  if (!output || typeof output !== "object") return false;
+  if (!output || typeof output !== "object") {
+    return false;
+  }
   const obj = output as Record<string, unknown>;
-  if (!Array.isArray(obj.sections)) return false;
-  if (obj.sections.length === 0) return true;
+  if (!Array.isArray(obj.sections)) {
+    return false;
+  }
+  if (obj.sections.length === 0) {
+    return true;
+  }
   const first = obj.sections[0] as Record<string, unknown>;
   return typeof first.title === "string" && Array.isArray(first.items);
 }

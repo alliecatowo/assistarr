@@ -1,7 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { ClockIcon, DownloadIcon, PlusCircleIcon, CheckCircleIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  DownloadIcon,
+  PlusCircleIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,7 +25,8 @@ export type MovieRequestStatus =
   | "declined"
   | "requested";
 
-export interface MovieCardProps extends Omit<MediaCardProps, "badges" | "actions" | "children"> {
+export interface MovieCardProps
+  extends Omit<MediaCardProps, "badges" | "actions" | "children"> {
   /** Runtime in minutes */
   runtime?: number;
   /** Download status from Radarr */
@@ -50,7 +55,13 @@ function formatRuntime(minutes: number): string {
 }
 
 function getDownloadStatusBadge(status: MovieDownloadStatus) {
-  const config: Record<MovieDownloadStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  const config: Record<
+    MovieDownloadStatus,
+    {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+    }
+  > = {
     downloaded: { label: "Downloaded", variant: "default" },
     downloading: { label: "Downloading", variant: "secondary" },
     queued: { label: "Queued", variant: "secondary" },
@@ -60,7 +71,7 @@ function getDownloadStatusBadge(status: MovieDownloadStatus) {
 
   const { label, variant } = config[status];
   return (
-    <Badge variant={variant} className="text-xs">
+    <Badge className="text-xs" variant={variant}>
       <DownloadIcon className="mr-1 size-3" />
       {label}
     </Badge>
@@ -68,7 +79,13 @@ function getDownloadStatusBadge(status: MovieDownloadStatus) {
 }
 
 function getRequestStatusBadge(status: MovieRequestStatus) {
-  const config: Record<MovieRequestStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  const config: Record<
+    MovieRequestStatus,
+    {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+    }
+  > = {
     available: { label: "Available", variant: "default" },
     pending: { label: "Pending", variant: "secondary" },
     approved: { label: "Approved", variant: "secondary" },
@@ -78,7 +95,7 @@ function getRequestStatusBadge(status: MovieRequestStatus) {
 
   const { label, variant } = config[status];
   return (
-    <Badge variant={variant} className="text-xs">
+    <Badge className="text-xs" variant={variant}>
       {status === "available" ? (
         <CheckCircleIcon className="mr-1 size-3" />
       ) : (
@@ -115,10 +132,14 @@ export function MovieCard({
 
   const actions = showRequestButton && onRequest && (
     <Button
+      disabled={
+        isRequesting ||
+        requestStatus === "pending" ||
+        requestStatus === "approved"
+      }
+      onClick={onRequest}
       size="sm"
       variant="outline"
-      onClick={onRequest}
-      disabled={isRequesting || requestStatus === "pending" || requestStatus === "approved"}
     >
       <PlusCircleIcon className="mr-1 size-4" />
       {isRequesting ? "Requesting..." : "Request"}
@@ -127,16 +148,16 @@ export function MovieCard({
 
   return (
     <MediaCard
+      actions={actions}
+      badges={badges}
+      className={cn("", className)}
+      genres={genres}
+      overview={overview}
+      posterAlt={posterAlt}
+      posterUrl={posterUrl}
+      rating={rating}
       title={title}
       year={year}
-      rating={rating}
-      overview={overview}
-      posterUrl={posterUrl}
-      posterAlt={posterAlt}
-      genres={genres}
-      badges={badges}
-      actions={actions}
-      className={cn("", className)}
     >
       <div className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm">
         {runtime && runtime > 0 && (
@@ -146,7 +167,7 @@ export function MovieCard({
           </span>
         )}
         {quality && (
-          <Badge variant="outline" className="text-xs">
+          <Badge className="text-xs" variant="outline">
             {quality}
           </Badge>
         )}

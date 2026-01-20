@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { radarrRequest, RadarrClientError } from "./client";
+import { RadarrClientError, radarrRequest } from "./client";
 import type { RadarrMovie } from "./types";
 
 type SearchMoviesProps = {
@@ -15,7 +15,9 @@ export const searchMovies = ({ session }: SearchMoviesProps) =>
     inputSchema: z.object({
       query: z
         .string()
-        .describe("The movie name to search for (e.g., 'Inception', 'The Matrix')"),
+        .describe(
+          "The movie name to search for (e.g., 'Inception', 'The Matrix')"
+        ),
     }),
     execute: async ({ query }) => {
       try {
@@ -34,7 +36,9 @@ export const searchMovies = ({ session }: SearchMoviesProps) =>
         const movies = results.slice(0, 10).map((m) => ({
           title: m.title,
           year: m.year,
-          overview: m.overview?.slice(0, 200) + (m.overview && m.overview.length > 200 ? "..." : ""),
+          overview:
+            m.overview?.slice(0, 200) +
+            (m.overview && m.overview.length > 200 ? "..." : ""),
           tmdbId: m.tmdbId,
           imdbId: m.imdbId,
           status: m.status,
@@ -46,7 +50,9 @@ export const searchMovies = ({ session }: SearchMoviesProps) =>
             imdb: m.ratings?.imdb?.value,
             tmdb: m.ratings?.tmdb?.value,
           },
-          posterUrl: m.remotePoster ?? m.images.find((img) => img.coverType === "poster")?.remoteUrl,
+          posterUrl:
+            m.remotePoster ??
+            m.images.find((img) => img.coverType === "poster")?.remoteUrl,
         }));
 
         return {

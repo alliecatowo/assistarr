@@ -44,7 +44,15 @@ function initializeMetadataRegistry(): void {
     });
 
     // Register tool metadata
-    const toolMetadata: Record<string, { displayName: string; category: any; description?: string; requiresApproval?: boolean }> = {};
+    const toolMetadata: Record<
+      string,
+      {
+        displayName: string;
+        category: any;
+        description?: string;
+        requiresApproval?: boolean;
+      }
+    > = {};
     for (const [toolName, toolDef] of Object.entries(service.tools)) {
       toolMetadata[toolName] = {
         displayName: toolDef.displayName,

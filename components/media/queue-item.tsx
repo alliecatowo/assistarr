@@ -1,16 +1,16 @@
 "use client";
 
-import * as React from "react";
 import {
+  AlertCircleIcon,
+  CheckCircleIcon,
   ClockIcon,
   DownloadIcon,
   HardDriveIcon,
-  AlertCircleIcon,
-  CheckCircleIcon,
   PauseCircleIcon,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,9 @@ export interface QueueItemProps {
 
 function getStatusIcon(status: QueueItemStatus) {
   const icons: Record<QueueItemStatus, React.ReactNode> = {
-    downloading: <DownloadIcon className="size-4 animate-pulse text-blue-500" />,
+    downloading: (
+      <DownloadIcon className="size-4 animate-pulse text-blue-500" />
+    ),
     paused: <PauseCircleIcon className="size-4 text-yellow-500" />,
     queued: <ClockIcon className="size-4 text-muted-foreground" />,
     completed: <CheckCircleIcon className="size-4 text-green-500" />,
@@ -60,7 +62,13 @@ function getStatusIcon(status: QueueItemStatus) {
 }
 
 function getStatusBadge(status: QueueItemStatus) {
-  const config: Record<QueueItemStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  const config: Record<
+    QueueItemStatus,
+    {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+    }
+  > = {
     downloading: { label: "Downloading", variant: "default" },
     paused: { label: "Paused", variant: "secondary" },
     queued: { label: "Queued", variant: "outline" },
@@ -71,7 +79,7 @@ function getStatusBadge(status: QueueItemStatus) {
 
   const { label, variant } = config[status];
   return (
-    <Badge variant={variant} className="text-xs">
+    <Badge className="text-xs" variant={variant}>
       {label}
     </Badge>
   );
@@ -103,13 +111,15 @@ export function QueueItem({
               <div className="min-w-0 flex-1">
                 <h4 className="truncate font-medium text-sm">{title}</h4>
                 {subtitle && (
-                  <p className="truncate text-muted-foreground text-xs">{subtitle}</p>
+                  <p className="truncate text-muted-foreground text-xs">
+                    {subtitle}
+                  </p>
                 )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {quality && (
-                <Badge variant="outline" className="text-xs">
+                <Badge className="text-xs" variant="outline">
                   {quality}
                 </Badge>
               )}
@@ -120,7 +130,7 @@ export function QueueItem({
           {/* Progress bar */}
           {showProgress && (
             <div className="space-y-1">
-              <Progress value={progress} className="h-2" />
+              <Progress className="h-2" value={progress} />
               <div className="flex items-center justify-between text-muted-foreground text-xs">
                 <span>{progress.toFixed(1)}%</span>
                 {sizeDownloaded && sizeTotal && (
@@ -151,10 +161,12 @@ export function QueueItem({
 
           {/* Error/Warning message */}
           {message && (status === "failed" || status === "warning") && (
-            <p className={cn(
-              "text-xs",
-              status === "failed" ? "text-red-500" : "text-yellow-500"
-            )}>
+            <p
+              className={cn(
+                "text-xs",
+                status === "failed" ? "text-red-500" : "text-yellow-500"
+              )}
+            >
               {message}
             </p>
           )}

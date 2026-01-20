@@ -134,7 +134,15 @@ export interface SonarrQueueItem {
   sizeleft: number;
   timeleft?: string;
   estimatedCompletionTime?: string;
-  status: "downloading" | "paused" | "queued" | "completed" | "delay" | "downloadClientUnavailable" | "warning" | "failed";
+  status:
+    | "downloading"
+    | "paused"
+    | "queued"
+    | "completed"
+    | "delay"
+    | "downloadClientUnavailable"
+    | "warning"
+    | "failed";
   trackedDownloadStatus?: string;
   trackedDownloadState?: string;
   statusMessages: Array<{ title: string; messages: string[] }>;
@@ -190,7 +198,15 @@ export interface SonarrRootFolder {
 export interface SonarrAddSeriesOptions {
   ignoreEpisodesWithFiles?: boolean;
   ignoreEpisodesWithoutFiles?: boolean;
-  monitor: "all" | "future" | "missing" | "existing" | "firstSeason" | "lastSeason" | "pilot" | "none";
+  monitor:
+    | "all"
+    | "future"
+    | "missing"
+    | "existing"
+    | "firstSeason"
+    | "lastSeason"
+    | "pilot"
+    | "none";
   searchForMissingEpisodes?: boolean;
   searchForCutoffUnmetEpisodes?: boolean;
 }

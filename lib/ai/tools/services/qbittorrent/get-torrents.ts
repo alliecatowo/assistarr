@@ -8,7 +8,7 @@ import {
   QBittorrentClientError,
   qbittorrentRequest,
 } from "./client";
-import type { Torrent, TorrentFilter } from "./types";
+import type { Torrent } from "./types";
 
 interface GetTorrentsProps {
   session: Session;
@@ -41,7 +41,15 @@ export const getTorrents = ({ session }: GetTorrentsProps) =>
         .default(20)
         .describe("Maximum number of torrents to return"),
       sort: z
-        .enum(["name", "size", "progress", "dlspeed", "upspeed", "added_on", "eta"])
+        .enum([
+          "name",
+          "size",
+          "progress",
+          "dlspeed",
+          "upspeed",
+          "added_on",
+          "eta",
+        ])
         .default("added_on")
         .describe("Sort torrents by field"),
     }),
@@ -81,8 +89,8 @@ export const getTorrents = ({ session }: GetTorrentsProps) =>
           size: formatBytes(t.size),
           downloaded: formatBytes(t.downloaded),
           uploaded: formatBytes(t.uploaded),
-          downloadSpeed: formatBytes(t.dlspeed) + "/s",
-          uploadSpeed: formatBytes(t.upspeed) + "/s",
+          downloadSpeed: `${formatBytes(t.dlspeed)}/s`,
+          uploadSpeed: `${formatBytes(t.upspeed)}/s`,
           eta: formatEta(t.eta),
           ratio: t.ratio.toFixed(2),
           seeds: t.num_seeds,
@@ -116,7 +124,9 @@ export const getTorrents = ({ session }: GetTorrentsProps) =>
         if (error instanceof QBittorrentClientError) {
           return { error: error.message };
         }
-        return { error: "Failed to get torrents from qBittorrent. Please try again." };
+        return {
+          error: "Failed to get torrents from qBittorrent. Please try again.",
+        };
       }
     },
   });

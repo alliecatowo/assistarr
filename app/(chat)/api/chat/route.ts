@@ -72,8 +72,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, messages, selectedChatModel, selectedVisibilityType } =
-      requestBody;
+    const {
+      id,
+      message,
+      messages,
+      selectedChatModel,
+      selectedVisibilityType,
+      debugMode,
+    } = requestBody;
 
     const session = await auth();
 
@@ -173,7 +179,7 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({ selectedChatModel, requestHints, debugMode }),
           messages: modelMessages,
           stopWhen: stepCountIs(8),
           experimental_activeTools: allToolNames,
