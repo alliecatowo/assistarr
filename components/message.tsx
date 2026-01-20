@@ -390,10 +390,20 @@ const PurePreviewMessage = ({
               const displayName =
                 TOOL_DISPLAY_NAMES[rawToolName] || rawToolName;
 
+              // Determine if tool returned an error in its output
+              const hasError =
+                state === "output-available" &&
+                toolPart.output &&
+                "error" in toolPart.output;
+              const displayState = hasError ? "output-error" : state;
+
               return (
                 <div className="w-[min(100%,450px)]" key={toolCallId}>
-                  <Tool className="w-full" defaultOpen={true}>
-                    <ToolHeader state={state} type={displayName as any} />
+                  <Tool className="w-full" defaultOpen={false}>
+                    <ToolHeader
+                      state={displayState as any}
+                      type={displayName as any}
+                    />
                     <ToolContent>
                       {(state === "input-available" ||
                         state === "approval-requested") && (

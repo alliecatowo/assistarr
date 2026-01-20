@@ -52,45 +52,75 @@ function PureMessages({
         <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4 px-2 py-4 md:gap-6 md:px-4">
           {messages.length === 0 && <Greeting />}
 
-          {messages.map((message, index) => (
-            <PreviewMessage
-              addToolApprovalResponse={addToolApprovalResponse}
-              chatId={chatId}
-              isLoading={
-                status === "streaming" && messages.length - 1 === index
-              }
-              isReadonly={isReadonly}
-              key={message.id}
-              message={message}
-              regenerate={regenerate}
-              requiresScrollPadding={
-                hasSentMessage && index === messages.length - 1
-              }
-              setMessages={setMessages}
-              vote={
-                votes
-                  ? votes.find((vote) => vote.messageId === message.id)
-                  : undefined
-              }
-            />
-          ))}
+          {messages.map((message, index) => {
+            // Skip rendering assistant messages with no visible content
+            // (ThinkingMessage will show instead)
+            if (message.role === "assistant") {
+              const hasVisibleContent = message.parts?.some(
+                (part) =>
+                  (part.type === "text" && part.text?.trim()) ||
+                  (part.type === "reasoning" && part.text?.trim()) ||
+                  part.type.startsWith("tool-")
+              );
+              if (!hasVisibleContent) return null;
+            }
 
-          {(status === "submitted" || status === "streaming") &&
-            !messages.some(
-              (msg) =>
-                msg.role === "assistant" &&
-                msg.parts?.some(
-                  (part) =>
-                    (part.type === "text" && part.text?.trim()) ||
-                    (part.type === "reasoning" && part.text?.trim()) ||
-                    part.type.startsWith("tool-")
-                )
-            ) &&
-            !messages.some((msg) =>
+            return (
+              <PreviewMessage
+                addToolApprovalResponse={addToolApprovalResponse}
+                chatId={chatId}
+                isLoading={
+                  status === "streaming" && messages.length - 1 === index
+                }
+                isReadonly={isReadonly}
+                key={message.id}
+                message={message}
+                regenerate={regenerate}
+                requiresScrollPadding={
+                  hasSentMessage && index === messages.length - 1
+                }
+                setMessages={setMessages}
+                vote={
+                  votes
+                    ? votes.find((vote) => vote.messageId === message.id)
+                    : undefined
+                }
+              />
+            );
+          })}
+
+          {(() => {
+            // Show ThinkingMessage only when waiting for assistant response
+            if (status !== "submitted" && status !== "streaming") return null;
+
+            // Check if there's an approval flow in progress
+            const hasApprovalResponded = messages.some((msg) =>
               msg.parts?.some(
                 (part) => "state" in part && part.state === "approval-responded"
               )
-            ) && <ThinkingMessage />}
+            );
+            if (hasApprovalResponded) return null;
+
+            // Get the last message
+            const lastMessage = messages[messages.length - 1];
+
+            // If last message is from user, show thinking (waiting for assistant)
+            if (lastMessage?.role === "user") return <ThinkingMessage />;
+
+            // If last message is assistant, check if it has any visible content
+            if (lastMessage?.role === "assistant") {
+              const hasVisibleContent = lastMessage.parts?.some(
+                (part) =>
+                  (part.type === "text" && part.text?.trim()) ||
+                  (part.type === "reasoning" && part.text?.trim()) ||
+                  part.type.startsWith("tool-")
+              );
+              // Only show thinking if assistant message has no visible content yet
+              if (!hasVisibleContent) return <ThinkingMessage />;
+            }
+
+            return null;
+          })()}
 
           <div
             className="min-h-[24px] min-w-[24px] shrink-0"
