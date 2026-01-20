@@ -344,35 +344,40 @@ const PurePreviewMessage = ({
                     )}
                   </ToolContent>
                 </Tool>
-              );
             }
 
             // Generic handler for all other tools (Radarr, Sonarr, Jellyseerr, etc.)
             if (type.startsWith("tool-")) {
-              const { toolCallId, state } = part;
+              const toolPart = part as any;
+              const { toolCallId, state } = toolPart;
               const toolName = type.replace("tool-", "");
 
               return (
                 <div className="w-[min(100%,450px)]" key={toolCallId}>
                   <Tool className="w-full" defaultOpen={true}>
-                    <ToolHeader state={state} type={toolName} />
+                    <ToolHeader state={state} type={toolName as any} />
                     <ToolContent>
                       {(state === "input-available" ||
                         state === "approval-requested") && (
-                        <ToolInput input={part.input} />
+                        <ToolInput input={toolPart.input} />
                       )}
 
                       {state === "output-available" && (
                         <ToolOutput
+                          errorText={
+                            toolPart.output && "error" in toolPart.output
+                              ? String(toolPart.output.error)
+                              : undefined
+                          }
                           output={
-                            "error" in part.output ? (
-                              <div className="text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded text-xs border border-red-200 dark:border-red-900">
+                            toolPart.output && "error" in toolPart.output ? (
+                              <div className="text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded text-xs border border-red-200 dark:border-900">
                                 <strong>Error:</strong>{" "}
-                                {String(part.output.error)}
+                                {String(toolPart.output.error)}
                               </div>
                             ) : (
                               <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/50 max-h-60 overflow-y-auto whitespace-pre-wrap font-mono">
-                                {JSON.stringify(part.output, null, 2)}
+                                {JSON.stringify(toolPart.output, null, 2)}
                               </div>
                             )
                           }
