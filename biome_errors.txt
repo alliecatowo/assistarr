@@ -1,0 +1,599 @@
+app/(chat)/settings/page.tsx:493:22 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    491 │         setConfigs(data);
+    492 │       }
+  > 493 │     } catch (_error) {
+        │                      ^
+  > 494 │     } finally {
+        │     ^
+    495 │       setIsLoading(false);
+    496 │     }
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+app/(chat)/settings/page.tsx:156:11 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    154 │         ))}
+    155 │         {hasMore && !isExpanded && (
+  > 156 │           <button
+        │           ^^^^^^^
+  > 157 │             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+  > 158 │             onClick={() => setIsExpanded(true)}
+  > 159 │           >
+        │           ^
+    160 │             +{hiddenCount} more
+    161 │           </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+app/(chat)/settings/page.tsx:164:11 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    162 │         )}
+    163 │         {isExpanded && hasMore && (
+  > 164 │           <button
+        │           ^^^^^^^
+  > 165 │             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+  > 166 │             onClick={() => setIsExpanded(false)}
+  > 167 │           >
+        │           ^
+    168 │             Show less
+    169 │           </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+app/(monitor)/monitor/loading.tsx:27:73 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    25 │       <CardContent className="space-y-4">
+    26 │         {Array.from({ length: 4 }).map((_, i) => (
+  > 27 │           <div className="space-y-2 py-3 border-b last:border-b-0" key={i}>
+       │                                                                         ^
+    28 │             <div className="flex items-start justify-between gap-2">
+    29 │               <div className="space-y-1 flex-1">
+  
+  i This is the source of the key value.
+  
+    24 │       </CardHeader>
+    25 │       <CardContent className="space-y-4">
+  > 26 │         {Array.from({ length: 4 }).map((_, i) => (
+       │                                            ^
+    27 │           <div className="space-y-2 py-3 border-b last:border-b-0" key={i}>
+    28 │             <div className="flex items-start justify-between gap-2">
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+app/(monitor)/monitor/loading.tsx:61:18 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    59 │           <div
+    60 │             className="flex items-center justify-between py-3 border-b last:border-b-0"
+  > 61 │             key={i}
+       │                  ^
+    62 │           >
+    63 │             <div className="space-y-1 flex-1">
+  
+  i This is the source of the key value.
+  
+    56 │       </CardHeader>
+    57 │       <CardContent className="space-y-3">
+  > 58 │         {Array.from({ length: 3 }).map((_, i) => (
+       │                                            ^
+    59 │           <div
+    60 │             className="flex items-center justify-between py-3 border-b last:border-b-0"
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+app/(monitor)/monitor/loading.tsx:96:43 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    94 │             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    95 │               {Array.from({ length: 5 }).map((_, i) => (
+  > 96 │                 <ServiceCardSkeleton key={i} />
+       │                                           ^
+    97 │               ))}
+    98 │             </div>
+  
+  i This is the source of the key value.
+  
+    93 │             <Skeleton className="mb-4 h-4 w-16" />
+    94 │             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+  > 95 │               {Array.from({ length: 5 }).map((_, i) => (
+       │                                                  ^
+    96 │                 <ServiceCardSkeleton key={i} />
+    97 │               ))}
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+artifacts/text/server.ts:35:38 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    33 │             transient: true,
+    34 │           });
+  > 35 │         } else if (type === "error") {
+       │                                      ^
+  > 36 │         }
+       │         ^
+    37 │       }
+    38 │ 
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+artifacts/text/server.ts:39:26 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    37 │       }
+    38 │ 
+  > 39 │       if (!draftContent) {
+       │                          ^
+  > 40 │       }
+       │       ^
+    41 │     } catch (error) {
+    42 │       // Write error message to stream so user sees something
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+artifacts/text/server.ts:86:38 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    84 │             transient: true,
+    85 │           });
+  > 86 │         } else if (type === "error") {
+       │                                      ^
+  > 87 │         }
+       │         ^
+    88 │       }
+    89 │ 
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+artifacts/text/server.ts:90:26 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    88 │       }
+    89 │ 
+  > 90 │       if (!draftContent) {
+       │                          ^
+  > 91 │       }
+       │       ^
+    92 │     } catch (error) {
+    93 │       const errorMessage = `Error updating document: ${error instanceof Error ? error.message : "Unknown error"}`;
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+components/ai-loading/plasma-orb.tsx:284:18 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    282 │             fill="white"
+    283 │             filter="url(#particle-blur)"
+  > 284 │             key={i}
+        │                  ^
+    285 │             r="1.2"
+    286 │             transition={{
+  
+  i This is the source of the key value.
+  
+    273 │         {/* Energy particles orbiting */}
+  > 274 │         {PARTICLES.map((particle, i) => (
+        │                                   ^
+    275 │           <motion.circle
+    276 │             animate={{
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/multimodal-input/core.tsx:213:24 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    211 │           ...successfullyUploadedAttachments,
+    212 │         ]);
+  > 213 │       } catch (_error) {
+        │                        ^
+  > 214 │       } finally {
+        │       ^
+    215 │         setUploadQueue([]);
+    216 │       }
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+components/elements/prompt-input/core.tsx:410:28 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    408 │                 }
+    409 │               })
+  > 410 │               .catch(() => {});
+        │                            ^^
+    411 │           } else {
+    412 │             clear();
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+components/elements/prompt-input/core.tsx:417:17 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    415 │             }
+    416 │           }
+  > 417 │         } catch {}
+        │                 ^^
+    418 │       })
+    419 │       .catch(() => {});
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+components/elements/prompt-input/core.tsx:419:20 lint/suspicious/noEmptyBlockStatements ━━━━━━━━━━━━
+
+  × Unexpected empty block.
+  
+    417 │         } catch {}
+    418 │       })
+  > 419 │       .catch(() => {});
+        │                    ^^
+    420 │   };
+    421 │ 
+  
+  i Empty blocks are usually the result of an incomplete refactoring. Remove the empty block or add a comment inside it if it is intentional.
+  
+
+components/elements/response.tsx:72:11 lint/suspicious/noAssignInExpressions ━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The assignment should not be in an expression.
+  
+    70 │   let match: RegExpExecArray | null;
+    71 │ 
+  > 72 │   while ((match = pattern.exec(text)) !== null) {
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    73 │     // Add text before the match
+    74 │     if (match.index > lastIndex) {
+  
+  i The use of assignments in expressions is confusing.
+    Expressions are often considered as side-effect free.
+  
+
+components/elements/response.tsx:129:42 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    127 │           return (
+    128 │             <InlineMediaLink
+  > 129 │               key={`${keyPrefix}-media-${index}`}
+        │                                          ^^^^^
+    130 │               mediaType={part.mediaType as "movie" | "tv"}
+    131 │               title={part.content}
+  
+  i This is the source of the key value.
+  
+    123 │   return (
+    124 │     <>
+  > 125 │       {parts.map((part, index) => {
+        │                         ^^^^^
+    126 │         if (part.type === "media") {
+    127 │           return (
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:139:50 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    137 │         // Streamdown can strip leading/trailing spaces during markdown processing
+    138 │         if (isSimpleText(part.content)) {
+  > 139 │           return <span key={`${keyPrefix}-text-${index}`}>{part.content}</span>;
+        │                                                  ^^^^^
+    140 │         }
+    141 │         // For text with markdown formatting, use Streamdown
+  
+  i This is the source of the key value.
+  
+    123 │   return (
+    124 │     <>
+  > 125 │       {parts.map((part, index) => {
+        │                         ^^^^^
+    126 │         if (part.type === "media") {
+    127 │           return (
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:145:39 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    143 │           <Streamdown
+    144 │             className="inline [&>p]:inline [&>*]:inline [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+  > 145 │             key={`${keyPrefix}-text-${index}`}
+        │                                       ^^^^^
+    146 │           >
+    147 │             {part.content}
+  
+  i This is the source of the key value.
+  
+    123 │   return (
+    124 │     <>
+  > 125 │       {parts.map((part, index) => {
+        │                         ^^^^^
+    126 │         if (part.type === "media") {
+    127 │           return (
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:193:38 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    191 │               <ul
+    192 │                 className="list-disc pl-6 space-y-1"
+  > 193 │                 key={`${baseKey}-p-${pIndex}`}
+        │                                      ^^^^^^
+    194 │               >
+    195 │                 {lines
+  
+  i This is the source of the key value.
+  
+    171 │   return (
+    172 │     <div className="space-y-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+  > 173 │       {paragraphs.map((paragraph, pIndex) => {
+        │                                   ^^^^^^
+    174 │         const trimmed = paragraph.trim();
+    175 │         if (!trimmed) {
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:201:60 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    199 │                     const content = line.replace(/^[\s]*[-*]\s?/, "");
+    200 │                     return (
+  > 201 │                       <li key={`${baseKey}-p-${pIndex}-l-${lIndex}`}>
+        │                                                            ^^^^^^
+    202 │                         {renderParagraphWithLinks(
+    203 │                           content,
+  
+  i This is the source of the key value.
+  
+    195 │                 {lines
+    196 │                   .filter((l) => l.trim())
+  > 197 │                   .map((line, lIndex) => {
+        │                               ^^^^^^
+    198 │                     // Remove list marker (- or *) with optional space
+    199 │                     const content = line.replace(/^[\s]*[-*]\s?/, "");
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:225:65 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    223 │             if (items.length > 0) {
+    224 │               return (
+  > 225 │                 <div className="space-y-2" key={`${baseKey}-p-${pIndex}`}>
+        │                                                                 ^^^^^^
+    226 │                   {header && (
+    227 │                     <div>
+  
+  i This is the source of the key value.
+  
+    171 │   return (
+    172 │     <div className="space-y-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+  > 173 │       {paragraphs.map((paragraph, pIndex) => {
+        │                                   ^^^^^^
+    174 │         const trimmed = paragraph.trim();
+    175 │         if (!trimmed) {
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:240:62 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    238 │                       const fullItem = `[[${item}`;
+    239 │                       return (
+  > 240 │                         <li key={`${baseKey}-p-${pIndex}-i-${iIndex}`}>
+        │                                                              ^^^^^^
+    241 │                           {renderParagraphWithLinks(
+    242 │                             fullItem,
+  
+  i This is the source of the key value.
+  
+    233 │                   )}
+    234 │                   <ul className="list-disc pl-6 space-y-1">
+  > 235 │                     {items.map((item, iIndex) => {
+        │                                       ^^^^^^
+    236 │                       // Restore the [[ that was consumed by the lookahead split
+    237 │                       // and ensure any description text has proper spacing
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:256:39 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    254 │           // Use div instead of p to avoid hydration errors when Streamdown renders block elements
+    255 │           return (
+  > 256 │             <div key={`${baseKey}-p-${pIndex}`}>
+        │                                       ^^^^^^
+    257 │               {renderParagraphWithLinks(trimmed, `${baseKey}-p-${pIndex}`)}
+    258 │             </div>
+  
+  i This is the source of the key value.
+  
+    171 │   return (
+    172 │     <div className="space-y-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+  > 173 │       {paragraphs.map((paragraph, pIndex) => {
+        │                                   ^^^^^^
+    174 │         const trimmed = paragraph.trim();
+    175 │         if (!trimmed) {
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/elements/response.tsx:266:34 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Avoid using the index of an array as key property in an element.
+  
+    264 │           <Streamdown
+    265 │             className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+  > 266 │             key={`${baseKey}-p-${pIndex}`}
+        │                                  ^^^^^^
+    267 │           >
+    268 │             {trimmed}
+  
+  i This is the source of the key value.
+  
+    171 │   return (
+    172 │     <div className="space-y-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+  > 173 │       {paragraphs.map((paragraph, pIndex) => {
+        │                                   ^^^^^^
+    174 │         const trimmed = paragraph.trim();
+    175 │         if (!trimmed) {
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+components/inline-media-link.tsx:225:11 lint/suspicious/noAssignInExpressions ━━━━━━━━━━━━━━━━━━━━━━
+
+  × The assignment should not be in an expression.
+  
+    223 │   let keyIndex = 0;
+    224 │ 
+  > 225 │   while ((match = pattern.exec(text)) !== null) {
+        │           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    226 │     // Add text before the match
+    227 │     if (match.index > lastIndex) {
+  
+  i The use of assignments in expressions is confusing.
+    Expressions are often considered as side-effect free.
+  
+
+components/tool-results/calendar-view.tsx:405:23 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━
+
+  × Forbidden non-null assertion.
+  
+    404 │       {sortedDates.map((dateKey) => {
+  > 405 │         const items = grouped.get(dateKey)!;
+        │                       ^^^^^^^^^^^^^^^^^^^^^
+    406 │         const { label, isToday, isTomorrow, isPast } = formatDate(dateKey);
+    407 │ 
+  
+
+components/tool-results/calendar-view.tsx:214:11 lint/correctness/noUnusedVariables ━━━━━━━━━━━━━━━━
+
+  × This variable visibleMovies is unused.
+  
+    212 │   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
+    213 │ 
+  > 214 │   const { visibleMovies, hasMore, remaining, grouped, sortedDates } =
+        │           ^^^^^^^^^^^^^
+    215 │     useMemo(() => {
+    216 │       if (!output || !output.movies || output.movies.length === 0) {
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+components/tool-results/calendar-view.tsx:348:11 lint/correctness/noUnusedVariables ━━━━━━━━━━━━━━━━
+
+  × This variable visibleEpisodes is unused.
+  
+    346 │   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
+    347 │ 
+  > 348 │   const { visibleEpisodes, hasMore, remaining, grouped, sortedDates } =
+        │           ^^^^^^^^^^^^^^^
+    349 │     useMemo(() => {
+    350 │       if (!output || !output.episodes || output.episodes.length === 0) {
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+
+lib/ai/tools/services/base.ts:184:7 lint/style/useDefaultSwitchClause ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Expected a default switch clause.
+  
+    182 │       const baseUrl = serviceConfig.baseUrl.replace(/\/$/, "");
+    183 │ 
+  > 184 │       switch (config.type) {
+        │       ^^^^^^^^^^^^^^^^^^^^^^
+  > 185 │         case "api-key-header": {
+         ...
+  > 230 │         }
+  > 231 │       }
+        │       ^
+    232 │     } catch {
+    233 │       return false;
+  
+  i The lack of a default clause can be a possible omission.
+  
+  i Consider adding a default clause.
+  
+
+Checked 312 files in 160ms. No fixes applied.
+Found 30 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

@@ -210,8 +210,7 @@ function PureMultimodalInput({
           ...currentAttachments,
           ...successfullyUploadedAttachments,
         ]);
-      } catch (error) {
-        console.error("Error uploading files!", error);
+      } catch (_error) {
       } finally {
         setUploadQueue([]);
       }
@@ -257,8 +256,7 @@ function PureMultimodalInput({
           ...curr,
           ...(successfullyUploadedAttachments as Attachment[]),
         ]);
-      } catch (error) {
-        console.error("Error uploading pasted images:", error);
+      } catch (_error) {
         toast.error("Failed to upload pasted image(s)");
       } finally {
         setUploadQueue([]);

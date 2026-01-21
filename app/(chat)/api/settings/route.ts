@@ -4,7 +4,7 @@ import {
   deleteServiceConfig,
   getServiceConfigs,
   upsertServiceConfig,
-} from "@/lib/db/queries";
+} from "@/lib/db/queries/index";
 import { ChatSDKError } from "@/lib/errors";
 
 export async function GET() {

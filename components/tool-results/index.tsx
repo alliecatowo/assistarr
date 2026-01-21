@@ -34,11 +34,7 @@ export {
 } from "./display";
 export { ErrorResult, GenericResult } from "./generic-result";
 export { MediaCard, type MediaCardProps, type MediaStatus } from "./media-card";
-export {
-  type LayoutMode,
-  MediaResultsView,
-  SearchResultsView,
-} from "./media-results-view";
+export { type LayoutMode, MediaResultsView } from "./media-results-view";
 // Preview components
 export {
   CountPreview,

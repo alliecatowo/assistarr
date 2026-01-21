@@ -1,5 +1,9 @@
 import { auth } from "@/app/(auth)/auth";
-import { getChatById, getVotesByChatId, voteMessage } from "@/lib/db/queries";
+import {
+  getChatById,
+  getVotesByChatId,
+  voteMessage,
+} from "@/lib/db/queries/index";
 import { ChatSDKError } from "@/lib/errors";
 
 export async function GET(request: Request) {

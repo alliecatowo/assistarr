@@ -27,9 +27,7 @@ interface PreviewRouterProps {
 /**
  * Extract media items from output for items preview.
  */
-function extractMediaItems(
-  output: unknown
-): Array<{
+function extractMediaItems(output: unknown): Array<{
   title: string;
   posterUrl?: string | null;
   imageUrl?: string | null;
@@ -75,11 +73,21 @@ function getCountLabel(output: unknown): string {
 
   const obj = output as Record<string, unknown>;
 
-  if ("movies" in obj) return "movies";
-  if ("episodes" in obj) return "episodes";
-  if ("torrents" in obj) return "torrents";
-  if ("items" in obj) return "items";
-  if ("results" in obj) return "results";
+  if ("movies" in obj) {
+    return "movies";
+  }
+  if ("episodes" in obj) {
+    return "episodes";
+  }
+  if ("torrents" in obj) {
+    return "torrents";
+  }
+  if ("items" in obj) {
+    return "items";
+  }
+  if ("results" in obj) {
+    return "results";
+  }
 
   return "items";
 }

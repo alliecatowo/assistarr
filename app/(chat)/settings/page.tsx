@@ -92,11 +92,7 @@ const SERVICE_TOOLS: Record<string, string[]> = {
     "searchSonarrMissingEpisodes",
     "getSonarrCommandStatus",
   ],
-  jellyfin: [
-    "getContinueWatching",
-    "getRecentlyAdded",
-    "searchJellyfinMedia",
-  ],
+  jellyfin: ["getContinueWatching", "getRecentlyAdded", "searchJellyfinMedia"],
   jellyseerr: [
     "searchContent",
     "requestMedia",
@@ -104,11 +100,7 @@ const SERVICE_TOOLS: Record<string, string[]> = {
     "deleteRequest",
     "getDiscovery",
   ],
-  qbittorrent: [
-    "getTorrents",
-    "getTransferInfo",
-    "pauseResumeTorrent",
-  ],
+  qbittorrent: ["getTorrents", "getTransferInfo", "pauseResumeTorrent"],
 };
 
 // Convert camelCase tool names to readable format
@@ -131,7 +123,9 @@ function ToolPills({ serviceName }: { serviceName: string }) {
   const tools = SERVICE_TOOLS[serviceName] || [];
   const [isExpanded, setIsExpanded] = useState(false);
 
-  if (tools.length === 0) return null;
+  if (tools.length === 0) {
+    return null;
+  }
 
   const displayLimit = 6;
   const hasMore = tools.length > displayLimit;
@@ -151,8 +145,8 @@ function ToolPills({ serviceName }: { serviceName: string }) {
       <div className="flex flex-wrap gap-1.5">
         {displayedTools.map((tool) => (
           <span
-            key={tool}
             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors cursor-default"
+            key={tool}
             title={tool}
           >
             {formatToolName(tool)}
@@ -160,16 +154,16 @@ function ToolPills({ serviceName }: { serviceName: string }) {
         ))}
         {hasMore && !isExpanded && (
           <button
-            onClick={() => setIsExpanded(true)}
             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+            onClick={() => setIsExpanded(true)}
           >
             +{hiddenCount} more
           </button>
         )}
         {isExpanded && hasMore && (
           <button
-            onClick={() => setIsExpanded(false)}
             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+            onClick={() => setIsExpanded(false)}
           >
             Show less
           </button>
@@ -496,8 +490,7 @@ export default function SettingsPage() {
         const data = await response.json();
         setConfigs(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch configs:", error);
+    } catch (_error) {
     } finally {
       setIsLoading(false);
     }

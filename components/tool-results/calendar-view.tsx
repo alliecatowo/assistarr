@@ -164,6 +164,65 @@ function MovieCalendarEntry({ item }: { item: MovieCalendarItem }) {
 }
 
 /**
+ * Render a section of movies for a specific date
+ */
+function MovieCalendarDateSection({
+  dateKey,
+  items,
+}: {
+  dateKey: string;
+  items: Array<MovieCalendarItem & { date: string }>;
+}) {
+  const { label, isToday, isTomorrow, isPast } = formatDate(dateKey);
+
+  return (
+    <div key={dateKey}>
+      <div
+        className={cn(
+          "flex items-center gap-2 mb-2 pb-1 border-b",
+          isToday && "border-primary/50",
+          isTomorrow && "border-yellow-500/50",
+          isPast && "border-muted"
+        )}
+      >
+        <CalendarIcon
+          className={cn(
+            "size-4",
+            isToday
+              ? "text-primary"
+              : isTomorrow
+                ? "text-yellow-500"
+                : "text-muted-foreground"
+          )}
+        />
+        <span
+          className={cn(
+            "text-sm font-medium",
+            isToday
+              ? "text-primary"
+              : isTomorrow
+                ? "text-yellow-500"
+                : isPast
+                  ? "text-muted-foreground"
+                  : ""
+          )}
+        >
+          {label}
+        </span>
+      </div>
+      <div className="space-y-2">
+        {items.map((item, idx) => (
+          <MovieCalendarEntry
+            item={item}
+            key={`${item.tmdbId || item.title}-${idx}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Episode calendar item component
  */
 function EpisodeCalendarEntry({ item }: { item: EpisodeCalendarItem }) {
@@ -204,6 +263,65 @@ function EpisodeCalendarEntry({ item }: { item: EpisodeCalendarItem }) {
 }
 
 /**
+ * Render a section of episodes for a specific date
+ */
+function EpisodeCalendarDateSection({
+  dateKey,
+  items,
+}: {
+  dateKey: string;
+  items: Array<EpisodeCalendarItem & { date: string }>;
+}) {
+  const { label, isToday, isTomorrow, isPast } = formatDate(dateKey);
+
+  return (
+    <div key={dateKey}>
+      <div
+        className={cn(
+          "flex items-center gap-2 mb-2 pb-1 border-b",
+          isToday && "border-primary/50",
+          isTomorrow && "border-yellow-500/50",
+          isPast && "border-muted"
+        )}
+      >
+        <CalendarIcon
+          className={cn(
+            "size-4",
+            isToday
+              ? "text-primary"
+              : isTomorrow
+                ? "text-yellow-500"
+                : "text-muted-foreground"
+          )}
+        />
+        <span
+          className={cn(
+            "text-sm font-medium",
+            isToday
+              ? "text-primary"
+              : isTomorrow
+                ? "text-yellow-500"
+                : isPast
+                  ? "text-muted-foreground"
+                  : ""
+          )}
+        >
+          {label}
+        </span>
+      </div>
+      <div className="space-y-2">
+        {items.map((item, idx) => (
+          <EpisodeCalendarEntry
+            item={item}
+            key={`${item.seriesTitle}-${item.seasonNumber}-${item.episodeNumber}-${idx}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Calendar view for movie releases
  */
 export function MovieCalendarView({
@@ -211,43 +329,42 @@ export function MovieCalendarView({
 }: ToolResultProps<MovieCalendarShape>) {
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
 
-  const { visibleMovies, hasMore, remaining, grouped, sortedDates } =
-    useMemo(() => {
-      if (!output || !output.movies || output.movies.length === 0) {
-        return {
-          visibleMovies: [],
-          hasMore: false,
-          remaining: 0,
-          grouped: new Map(),
-          sortedDates: [],
-        };
-      }
-
-      const all = output.movies;
-      const visible = all.slice(0, displayCount);
-      const more = all.length > displayCount;
-      const rem = all.length - displayCount;
-
-      // Transform and group by date
-      const itemsWithDate = visible.map((m) => ({
-        ...m,
-        date: m.releaseDate,
-      }));
-      const grp = groupByDate(itemsWithDate);
-
-      // Sort dates
-      const dates = Array.from(grp.keys()).sort(
-        (a, b) => new Date(a).getTime() - new Date(b).getTime()
-      );
-
+  const { hasMore, remaining, grouped, sortedDates } = useMemo(() => {
+    if (!output || !output.movies || output.movies.length === 0) {
       return {
-        visibleMovies: visible,
-        hasMore: more,
-        remaining: rem,
-        grouped: grp,
-        sortedDates: dates,
+        visibleMovies: [],
+        hasMore: false,
+        remaining: 0,
+        grouped: new Map(),
+        sortedDates: [],
       };
-    }, [output, displayCount]);
+    }
+
+    const all = output.movies;
+    const visible = all.slice(0, displayCount);
+    const more = all.length > displayCount;
+    const rem = all.length - displayCount;
+
+    // Transform and group by date
+    const itemsWithDate = visible.map((m) => ({
+      ...m,
+      date: m.releaseDate,
+    }));
+    const grp = groupByDate(itemsWithDate);
+
+    // Sort dates
+    const dates = Array.from(grp.keys()).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    );
+
+    return {
+      visibleMovies: visible,
+      hasMore: more,
+      remaining: rem,
+      grouped: grp,
+      sortedDates: dates,
+    };
+  }, [output, displayCount]);
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + PAGE_SIZE);
@@ -267,58 +384,13 @@ export function MovieCalendarView({
         <p className="text-xs text-muted-foreground">{output.message}</p>
       )}
 
-      {sortedDates.map((dateKey) => {
-        const items = grouped.get(dateKey) || [];
-        const { label, isToday, isTomorrow, isPast } = formatDate(dateKey);
-
-        return (
-          <div key={dateKey}>
-            <div
-              className={cn(
-                "flex items-center gap-2 mb-2 pb-1 border-b",
-                isToday && "border-primary/50",
-                isTomorrow && "border-yellow-500/50",
-                isPast && "border-muted"
-              )}
-            >
-              <CalendarIcon
-                className={cn(
-                  "size-4",
-                  isToday
-                    ? "text-primary"
-                    : isTomorrow
-                      ? "text-yellow-500"
-                      : "text-muted-foreground"
-                )}
-              />
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  isToday
-                    ? "text-primary"
-                    : isTomorrow
-                      ? "text-yellow-500"
-                      : isPast
-                        ? "text-muted-foreground"
-                        : ""
-                )}
-              >
-                {label}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {items.map(
-                (item: MovieCalendarItem & { date: string }, idx: number) => (
-                  <MovieCalendarEntry
-                    item={item}
-                    key={`${item.tmdbId || item.title}-${idx}`}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        );
-      })}
+      {sortedDates.map((dateKey) => (
+        <MovieCalendarDateSection
+          dateKey={dateKey}
+          items={grouped.get(dateKey) || []}
+          key={dateKey}
+        />
+      ))}
 
       {hasMore && (
         <div className="flex flex-col items-center gap-2">
@@ -345,43 +417,42 @@ export function EpisodeCalendarView({
 }: ToolResultProps<EpisodeCalendarShape>) {
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
 
-  const { visibleEpisodes, hasMore, remaining, grouped, sortedDates } =
-    useMemo(() => {
-      if (!output || !output.episodes || output.episodes.length === 0) {
-        return {
-          visibleEpisodes: [],
-          hasMore: false,
-          remaining: 0,
-          grouped: new Map(),
-          sortedDates: [],
-        };
-      }
-
-      const all = output.episodes;
-      const visible = all.slice(0, displayCount);
-      const more = all.length > displayCount;
-      const rem = all.length - displayCount;
-
-      // Transform and group by date
-      const itemsWithDate = visible.map((e) => ({
-        ...e,
-        date: e.airDate,
-      }));
-      const grp = groupByDate(itemsWithDate);
-
-      // Sort dates
-      const dates = Array.from(grp.keys()).sort(
-        (a, b) => new Date(a).getTime() - new Date(b).getTime()
-      );
-
+  const { hasMore, remaining, grouped, sortedDates } = useMemo(() => {
+    if (!output || !output.episodes || output.episodes.length === 0) {
       return {
-        visibleEpisodes: visible,
-        hasMore: more,
-        remaining: rem,
-        grouped: grp,
-        sortedDates: dates,
+        visibleEpisodes: [],
+        hasMore: false,
+        remaining: 0,
+        grouped: new Map(),
+        sortedDates: [],
       };
-    }, [output, displayCount]);
+    }
+
+    const all = output.episodes;
+    const visible = all.slice(0, displayCount);
+    const more = all.length > displayCount;
+    const rem = all.length - displayCount;
+
+    // Transform and group by date
+    const itemsWithDate = visible.map((e) => ({
+      ...e,
+      date: e.airDate,
+    }));
+    const grp = groupByDate(itemsWithDate);
+
+    // Sort dates
+    const dates = Array.from(grp.keys()).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    );
+
+    return {
+      visibleEpisodes: visible,
+      hasMore: more,
+      remaining: rem,
+      grouped: grp,
+      sortedDates: dates,
+    };
+  }, [output, displayCount]);
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + PAGE_SIZE);
@@ -401,58 +472,13 @@ export function EpisodeCalendarView({
         <p className="text-xs text-muted-foreground">{output.message}</p>
       )}
 
-      {sortedDates.map((dateKey) => {
-        const items = grouped.get(dateKey)!;
-        const { label, isToday, isTomorrow, isPast } = formatDate(dateKey);
-
-        return (
-          <div key={dateKey}>
-            <div
-              className={cn(
-                "flex items-center gap-2 mb-2 pb-1 border-b",
-                isToday && "border-primary/50",
-                isTomorrow && "border-yellow-500/50",
-                isPast && "border-muted"
-              )}
-            >
-              <CalendarIcon
-                className={cn(
-                  "size-4",
-                  isToday
-                    ? "text-primary"
-                    : isTomorrow
-                      ? "text-yellow-500"
-                      : "text-muted-foreground"
-                )}
-              />
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  isToday
-                    ? "text-primary"
-                    : isTomorrow
-                      ? "text-yellow-500"
-                      : isPast
-                        ? "text-muted-foreground"
-                        : ""
-                )}
-              >
-                {label}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {items.map(
-                (item: EpisodeCalendarItem & { date: string }, idx: number) => (
-                  <EpisodeCalendarEntry
-                    item={item}
-                    key={`${item.seriesTitle}-${item.seasonNumber}-${item.episodeNumber}-${idx}`}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        );
-      })}
+      {sortedDates.map((dateKey) => (
+        <EpisodeCalendarDateSection
+          dateKey={dateKey}
+          items={grouped.get(dateKey) || []}
+          key={dateKey}
+        />
+      ))}
 
       {hasMore && (
         <div className="flex flex-col items-center gap-2">

@@ -44,12 +44,18 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
         }
 
         const params = new URLSearchParams();
-        if (folder) params.append("folder", folder);
-        if (downloadId) params.append("downloadId", downloadId);
-        if (seriesId !== undefined)
+        if (folder) {
+          params.append("folder", folder);
+        }
+        if (downloadId) {
+          params.append("downloadId", downloadId);
+        }
+        if (seriesId !== undefined) {
           params.append("seriesId", seriesId.toString());
-        if (seasonNumber !== undefined)
+        }
+        if (seasonNumber !== undefined) {
           params.append("seasonNumber", seasonNumber.toString());
+        }
 
         const items = await sonarrRequest<SonarrManualImportItem[]>(
           session.user.id,
@@ -94,7 +100,9 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
   });
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) {
+    return "0 B";
+  }
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

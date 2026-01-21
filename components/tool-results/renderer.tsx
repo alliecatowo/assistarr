@@ -8,7 +8,11 @@ import { ErrorResult, GenericResult } from "./generic-result";
 import { MediaResultsView } from "./media-results-view";
 import { QueueView } from "./queue-view";
 import { SuccessCard } from "./success-card";
-import { detectResultType, type SuccessConfirmationShape, type ToolState } from "./types";
+import {
+  detectResultType,
+  type SuccessConfirmationShape,
+  type ToolState,
+} from "./types";
 
 interface ToolResultRendererProps {
   toolName: string;
@@ -106,12 +110,7 @@ export function ToolResultRenderer({
   // 1. Handle error outputs (no wrapper for errors)
   if (output && typeof output === "object" && "error" in output) {
     const errorOutput = output as { error: unknown; [key: string]: unknown };
-    return (
-      <ErrorResult
-        context={errorOutput}
-        error={errorOutput.error}
-      />
-    );
+    return <ErrorResult context={errorOutput} error={errorOutput.error} />;
   }
 
   // 2. Detect result type by shape (not tool name!)
@@ -146,4 +145,3 @@ export function ToolResultRenderer({
 export function hasRichRenderer(output: unknown): boolean {
   return detectResultType(output) !== null;
 }
-

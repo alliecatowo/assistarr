@@ -41,18 +41,22 @@ export function ErrorResult({ error, context }: ErrorResultProps) {
   const errorMessage = typeof error === "string" ? error : String(error);
 
   // Check for "already exists" context
-  const existingMovie = context?.existingMovie as {
-    title?: string;
-    id?: number;
-    path?: string;
-    hasFile?: boolean;
-  } | undefined;
+  const existingMovie = context?.existingMovie as
+    | {
+        title?: string;
+        id?: number;
+        path?: string;
+        hasFile?: boolean;
+      }
+    | undefined;
 
-  const existingSeries = context?.existingSeries as {
-    title?: string;
-    id?: number;
-    path?: string;
-  } | undefined;
+  const existingSeries = context?.existingSeries as
+    | {
+        title?: string;
+        id?: number;
+        path?: string;
+      }
+    | undefined;
 
   const existingItem = existingMovie || existingSeries;
   const isAlreadyExists = !!existingItem;
@@ -67,7 +71,8 @@ export function ErrorResult({ error, context }: ErrorResultProps) {
               Already in library
             </p>
             <p className="text-muted-foreground">
-              <span className="font-medium">{existingItem.title}</span> is already being tracked.
+              <span className="font-medium">{existingItem.title}</span> is
+              already being tracked.
             </p>
             {existingItem.path && (
               <p className="text-muted-foreground/70 text-[10px]">

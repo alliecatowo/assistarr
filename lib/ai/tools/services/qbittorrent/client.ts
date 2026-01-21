@@ -1,4 +1,4 @@
-import { getServiceConfig } from "@/lib/db/queries";
+import { getServiceConfig } from "@/lib/db/queries/index";
 import type { ServiceConfig } from "@/lib/db/schema";
 
 const SERVICE_NAME = "qbittorrent";
@@ -25,7 +25,7 @@ export class QBittorrentClientError extends Error {
 /**
  * Get qBittorrent service configuration for a user
  */
-export async function getQBittorrentConfig(
+export function getQBittorrentConfig(
   userId: string
 ): Promise<ServiceConfig | null> {
   return getServiceConfig({
@@ -160,7 +160,7 @@ export async function qbittorrentRequest<T>(
   let sid = await getSessionId(baseUrl, username, password);
   const url = `${baseUrl}/api/v2${endpoint}`;
 
-  const makeRequest = async (sessionId: string): Promise<Response> => {
+  const makeRequest = (sessionId: string): Promise<Response> => {
     const headers: HeadersInit = {
       Cookie: `SID=${sessionId}`,
       ...options.headers,

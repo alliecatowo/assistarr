@@ -35,7 +35,13 @@ export interface MediaItemShape {
   // Standardized media type (from DisplayableMedia)
   mediaType?: "movie" | "tv" | "episode";
   // Standardized status (from DisplayableMedia)
-  status?: "available" | "wanted" | "downloading" | "requested" | "missing" | string;
+  status?:
+    | "available"
+    | "wanted"
+    | "downloading"
+    | "requested"
+    | "missing"
+    | string;
   // Service IDs nested under externalIds (from DisplayableMedia)
   externalIds?: {
     tmdb?: number;
@@ -99,7 +105,10 @@ export function isMediaItem(item: unknown): item is MediaItemShape {
   }
 
   // If it has mediaType, it's likely a DisplayableMedia (stronger signal)
-  if (obj.mediaType && ["movie", "tv", "episode"].includes(obj.mediaType as string)) {
+  if (
+    obj.mediaType &&
+    ["movie", "tv", "episode"].includes(obj.mediaType as string)
+  ) {
     return true;
   }
 

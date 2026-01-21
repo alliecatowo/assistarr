@@ -43,16 +43,12 @@ async function fetchJellyseerrService(
     });
 
     if (!response.ok) {
-      console.error(
-        `Failed to fetch ${servicePath} from Jellyseerr: ${response.status}`
-      );
       return null;
     }
 
     const data = await response.json();
     return Array.isArray(data) ? data : null;
-  } catch (error) {
-    console.error(`Error fetching ${servicePath} from Jellyseerr:`, error);
+  } catch (_error) {
     return null;
   }
 }
@@ -111,7 +107,6 @@ export async function POST(request: Request) {
 
     return Response.json(response);
   } catch (error) {
-    console.error("Discovery error:", error);
     const message =
       error instanceof Error ? error.message : "Failed to discover services";
     return new ChatSDKError("bad_request:settings", message).toResponse();

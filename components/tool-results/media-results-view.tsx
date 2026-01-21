@@ -22,16 +22,22 @@ import type {
 /**
  * Determine the media type from the item data or tool name hint
  */
-function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
-  // Explicit mediaType field
+function getMediaTypeFromExplicitField(
+  item: MediaItemShape
+): "movie" | "tv" | null {
   if (item.mediaType) {
-    // Map "episode" to "tv" for display purposes
-    return item.mediaType === "episode" ? "tv" : item.mediaType;
+    return item.mediaType === "episode"
+      ? "tv"
+      : (item.mediaType as "movie" | "tv");
   }
+  return null;
+}
 
-  // Jellyfin format: type field with capitalized values ("Movie", "Episode", "Series")
+function getMediaTypeFromJellyfinType(
+  item: MediaItemShape
+): "movie" | "tv" | null {
   if ("type" in item) {
-    const itemType = (item as any).type;
+    const itemType = (item as unknown as Record<string, unknown>).type;
     if (itemType === "Episode" || itemType === "Series") {
       return "tv";
     }
@@ -39,8 +45,44 @@ function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
       return "movie";
     }
   }
+  return null;
+}
 
-  // Check for TV-specific fields
+function getMediaTypeFromToolHint(
+  item: MediaItemShape,
+  toolName?: string
+): "movie" | "tv" | null {
+  if (!toolName) {
+    return null;
+  }
+  const lower = toolName.toLowerCase();
+
+  if (
+    lower.includes("sonarr") ||
+    lower.includes("series") ||
+    lower.includes("tv")
+  ) {
+    return "tv";
+  }
+
+  if (lower.includes("jellyfin") && "seriesName" in item) {
+    return "tv";
+  }
+
+  return null;
+}
+
+function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
+  const explicit = getMediaTypeFromExplicitField(item);
+  if (explicit) {
+    return explicit;
+  }
+
+  const jellyfin = getMediaTypeFromJellyfinType(item);
+  if (jellyfin) {
+    return jellyfin;
+  }
+
   if (
     "tvdbId" in item ||
     "seasonCount" in item ||
@@ -50,30 +92,11 @@ function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
     return "tv";
   }
 
-  // Hint from tool name (for backwards compatibility)
-  if (toolName) {
-    const lower = toolName.toLowerCase();
-    if (
-      lower.includes("sonarr") ||
-      lower.includes("series") ||
-      lower.includes("tv") ||
-      lower.includes("jellyfin")
-    ) {
-      // Jellyfin can be either, but if we're here it's likely episodes
-      if (lower.includes("jellyfin") && "seriesName" in item) {
-        return "tv";
-      }
-    }
-    if (
-      lower.includes("sonarr") ||
-      lower.includes("series") ||
-      lower.includes("tv")
-    ) {
-      return "tv";
-    }
+  const hint = getMediaTypeFromToolHint(item, toolName);
+  if (hint) {
+    return hint;
   }
 
-  // Default to movie
   return "movie";
 }
 
@@ -82,14 +105,15 @@ function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
  * Handles both standard posterUrl and Jellyfin's imageUrl
  */
 function getPosterUrl(item: MediaItemShape): string | null | undefined {
-  // Standard posterUrl field (TMDB, Radarr, Sonarr, Jellyseerr)
   if (item.posterUrl) {
     return item.posterUrl;
   }
 
-  // Jellyfin returns imageUrl instead
-  if ("imageUrl" in item && typeof (item as any).imageUrl === "string") {
-    return (item as any).imageUrl;
+  if (
+    "imageUrl" in item &&
+    typeof (item as unknown as Record<string, unknown>).imageUrl === "string"
+  ) {
+    return (item as unknown as Record<string, string>).imageUrl;
   }
 
   return null;
@@ -99,53 +123,58 @@ function getPosterUrl(item: MediaItemShape): string | null | undefined {
  * Normalize status to MediaStatus enum.
  * Handles various status formats from different services.
  */
-function normalizeStatus(
-  item: MediaItemShape,
-  _toolName?: string
-): MediaStatus {
-  // Jellyseerr format: explicit boolean flags
+function getStatusFromExplicitFlags(item: MediaItemShape): MediaStatus | null {
   if ("isAvailable" in item && item.isAvailable === true) {
     return "available";
   }
   if ("isPending" in item && item.isPending === true) {
     return "pending";
   }
-
-  // Library format: hasFile indicates downloaded/available
   if ("hasFile" in item && item.hasFile === true) {
     return "available";
   }
+  return null;
+}
 
-  // Check string status field
-  if (item.status) {
-    const statusLower = item.status.toLowerCase();
-    if (
-      statusLower.includes("available") ||
-      statusLower.includes("downloaded")
-    ) {
-      return "available";
-    }
-    if (statusLower.includes("request")) {
-      return "requested";
-    }
-    if (statusLower.includes("pending") || statusLower.includes("process")) {
-      return "pending";
-    }
+function getStatusFromTextField(item: MediaItemShape): MediaStatus | null {
+  if (!item.status) {
+    return null;
+  }
+  const statusLower = item.status.toLowerCase();
+  if (statusLower.includes("available") || statusLower.includes("downloaded")) {
+    return "available";
+  }
+  if (statusLower.includes("request")) {
+    return "requested";
+  }
+  if (statusLower.includes("pending") || statusLower.includes("process")) {
+    return "pending";
+  }
+  return null;
+}
+
+function normalizeStatus(
+  item: MediaItemShape,
+  _toolName?: string
+): MediaStatus {
+  const explicitStatus = getStatusFromExplicitFlags(item);
+  if (explicitStatus) {
+    return explicitStatus;
   }
 
-  // Jellyfin items from library are already available (they exist in the library)
-  // Items with imageUrl are from Jellyfin library
+  const textStatus = getStatusFromTextField(item);
+  if (textStatus) {
+    return textStatus;
+  }
+
   if ("imageUrl" in item || "type" in item) {
     return "available";
   }
 
-  // Radarr/Sonarr library items - if monitored and has a quality profile, likely available
   if (item.monitored !== undefined) {
-    // If it's in the library and monitored, default to available unless hasFile is explicitly false
-    if ("hasFile" in item && item.hasFile === false) {
-      return "unavailable";
-    }
-    return "available";
+    return "hasFile" in item && item.hasFile === false
+      ? "unavailable"
+      : "available";
   }
 
   return "unavailable";
@@ -155,30 +184,36 @@ function normalizeStatus(
  * Get rating from various possible sources
  */
 function getRating(item: MediaItemShape): number | undefined {
-  // Direct rating field
   if (typeof item.rating === "number") {
     return item.rating;
   }
 
-  // Jellyseerr format
-  if ("voteAverage" in item && typeof (item as any).voteAverage === "number") {
-    return (item as any).voteAverage;
+  if (
+    "voteAverage" in item &&
+    typeof (item as unknown as Record<string, unknown>).voteAverage === "number"
+  ) {
+    return (item as unknown as Record<string, number>).voteAverage;
   }
 
-  // Radarr format
-  if ("ratings" in item && typeof item === "object") {
-    const ratings = (item as any).ratings;
-    if (ratings?.tmdb?.value) {
-      return ratings.tmdb.value;
+  if ("ratings" in item && item.ratings && typeof item.ratings === "object") {
+    const ratings = item.ratings as Record<
+      string,
+      { value?: number } | number | undefined
+    >;
+    const tmdb = ratings.tmdb;
+    const imdb = ratings.imdb;
+
+    if (tmdb && typeof tmdb === "object" && typeof tmdb.value === "number") {
+      return tmdb.value;
     }
-    if (ratings?.imdb?.value) {
-      return ratings.imdb.value;
+    if (imdb && typeof imdb === "object" && typeof imdb.value === "number") {
+      return imdb.value;
     }
-    if (ratings?.tmdb) {
-      return ratings.tmdb;
+    if (typeof tmdb === "number") {
+      return tmdb;
     }
-    if (ratings?.imdb) {
-      return ratings.imdb;
+    if (typeof imdb === "number") {
+      return imdb;
     }
   }
 
@@ -187,29 +222,19 @@ function getRating(item: MediaItemShape): number | undefined {
 
 export type LayoutMode = "auto" | "carousel" | "grid";
 
-/** Initial items to display before "Load More" */
 const INITIAL_DISPLAY_COUNT = 10;
-/** Items to load per "Load More" click */
 const PAGE_SIZE = 10;
 
-/**
- * Get TMDB ID from item - handles various field names
- */
 function getTmdbId(item: MediaItemShape): number | undefined {
   if (typeof item.tmdbId === "number") {
     return item.tmdbId;
   }
-  // Some services use 'id' as TMDB ID for search results
   if (typeof item.id === "number" && !("type" in item)) {
-    // Don't treat Jellyfin IDs (which are strings) as TMDB IDs
     return item.id;
   }
   return undefined;
 }
 
-/**
- * Get IMDB ID from item
- */
 function getImdbId(item: MediaItemShape): string | undefined {
   if (typeof item.imdbId === "string" && item.imdbId.startsWith("tt")) {
     return item.imdbId;
@@ -217,11 +242,7 @@ function getImdbId(item: MediaItemShape): string | undefined {
   return undefined;
 }
 
-/**
- * Get Jellyfin item ID - only for items that are from Jellyfin
- */
 function getJellyfinId(item: MediaItemShape): string | undefined {
-  // Jellyfin items have a string ID and usually have 'type' or 'imageUrl' field
   if (typeof item.id === "string" && ("type" in item || "imageUrl" in item)) {
     return item.id;
   }
@@ -230,33 +251,12 @@ function getJellyfinId(item: MediaItemShape): string | undefined {
 
 interface MediaResultsViewProps extends ToolResultProps<MediaResultsShape> {
   toolName?: string;
-  /** Layout mode: auto (default), carousel, or grid */
   layout?: LayoutMode;
-  /** Threshold for auto layout: use carousel if <= this count, grid otherwise */
   gridThreshold?: number;
-  /** Initial items to display before Load More (default: 10) */
   initialCount?: number;
-  /** Jellyfin base URL for Watch links (passed from parent) */
   jellyfinBaseUrl?: string;
 }
 
-/**
- * MediaResultsView displays media results in a carousel or grid layout.
- *
- * This is a SHAPE-BASED renderer that works with any tool output matching
- * the MediaResultsShape: { results: [{ title, ... }], message? }
- *
- * Layout modes:
- * - "auto" (default): carousel for ≤6 items, grid for more
- * - "carousel": always horizontal scroll
- * - "grid": responsive grid layout
- *
- * Supports:
- * - Search results (Jellyseerr, Radarr, Sonarr)
- * - Library listings (Radarr, Sonarr, Jellyfin)
- * - Discovery/trending content
- * - Any plugin returning media items
- */
 export function MediaResultsView({
   output,
   toolName,
@@ -293,8 +293,7 @@ export function MediaResultsView({
         }
 
         toast.success(data.message || "Media requested successfully");
-      } catch (error) {
-        console.error("Error requesting media:", error);
+      } catch (_error) {
         toast.error("Failed to request media");
       } finally {
         setRequestingIds((prev) => {
@@ -307,32 +306,28 @@ export function MediaResultsView({
     [requestingIds]
   );
 
-  // Memoize derived values
-  const { allResults, visibleResults, hasMore, remaining, message } =
-    useMemo(() => {
-      if (!output || !output.results || output.results.length === 0) {
-        return {
-          allResults: [],
-          visibleResults: [],
-          hasMore: false,
-          remaining: 0,
-          message: output?.message || "No results found.",
-        };
-      }
-
-      const all = output.results;
-      const visible = all.slice(0, displayCount);
-      const more = all.length > displayCount;
-      const rem = all.length - displayCount;
-
+  const { visibleResults, hasMore, remaining, message } = useMemo(() => {
+    if (!output || !output.results || output.results.length === 0) {
       return {
-        allResults: all,
-        visibleResults: visible,
-        hasMore: more,
-        remaining: rem,
-        message: output.message,
+        visibleResults: [],
+        hasMore: false,
+        remaining: 0,
+        message: output?.message || "No results found.",
       };
-    }, [output, displayCount]);
+    }
+
+    const all = output.results;
+    const visible = all.slice(0, displayCount);
+    const more = all.length > displayCount;
+    const rem = all.length - displayCount;
+
+    return {
+      visibleResults: visible,
+      hasMore: more,
+      remaining: rem,
+      message: output.message,
+    };
+  }, [output, displayCount]);
 
   const handleLoadMore = useCallback(() => {
     setDisplayCount((prev) => prev + PAGE_SIZE);
@@ -346,14 +341,13 @@ export function MediaResultsView({
     );
   }
 
-  // Get total count from various possible fields
+  const allResultsCount = output.results.length;
   const totalCount =
     output.totalResults ??
     output.totalMatching ??
     output.totalInLibrary ??
-    allResults.length;
+    allResultsCount;
 
-  // Determine effective layout
   const effectiveLayout =
     layout === "auto"
       ? visibleResults.length <= gridThreshold
@@ -385,10 +379,8 @@ export function MediaResultsView({
 
   return (
     <div className="space-y-3">
-      {/* Message header */}
       {message && <p className="text-xs text-muted-foreground">{message}</p>}
 
-      {/* Content */}
       {effectiveLayout === "carousel" ? (
         <div className="px-12">
           <Carousel
@@ -423,7 +415,6 @@ export function MediaResultsView({
         </div>
       )}
 
-      {/* Load More / Pagination info */}
       {hasMore ? (
         <div className="flex flex-col items-center gap-2">
           <Button
@@ -436,14 +427,11 @@ export function MediaResultsView({
             Load {Math.min(PAGE_SIZE, remaining)} more ({remaining} remaining)
           </Button>
         </div>
-      ) : totalCount > allResults.length ? (
+      ) : totalCount > allResultsCount ? (
         <p className="text-xs text-muted-foreground text-center">
-          Showing all {allResults.length} of {totalCount} results
+          Showing all {allResultsCount} of {totalCount} results
         </p>
       ) : null}
     </div>
   );
 }
-
-// Export with old name for backwards compatibility
-export { MediaResultsView as SearchResultsView };

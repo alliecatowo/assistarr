@@ -101,7 +101,7 @@ function splitLineByMediaLinks(text: string): Part[] {
  */
 function isSimpleText(text: string): boolean {
   // Check for common markdown patterns that need processing
-  const markdownPatterns = /[*_`~#\[\]()>|\\]/;
+  const markdownPatterns = /[*_`~#[\]()>|\\]/;
   return !markdownPatterns.test(text);
 }
 
@@ -136,9 +136,7 @@ function renderParagraphWithLinks(text: string, keyPrefix: string): ReactNode {
         // For simple text (no markdown), render directly to preserve whitespace
         // Streamdown can strip leading/trailing spaces during markdown processing
         if (isSimpleText(part.content)) {
-          return (
-            <span key={`${keyPrefix}-text-${index}`}>{part.content}</span>
-          );
+          return <span key={`${keyPrefix}-text-${index}`}>{part.content}</span>;
         }
         // For text with markdown formatting, use Streamdown
         return (
@@ -279,7 +277,9 @@ export function Response({ className, children, ...props }: ResponseProps) {
   // Check if children is a string with inline media links
   if (typeof children === "string" && hasInlineMediaLinks(children)) {
     // Normalize spacing around media links and strip bold markers
-    const processedText = normalizeMediaLinkSpacing(stripBoldFromMediaLinks(children));
+    const processedText = normalizeMediaLinkSpacing(
+      stripBoldFromMediaLinks(children)
+    );
     return (
       <div
         className={cn(

@@ -28,7 +28,7 @@ export const Tool = ({ className, ...props }: ToolProps) => (
 );
 
 export type ToolHeaderProps = {
-  type: ToolUIPart["type"];
+  type: string | ToolUIPart["type"];
   state: ToolUIPart["state"];
   approval?: { approved?: boolean };
   className?: string;

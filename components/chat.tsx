@@ -27,9 +27,9 @@ import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
+import { MultimodalInput } from "./elements/multimodal-input/index";
 import type { VisibilityType } from "./elements/visibility-selector";
 import { Messages } from "./messages";
-import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 

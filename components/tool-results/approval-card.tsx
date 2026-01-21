@@ -48,7 +48,9 @@ export function ApprovalCard({
   onDeny,
   isLoading,
 }: ApprovalCardProps) {
-  const [fetchedMetadata, setFetchedMetadata] = useState<MediaMetadata | null>(null);
+  const [fetchedMetadata, setFetchedMetadata] = useState<MediaMetadata | null>(
+    null
+  );
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +61,8 @@ export function ApprovalCard({
     ?.qualityProfileId;
   const minimumAvailability = (input as { minimumAvailability?: string })
     ?.minimumAvailability;
-  const searchForMovie = (input as { searchForMovie?: boolean })?.searchForMovie;
+  const searchForMovie = (input as { searchForMovie?: boolean })
+    ?.searchForMovie;
   const monitor = (input as { monitor?: string })?.monitor;
   const searchForMissingEpisodes = (
     input as { searchForMissingEpisodes?: boolean }
@@ -96,13 +99,17 @@ export function ApprovalCard({
   // Only fetch metadata if not provided from tool input
   useEffect(() => {
     // Skip fetch if metadata was provided
-    if (providedMetadata) return;
+    if (providedMetadata) {
+      return;
+    }
 
     const fetchMetadata = async () => {
       // Jellyseerr uses TMDB for both movies and TV shows
       // Radarr uses TMDB for movies, Sonarr uses TVDB for series
       const id = isJellyseerr || isMovieTool ? tmdbId : tvdbId;
-      if (!id) return;
+      if (!id) {
+        return;
+      }
 
       setIsFetching(true);
       setError(null);
@@ -149,7 +156,12 @@ export function ApprovalCard({
       {/* Header */}
       <div className="border-b border-yellow-500/30 bg-yellow-500/10 px-4 py-2">
         <p className="text-xs font-medium text-yellow-700 dark:text-yellow-300">
-          Approval Required - {isJellyseerr ? "Request Media" : isMovieTool ? "Add Movie" : "Add Series"}
+          Approval Required -{" "}
+          {isJellyseerr
+            ? "Request Media"
+            : isMovieTool
+              ? "Add Movie"
+              : "Add Series"}
         </p>
       </div>
 
@@ -184,11 +196,16 @@ export function ApprovalCard({
               <h3 className="line-clamp-2 font-semibold text-sm">
                 {metadata.title}
                 {metadata.year && (
-                  <span className="text-muted-foreground"> ({metadata.year})</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    ({metadata.year})
+                  </span>
                 )}
               </h3>
 
-              {(metadata.rating || metadata.runtime || metadata.seasonCount) && (
+              {(metadata.rating ||
+                metadata.runtime ||
+                metadata.seasonCount) && (
                 <p className="mt-1 text-xs text-yellow-600">
                   {metadata.rating && `★ ${metadata.rating.toFixed(1)}`}
                   {metadata.runtime && ` - ${metadata.runtime} min`}
@@ -225,11 +242,13 @@ export function ApprovalCard({
           <div className="mt-3 space-y-1 text-xs">
             {qualityProfileName ? (
               <p>
-                <span className="font-medium">Quality:</span> {qualityProfileName}
+                <span className="font-medium">Quality:</span>{" "}
+                {qualityProfileName}
               </p>
             ) : qualityProfileId ? (
               <p>
-                <span className="font-medium">Quality Profile:</span> #{qualityProfileId}
+                <span className="font-medium">Quality Profile:</span> #
+                {qualityProfileId}
               </p>
             ) : null}
 
@@ -263,8 +282,7 @@ export function ApprovalCard({
             {/* Jellyseerr-specific settings */}
             {is4k !== undefined && (
               <p>
-                <span className="font-medium">4K:</span>{" "}
-                {is4k ? "Yes" : "No"}
+                <span className="font-medium">4K:</span> {is4k ? "Yes" : "No"}
               </p>
             )}
 
@@ -280,12 +298,7 @@ export function ApprovalCard({
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-2 border-t border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
-        <Button
-          disabled={isLoading}
-          onClick={onDeny}
-          size="sm"
-          variant="ghost"
-        >
+        <Button disabled={isLoading} onClick={onDeny} size="sm" variant="ghost">
           <XIcon className="mr-1 size-4" />
           Deny
         </Button>

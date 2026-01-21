@@ -29,10 +29,21 @@ export function SuccessCard({ output, toolName }: SuccessCardProps) {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
   const [isFetching, setIsFetching] = useState(false);
 
-  const { title, tmdbId, tvdbId, mediaType, status, is4k, message, posterUrl, year } = output;
+  const {
+    title,
+    tmdbId,
+    tvdbId,
+    mediaType,
+    status,
+    is4k,
+    message,
+    posterUrl,
+    year,
+  } = output;
 
   // Determine if this is a movie or TV show
-  const isMovie = mediaType === "movie" || toolName.toLowerCase().includes("movie");
+  const isMovie =
+    mediaType === "movie" || toolName.toLowerCase().includes("movie");
   const isJellyseerr = toolName.toLowerCase().includes("requestmedia");
 
   // Fetch metadata if we don't have a poster URL
@@ -44,7 +55,9 @@ export function SuccessCard({ output, toolName }: SuccessCardProps) {
 
     const fetchMetadata = async () => {
       const id = isJellyseerr || isMovie ? tmdbId : tvdbId;
-      if (!id) return;
+      if (!id) {
+        return;
+      }
 
       setIsFetching(true);
       try {
@@ -122,7 +135,10 @@ export function SuccessCard({ output, toolName }: SuccessCardProps) {
           <h3 className="line-clamp-2 font-semibold text-sm">
             {metadata?.title || title}
             {(metadata?.year || year) && (
-              <span className="text-muted-foreground"> ({metadata?.year || year})</span>
+              <span className="text-muted-foreground">
+                {" "}
+                ({metadata?.year || year})
+              </span>
             )}
           </h3>
 

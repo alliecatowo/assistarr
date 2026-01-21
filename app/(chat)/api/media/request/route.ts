@@ -130,8 +130,6 @@ export async function POST(request: Request) {
         }),
     });
   } catch (error) {
-    console.error("Error requesting media:", error);
-
     if (error instanceof Error) {
       // Check if it's a configuration error
       if (

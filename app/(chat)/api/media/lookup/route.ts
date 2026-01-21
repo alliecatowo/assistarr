@@ -1,11 +1,11 @@
 import { auth } from "@/app/(auth)/auth";
 import {
-  jellyseerrRequest,
   getJellyseerrConfig,
+  jellyseerrRequest,
 } from "@/lib/ai/tools/services/jellyseerr/client";
 import { radarrRequest } from "@/lib/ai/tools/services/radarr/client";
-import { sonarrRequest } from "@/lib/ai/tools/services/sonarr/client";
 import type { RadarrMovie } from "@/lib/ai/tools/services/radarr/types";
+import { sonarrRequest } from "@/lib/ai/tools/services/sonarr/client";
 import type { SonarrSeries } from "@/lib/ai/tools/services/sonarr/types";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -89,7 +89,9 @@ export async function GET(request: Request) {
       }
 
       const movie = results[0];
-      const posterImage = movie.images?.find((img) => img.coverType === "poster");
+      const posterImage = movie.images?.find(
+        (img) => img.coverType === "poster"
+      );
 
       return Response.json({
         title: movie.title,
@@ -114,10 +116,13 @@ export async function GET(request: Request) {
       }
 
       const series = results[0];
-      const posterImage = series.images?.find((img) => img.coverType === "poster");
+      const posterImage = series.images?.find(
+        (img) => img.coverType === "poster"
+      );
 
       // Calculate season count from seasons array (excluding specials/season 0)
-      const seasonCount = series.seasons?.filter((s) => s.seasonNumber > 0).length ?? 0;
+      const seasonCount =
+        series.seasons?.filter((s) => s.seasonNumber > 0).length ?? 0;
 
       return Response.json({
         title: series.title,
@@ -133,7 +138,6 @@ export async function GET(request: Request) {
 
     return new ChatSDKError("bad_request:api").toResponse();
   } catch (error) {
-    console.error("[media/lookup] Error:", error);
     return Response.json(
       { error: error instanceof Error ? error.message : "Lookup failed" },
       { status: 500 }

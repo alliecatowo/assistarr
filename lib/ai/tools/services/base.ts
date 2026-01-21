@@ -62,9 +62,15 @@ export function deriveMediaStatus(
   isAvailable?: boolean,
   isPending?: boolean
 ): DisplayableMedia["status"] {
-  if (isAvailable || hasFile) return "available";
-  if (isPending) return "requested";
-  if (monitored) return "wanted";
+  if (isAvailable || hasFile) {
+    return "available";
+  }
+  if (isPending) {
+    return "requested";
+  }
+  if (monitored) {
+    return "wanted";
+  }
   return "missing";
 }
 
@@ -222,6 +228,9 @@ export function createHealthCheck(
           const text = await response.text();
           return text === config.successResponse;
         }
+
+        default:
+          return false;
       }
     } catch {
       return false;

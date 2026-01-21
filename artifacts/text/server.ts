@@ -32,19 +32,9 @@ export const textDocumentHandler = createDocumentHandler<"text">({
             data: text,
             transient: true,
           });
-        } else if (type === "error") {
-          console.error("[textDocumentHandler] Stream error:", delta);
         }
       }
-
-      if (!draftContent) {
-        console.error(
-          "[textDocumentHandler] No content generated for document:",
-          title
-        );
-      }
     } catch (error) {
-      console.error("[textDocumentHandler] Error generating document:", error);
       // Write error message to stream so user sees something
       const errorMessage = `Error generating document: ${error instanceof Error ? error.message : "Unknown error"}`;
       dataStream.write({
@@ -89,22 +79,9 @@ export const textDocumentHandler = createDocumentHandler<"text">({
             data: text,
             transient: true,
           });
-        } else if (type === "error") {
-          console.error("[textDocumentHandler] Update stream error:", delta);
         }
       }
-
-      if (!draftContent) {
-        console.error(
-          "[textDocumentHandler] No content generated for document update:",
-          document.id
-        );
-      }
     } catch (error) {
-      console.error(
-        "[textDocumentHandler] Error updating document:",
-        error
-      );
       const errorMessage = `Error updating document: ${error instanceof Error ? error.message : "Unknown error"}`;
       dataStream.write({
         type: "data-textDelta",

@@ -130,15 +130,27 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
         const limitedSeries = sortedSeries.slice(0, limit);
 
         const filters: string[] = [];
-        if (genre) filters.push(`genre: ${genre}`);
-        if (status) filters.push(`status: ${status}`);
-        if (hasEpisodes === true) filters.push("with episodes");
-        if (hasEpisodes === false) filters.push("missing episodes");
-        if (monitored !== undefined)
+        if (genre) {
+          filters.push(`genre: ${genre}`);
+        }
+        if (status) {
+          filters.push(`status: ${status}`);
+        }
+        if (hasEpisodes === true) {
+          filters.push("with episodes");
+        }
+        if (hasEpisodes === false) {
+          filters.push("missing episodes");
+        }
+        if (monitored !== undefined) {
           filters.push(monitored ? "monitored" : "unmonitored");
-        if (network) filters.push(`network: ${network}`);
-        if (yearFrom || yearTo)
+        }
+        if (network) {
+          filters.push(`network: ${network}`);
+        }
+        if (yearFrom || yearTo) {
           filters.push(`years: ${yearFrom ?? "any"}-${yearTo ?? "any"}`);
+        }
         const filterDesc = filters.length > 0 ? ` (${filters.join(", ")})` : "";
 
         return {

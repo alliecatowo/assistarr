@@ -164,8 +164,6 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching media details:", error);
-
     // Check if it's a configuration error
     if (
       error instanceof Error &&

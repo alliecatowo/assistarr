@@ -62,7 +62,7 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
 
         return {
           success: true,
-          message: `Removed ${ids!.length} item(s) from the blocklist.`,
+          message: `Removed ${ids?.length} item(s) from the blocklist.`,
         };
       }
     ),

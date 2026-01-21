@@ -1,4 +1,4 @@
-import { getServiceConfig } from "@/lib/db/queries";
+import { getServiceConfig } from "@/lib/db/queries/index";
 import type { ServiceConfig } from "@/lib/db/schema";
 
 const SERVICE_NAME = "jellyseerr";

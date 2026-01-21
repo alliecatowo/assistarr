@@ -29,7 +29,7 @@ import {
   saveMessages,
   updateChatTitleById,
   updateMessage,
-} from "@/lib/db/queries";
+} from "@/lib/db/queries/index";
 import type { DBMessage, ServiceConfig } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";

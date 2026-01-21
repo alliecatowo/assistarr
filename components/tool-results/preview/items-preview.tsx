@@ -25,7 +25,9 @@ interface ItemsPreviewProps {
  */
 function getPosterUrl(item: MediaPreviewItem): string | null {
   const url = item.posterUrl ?? item.imageUrl;
-  if (!url) return null;
+  if (!url) {
+    return null;
+  }
   // Handle TMDB paths
   if (url.startsWith("/")) {
     return `${TMDB_POSTER_W185}${url}`;

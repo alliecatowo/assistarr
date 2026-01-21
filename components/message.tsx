@@ -226,11 +226,11 @@ const MessagePartGenericTool = ({
   part: Extract<ChatMessage["parts"][number], { type: `tool-${string}` }>;
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
 }) => {
-  const toolPart = part as {
+  const toolPart = part as unknown as {
     toolCallId: string;
     state: string;
-    input: { metadata?: any };
-    output?: any;
+    input: { metadata?: Record<string, unknown> };
+    output?: Record<string, unknown>;
     approval?: { id: string; approved?: boolean };
   };
   const { toolCallId, state, type } = part;
@@ -240,6 +240,7 @@ const MessagePartGenericTool = ({
   const hasError =
     state === "output-available" &&
     toolPart.output &&
+    typeof toolPart.output === "object" &&
     "error" in toolPart.output;
   const displayState = hasError ? "output-error" : state;
 
@@ -262,7 +263,7 @@ const MessagePartGenericTool = ({
         <div key={toolCallId}>
           <ApprovalCard
             input={toolPart.input}
-            metadata={toolPart.input?.metadata}
+            metadata={toolPart.input?.metadata as any}
             onApprove={() => {
               addToolApprovalResponse({
                 id: approvalId,
@@ -289,8 +290,8 @@ const MessagePartGenericTool = ({
         <Tool className="w-full border-0" defaultOpen={true}>
           <ToolHeader
             approval={toolPart.approval}
-            state={displayState as any}
-            type={displayName as any}
+            state={displayState}
+            type={displayName}
           />
           <ToolContent>
             <ToolInput input={toolPart.input} />
@@ -347,7 +348,7 @@ const MessagePartGenericTool = ({
       <SimpleArtifactWrapper
         approval={toolPart.approval}
         defaultOpen={false}
-        state={displayState as any}
+        state={displayState}
         toolName={displayName}
       >
         {state === "input-available" && <ToolInput input={toolPart.input} />}
@@ -425,7 +426,7 @@ const MessagePart = ({
       <MessagePartGenericTool
         addToolApprovalResponse={addToolApprovalResponse}
         part={
-          part as Extract<
+          part as unknown as Extract<
             ChatMessage["parts"][number],
             { type: `tool-${string}` }
           >

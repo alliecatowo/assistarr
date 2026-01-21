@@ -36,9 +36,9 @@ interface PlasmaOrbProps {
 export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
   return (
     <motion.div
+      animate={{ rotate: 360 }}
       className={`relative ${className}`}
       style={{ width: size, height: size }}
-      animate={{ rotate: 360 }}
       transition={{
         duration: 60,
         repeat: Number.POSITIVE_INFINITY,
@@ -46,25 +46,24 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
       }}
     >
       <motion.svg
-        width={size}
-        height={size}
-        viewBox="0 0 40 40"
-        className="absolute inset-0"
-        style={{ filter: "url(#plasma-glow)" }}
         animate={{
           scale: [0.95, 1.05, 0.95],
         }}
+        className="absolute inset-0"
+        height={size}
+        style={{ filter: "url(#plasma-glow)" }}
         transition={{
           duration: 3,
           repeat: Number.POSITIVE_INFINITY,
           ease: "easeInOut",
         }}
+        viewBox="0 0 40 40"
+        width={size}
       >
         <defs>
           {/* Multi-stop radial gradient for depth */}
-          <radialGradient id="plasma-radial" cx="35%" cy="35%" r="65%">
+          <radialGradient cx="35%" cy="35%" id="plasma-radial" r="65%">
             <motion.stop
-              offset="0%"
               animate={{
                 stopColor: [
                   "rgba(255, 255, 255, 0.95)",
@@ -73,10 +72,14 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
                   "rgba(255, 255, 255, 0.95)",
                 ],
               }}
-              transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              offset="0%"
+              transition={{
+                duration: 4,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             />
             <motion.stop
-              offset="30%"
               animate={{
                 stopColor: [
                   "rgba(120, 200, 255, 0.9)",
@@ -85,10 +88,14 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
                   "rgba(120, 200, 255, 0.9)",
                 ],
               }}
-              transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              offset="30%"
+              transition={{
+                duration: 4,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             />
             <motion.stop
-              offset="70%"
               animate={{
                 stopColor: [
                   "rgba(80, 120, 255, 0.85)",
@@ -97,10 +104,14 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
                   "rgba(80, 120, 255, 0.85)",
                 ],
               }}
-              transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              offset="70%"
+              transition={{
+                duration: 4,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             />
             <motion.stop
-              offset="100%"
               animate={{
                 stopColor: [
                   "rgba(40, 60, 180, 0.6)",
@@ -109,14 +120,18 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
                   "rgba(40, 60, 180, 0.6)",
                 ],
               }}
-              transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              offset="100%"
+              transition={{
+                duration: 4,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             />
           </radialGradient>
 
           {/* Iridescent sweep gradient */}
-          <linearGradient id="plasma-sweep" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="plasma-sweep" x1="0%" x2="100%" y1="0%" y2="100%">
             <motion.stop
-              offset="0%"
               animate={{
                 stopColor: [
                   "rgba(255, 100, 200, 0.4)",
@@ -125,10 +140,14 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
                   "rgba(255, 100, 200, 0.4)",
                 ],
               }}
-              transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              offset="0%"
+              transition={{
+                duration: 3,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             />
             <motion.stop
-              offset="100%"
               animate={{
                 stopColor: [
                   "rgba(100, 200, 255, 0.3)",
@@ -137,21 +156,26 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
                   "rgba(100, 200, 255, 0.3)",
                 ],
               }}
-              transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              offset="100%"
+              transition={{
+                duration: 3,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
             />
           </linearGradient>
 
           {/* Inner core glow */}
-          <radialGradient id="plasma-core" cx="50%" cy="50%" r="50%">
+          <radialGradient cx="50%" cy="50%" id="plasma-core" r="50%">
             <stop offset="0%" stopColor="rgba(255, 255, 255, 1)" />
             <stop offset="40%" stopColor="rgba(200, 230, 255, 0.8)" />
             <stop offset="100%" stopColor="rgba(100, 180, 255, 0)" />
           </radialGradient>
 
           {/* Glow filter */}
-          <filter id="plasma-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="blur1" />
-            <feGaussianBlur stdDeviation="4" result="blur2" />
+          <filter height="200%" id="plasma-glow" width="200%" x="-50%" y="-50%">
+            <feGaussianBlur result="blur1" stdDeviation="2" />
+            <feGaussianBlur result="blur2" stdDeviation="4" />
             <feMerge>
               <feMergeNode in="blur2" />
               <feMergeNode in="blur1" />
@@ -167,60 +191,78 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
 
         {/* Outer aura layer - largest, most transparent */}
         <motion.path
-          fill="url(#plasma-radial)"
-          opacity={0.6}
           animate={{
-            d: [OUTER_BLOBS[0], OUTER_BLOBS[1], OUTER_BLOBS[2], OUTER_BLOBS[3], OUTER_BLOBS[0]],
+            d: [
+              OUTER_BLOBS[0],
+              OUTER_BLOBS[1],
+              OUTER_BLOBS[2],
+              OUTER_BLOBS[3],
+              OUTER_BLOBS[0],
+            ],
             scale: [1, 1.08, 1.02, 1.06, 1],
           }}
+          fill="url(#plasma-radial)"
+          opacity={0.6}
+          style={{ transformOrigin: "center" }}
           transition={{
             duration: 6,
             repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
-          style={{ transformOrigin: "center" }}
         />
 
         {/* Mid layer with iridescent sweep */}
         <motion.path
-          fill="url(#plasma-sweep)"
-          opacity={0.7}
           animate={{
-            d: [OUTER_BLOBS[2], OUTER_BLOBS[3], OUTER_BLOBS[0], OUTER_BLOBS[1], OUTER_BLOBS[2]],
+            d: [
+              OUTER_BLOBS[2],
+              OUTER_BLOBS[3],
+              OUTER_BLOBS[0],
+              OUTER_BLOBS[1],
+              OUTER_BLOBS[2],
+            ],
             rotate: [0, -10, 5, -5, 0],
           }}
+          fill="url(#plasma-sweep)"
+          opacity={0.7}
+          style={{ transformOrigin: "center" }}
           transition={{
             duration: 5,
             repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
-          style={{ transformOrigin: "center" }}
         />
 
         {/* Inner bright core */}
         <motion.path
-          fill="url(#plasma-core)"
           animate={{
-            d: [INNER_BLOBS[0], INNER_BLOBS[1], INNER_BLOBS[2], INNER_BLOBS[3], INNER_BLOBS[0]],
+            d: [
+              INNER_BLOBS[0],
+              INNER_BLOBS[1],
+              INNER_BLOBS[2],
+              INNER_BLOBS[3],
+              INNER_BLOBS[0],
+            ],
             scale: [1, 1.1, 0.95, 1.05, 1],
           }}
+          fill="url(#plasma-core)"
+          style={{ transformOrigin: "center" }}
           transition={{
             duration: 2.5,
             repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
-          style={{ transformOrigin: "center" }}
         />
 
         {/* Bright center hotspot */}
         <motion.circle
-          cx="20"
-          cy="20"
-          fill="white"
           animate={{
             r: [4, 6, 4],
             opacity: [0.9, 1, 0.9],
           }}
+          cx="20"
+          cy="20"
+          fill="white"
           transition={{
             duration: 1.5,
             repeat: Number.POSITIVE_INFINITY,
@@ -231,16 +273,16 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
         {/* Energy particles orbiting */}
         {PARTICLES.map((particle, i) => (
           <motion.circle
-            key={i}
-            r="1.2"
-            fill="white"
-            filter="url(#particle-blur)"
             animate={{
               cx: [particle.cx, particle.cx + 4, particle.cx - 2, particle.cx],
               cy: [particle.cy, particle.cy - 3, particle.cy + 4, particle.cy],
               opacity: [0.3, 0.9, 0.5, 0.3],
               scale: [0.8, 1.3, 1, 0.8],
             }}
+            fill="white"
+            filter="url(#particle-blur)"
+            key={i}
+            r="1.2"
             transition={{
               duration: 3,
               delay: particle.delay,
@@ -253,13 +295,14 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
 
       {/* Outer glow ring - separate for better layering */}
       <motion.div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: "radial-gradient(circle, rgba(100,180,255,0.3) 0%, rgba(150,100,255,0.1) 50%, transparent 70%)",
-        }}
         animate={{
           scale: [1, 1.3, 1],
           opacity: [0.5, 0.8, 0.5],
+        }}
+        className="absolute inset-0 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(100,180,255,0.3) 0%, rgba(150,100,255,0.1) 50%, transparent 70%)",
         }}
         transition={{
           duration: 2,
