@@ -35,62 +35,11 @@ export const requestSuggestions = ({
         };
       }
 
-      const suggestions: Omit<
-        Suggestion,
-        "userId" | "createdAt" | "documentCreatedAt"
-      >[] = [];
-
-      const { partialOutputStream } = streamText({
-        model: getArtifactModel(),
-        system:
-          "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
-        prompt: document.content,
-        output: Output.array({
-          element: z.object({
-            originalSentence: z.string().describe("The original sentence"),
-            suggestedSentence: z.string().describe("The suggested sentence"),
-            description: z
-              .string()
-              .describe("The description of the suggestion"),
-          }),
-        }),
-      });
-
-      let processedCount = 0;
-      for await (const partialOutput of partialOutputStream) {
-        if (!partialOutput) {
-          continue;
-        }
-
-        for (let i = processedCount; i < partialOutput.length; i++) {
-          const element = partialOutput[i];
-          if (
-            !element?.originalSentence ||
-            !element?.suggestedSentence ||
-            !element?.description
-          ) {
-            continue;
-          }
-
-          const suggestion = {
-            originalText: element.originalSentence,
-            suggestedText: element.suggestedSentence,
-            description: element.description,
-            id: generateUUID(),
-            documentId,
-            isResolved: false,
-          };
-
-          dataStream.write({
-            type: "data-suggestion",
-            data: suggestion as Suggestion,
-            transient: true,
-          });
-
-          suggestions.push(suggestion);
-          processedCount++;
-        }
-      }
+      const suggestions = await generateSuggestions(
+        document.content,
+        documentId,
+        dataStream
+      );
 
       if (session.user?.id) {
         const userId = session.user.id;
@@ -113,3 +62,65 @@ export const requestSuggestions = ({
       };
     },
   });
+
+async function generateSuggestions(
+  content: string,
+  documentId: string,
+  dataStream: UIMessageStreamWriter<ChatMessage>
+) {
+  const suggestions: Omit<
+    Suggestion,
+    "userId" | "createdAt" | "documentCreatedAt"
+  >[] = [];
+
+  const { partialOutputStream } = streamText({
+    model: getArtifactModel(),
+    system:
+      "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
+    prompt: content,
+    output: Output.array({
+      element: z.object({
+        originalSentence: z.string().describe("The original sentence"),
+        suggestedSentence: z.string().describe("The suggested sentence"),
+        description: z.string().describe("The description of the suggestion"),
+      }),
+    }),
+  });
+
+  let processedCount = 0;
+  for await (const partialOutput of partialOutputStream) {
+    if (!partialOutput) {
+      continue;
+    }
+
+    for (let i = processedCount; i < partialOutput.length; i++) {
+      const element = partialOutput[i];
+      if (
+        !element?.originalSentence ||
+        !element?.suggestedSentence ||
+        !element?.description
+      ) {
+        continue;
+      }
+
+      const suggestion = {
+        originalText: element.originalSentence,
+        suggestedText: element.suggestedSentence,
+        description: element.description,
+        id: generateUUID(),
+        documentId,
+        isResolved: false,
+      };
+
+      dataStream.write({
+        type: "data-suggestion",
+        data: suggestion as Suggestion,
+        transient: true,
+      });
+
+      suggestions.push(suggestion);
+      processedCount++;
+    }
+  }
+  return suggestions;
+}

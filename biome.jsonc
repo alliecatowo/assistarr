@@ -26,7 +26,7 @@
   "linter": {
     "rules": {
       "suspicious": {
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noUnknownAtRules": "off",
         "noConsole": "warn",
         "noBitwiseOperators": "off"
@@ -44,7 +44,7 @@
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": {
-          "level": "warn",
+          "level": "error",
           "options": {
             "maxAllowedComplexity": 15
           }
