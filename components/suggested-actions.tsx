@@ -2,10 +2,60 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { motion } from "framer-motion";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { Suggestion } from "./elements/suggestion";
 import type { VisibilityType } from "./visibility-selector";
+
+/**
+ * Media server suggestions organized by category.
+ * These are relevant to home media server management with Radarr, Sonarr, Jellyfin, etc.
+ */
+const MEDIA_SERVER_SUGGESTIONS = {
+  discovery: [
+    "What's trending this week?",
+    "Show me popular comedies from 2024",
+    "What new shows are releasing soon?",
+    "What sci-fi movies came out this year?",
+  ],
+  management: [
+    "What's in my download queue?",
+    "Are there any stalled downloads?",
+    "Check for import issues",
+    "Show me my recent downloads",
+  ],
+  library: [
+    "What movies do I have?",
+    "Search for The Sopranos",
+    "Show my TV library",
+    "Find movies with Tom Hanks",
+  ],
+  calendar: [
+    "What movies are releasing this month?",
+    "Show my upcoming episodes",
+    "What's airing today?",
+    "When does the next season of my shows start?",
+  ],
+};
+
+/**
+ * Pick a random item from an array.
+ */
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+/**
+ * Get media server suggestions - one from each category.
+ */
+function getMediaServerSuggestions(): string[] {
+  return [
+    pickRandom(MEDIA_SERVER_SUGGESTIONS.discovery),
+    pickRandom(MEDIA_SERVER_SUGGESTIONS.management),
+    pickRandom(MEDIA_SERVER_SUGGESTIONS.library),
+    pickRandom(MEDIA_SERVER_SUGGESTIONS.calendar),
+  ];
+}
 
 type SuggestedActionsProps = {
   chatId: string;
@@ -14,12 +64,8 @@ type SuggestedActionsProps = {
 };
 
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
-  const suggestedActions = [
-    "What are the advantages of using Next.js?",
-    "Write code to demonstrate Dijkstra's algorithm",
-    "Help me write an essay about Silicon Valley",
-    "What is the weather in San Francisco?",
-  ];
+  // Memoize suggestions so they don't change on every render
+  const suggestedActions = useMemo(() => getMediaServerSuggestions(), []);
 
   return (
     <div

@@ -89,9 +89,7 @@ export const getHistory = ({ session }: GetHistoryProps) =>
     },
   });
 
-function getEventDescription(
-  eventType: string
-): string {
+function getEventDescription(eventType: string): string {
   const descriptions: Record<string, string> = {
     grabbed: "Release grabbed for download",
     downloadFolderImported: "Download imported successfully",

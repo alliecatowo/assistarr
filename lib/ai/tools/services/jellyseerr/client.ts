@@ -58,6 +58,8 @@ export async function jellyseerrRequest<T>(
   const baseUrl = config.baseUrl.replace(/\/+$/, "");
   const url = `${baseUrl}/api/v1${endpoint}`;
 
+  console.log(`[Jellyseerr] Request: ${options.method || "GET"} ${url}`);
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -69,15 +71,27 @@ export async function jellyseerrRequest<T>(
 
   if (!response.ok) {
     let errorMessage = `Jellyseerr API error: ${response.status} ${response.statusText}`;
+    let errorDetails: unknown = null;
 
     try {
-      const errorData = await response.json();
-      if (errorData.message) {
-        errorMessage = errorData.message;
+      errorDetails = await response.json();
+      if (
+        errorDetails &&
+        typeof errorDetails === "object" &&
+        "message" in errorDetails
+      ) {
+        errorMessage = (errorDetails as { message: string }).message;
       }
     } catch {
       // Ignore JSON parse errors
     }
+
+    console.error(`[Jellyseerr] API Error:`, {
+      status: response.status,
+      statusText: response.statusText,
+      url,
+      errorDetails,
+    });
 
     throw new JellyseerrClientError(errorMessage, response.status);
   }

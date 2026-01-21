@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
@@ -23,7 +25,8 @@ import type {
 function getMediaType(item: MediaItemShape, toolName?: string): "movie" | "tv" {
   // Explicit mediaType field
   if (item.mediaType) {
-    return item.mediaType;
+    // Map "episode" to "tv" for display purposes
+    return item.mediaType === "episode" ? "tv" : item.mediaType;
   }
 
   // Jellyfin format: type field with capitalized values ("Movie", "Episode", "Series")
@@ -184,8 +187,10 @@ function getRating(item: MediaItemShape): number | undefined {
 
 export type LayoutMode = "auto" | "carousel" | "grid";
 
-/** Default max items to display */
-const DEFAULT_MAX_ITEMS = 20;
+/** Initial items to display before "Load More" */
+const INITIAL_DISPLAY_COUNT = 10;
+/** Items to load per "Load More" click */
+const PAGE_SIZE = 10;
 
 /**
  * Get TMDB ID from item - handles various field names
@@ -229,8 +234,8 @@ interface MediaResultsViewProps extends ToolResultProps<MediaResultsShape> {
   layout?: LayoutMode;
   /** Threshold for auto layout: use carousel if <= this count, grid otherwise */
   gridThreshold?: number;
-  /** Maximum items to display (default: 20) */
-  maxItems?: number;
+  /** Initial items to display before Load More (default: 10) */
+  initialCount?: number;
   /** Jellyfin base URL for Watch links (passed from parent) */
   jellyfinBaseUrl?: string;
 }
@@ -257,10 +262,11 @@ export function MediaResultsView({
   toolName,
   layout = "auto",
   gridThreshold = 6,
-  maxItems = DEFAULT_MAX_ITEMS,
+  initialCount = INITIAL_DISPLAY_COUNT,
   jellyfinBaseUrl,
 }: MediaResultsViewProps) {
   const [requestingIds, setRequestingIds] = useState<Set<number>>(new Set());
+  const [displayCount, setDisplayCount] = useState(initialCount);
 
   const handleRequest = useCallback(
     async (tmdbId: number, mediaType: "movie" | "tv") => {
@@ -301,6 +307,37 @@ export function MediaResultsView({
     [requestingIds]
   );
 
+  // Memoize derived values
+  const { allResults, visibleResults, hasMore, remaining, message } =
+    useMemo(() => {
+      if (!output || !output.results || output.results.length === 0) {
+        return {
+          allResults: [],
+          visibleResults: [],
+          hasMore: false,
+          remaining: 0,
+          message: output?.message || "No results found.",
+        };
+      }
+
+      const all = output.results;
+      const visible = all.slice(0, displayCount);
+      const more = all.length > displayCount;
+      const rem = all.length - displayCount;
+
+      return {
+        allResults: all,
+        visibleResults: visible,
+        hasMore: more,
+        remaining: rem,
+        message: output.message,
+      };
+    }, [output, displayCount]);
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
   if (!output || !output.results || output.results.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
@@ -309,24 +346,17 @@ export function MediaResultsView({
     );
   }
 
-  const { results: allResults, message } = output;
-
-  // Apply max items limit
-  const results = allResults.slice(0, maxItems);
-  const isTruncated = allResults.length > maxItems;
-
   // Get total count from various possible fields
   const totalCount =
     output.totalResults ??
     output.totalMatching ??
     output.totalInLibrary ??
-    results.length;
-  const showingCount = output.showing ?? results.length;
+    allResults.length;
 
   // Determine effective layout
   const effectiveLayout =
     layout === "auto"
-      ? results.length <= gridThreshold
+      ? visibleResults.length <= gridThreshold
         ? "carousel"
         : "grid"
       : layout;
@@ -369,7 +399,7 @@ export function MediaResultsView({
             }}
           >
             <CarouselContent className="-ml-3">
-              {results.map((item, index) => (
+              {visibleResults.map((item, index) => (
                 <CarouselItem
                   className="basis-auto pl-3"
                   key={item.id ?? index}
@@ -389,18 +419,28 @@ export function MediaResultsView({
             "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
           )}
         >
-          {results.map((item, index) => renderCard(item, index))}
+          {visibleResults.map((item, index) => renderCard(item, index))}
         </div>
       )}
 
-      {/* Pagination info */}
-      {(totalCount > showingCount || isTruncated) && (
+      {/* Load More / Pagination info */}
+      {hasMore ? (
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            className="w-full max-w-xs"
+            onClick={handleLoadMore}
+            size="sm"
+            variant="ghost"
+          >
+            <ChevronDownIcon className="size-4 mr-1" />
+            Load {Math.min(PAGE_SIZE, remaining)} more ({remaining} remaining)
+          </Button>
+        </div>
+      ) : totalCount > allResults.length ? (
         <p className="text-xs text-muted-foreground text-center">
-          Showing {results.length} of{" "}
-          {isTruncated ? allResults.length : totalCount} results
-          {isTruncated && " (limited)"}
+          Showing all {allResults.length} of {totalCount} results
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

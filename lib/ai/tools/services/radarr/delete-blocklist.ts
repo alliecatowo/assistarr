@@ -29,7 +29,8 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
       try {
         if (!id && (!ids || ids.length === 0)) {
           return {
-            error: "Please provide either 'id' for a single item or 'ids' for bulk removal.",
+            error:
+              "Please provide either 'id' for a single item or 'ids' for bulk removal.",
           };
         }
 

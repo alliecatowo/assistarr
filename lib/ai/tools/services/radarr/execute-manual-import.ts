@@ -10,7 +10,9 @@ type ExecuteManualImportProps = {
 
 const manualImportFileSchema = z.object({
   path: z.string().describe("Full path to the file to import"),
-  movieId: z.number().describe("The Radarr movie ID to associate this file with"),
+  movieId: z
+    .number()
+    .describe("The Radarr movie ID to associate this file with"),
   quality: z
     .object({
       quality: z.object({
@@ -74,7 +76,7 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
           success: true,
           commandId: command.id,
           status: command.status,
-          message: `Manual import started for ${files.length} file(s). Command ID: ${command.id}`,
+          message: `Manual import started for ${files.length} file(s). Command ID: ${command.id}. Use getCommandStatus to check completion.`,
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {

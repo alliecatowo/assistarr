@@ -3,6 +3,71 @@ import type { Session } from "next-auth";
 import type { ServiceConfig } from "@/lib/db/schema";
 import type { ServiceIconId, ToolCategory, ToolMetadata } from "./metadata";
 
+// ============================================================================
+// DISPLAYABLE MEDIA INTERFACES
+// These are the standard interfaces that ALL media-returning tools must use.
+// Services provide complete display-ready data - no separate API calls needed.
+// ============================================================================
+
+/**
+ * Standard interface that ALL media-returning tools must satisfy.
+ * Services provide complete display-ready data.
+ */
+export interface DisplayableMedia {
+  // Required for display
+  title: string;
+  posterUrl: string | null; // FULL URL from service
+  mediaType: "movie" | "tv" | "episode";
+
+  // Rich metadata (all optional)
+  year?: number;
+  overview?: string;
+  rating?: number;
+  genres?: string[];
+  runtime?: number;
+  seasonCount?: number; // For TV
+
+  // Status for UI rendering
+  status?: "available" | "wanted" | "downloading" | "requested" | "missing";
+  hasFile?: boolean;
+  monitored?: boolean;
+
+  // Service-specific IDs (for actions, not display)
+  serviceId?: number | string;
+  externalIds?: {
+    tmdb?: number;
+    tvdb?: number;
+    imdb?: string;
+    jellyfin?: string;
+  };
+}
+
+/**
+ * What add-movie/add-series tools should include for approval UI.
+ */
+export interface AddMediaRequest {
+  media: DisplayableMedia;
+  qualityProfile?: { id: number; name: string };
+  rootFolder?: string;
+  monitor?: string;
+  searchOnAdd?: boolean;
+}
+
+/**
+ * Helper to derive display status from Radarr/Sonarr fields
+ */
+export function deriveMediaStatus(
+  hasFile?: boolean,
+  monitored?: boolean,
+  isAvailable?: boolean,
+  isPending?: boolean
+): DisplayableMedia["status"] {
+  if (isAvailable || hasFile) return "available";
+  if (isPending) return "requested";
+  if (monitored) return "wanted";
+  return "missing";
+}
+
 /**
  * Props passed to tool factory functions
  */

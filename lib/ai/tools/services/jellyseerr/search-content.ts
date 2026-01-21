@@ -1,15 +1,16 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import type { DisplayableMedia } from "../base";
 import {
   getPosterUrl,
   JellyseerrClientError,
   jellyseerrRequest,
 } from "./client";
 import {
-  getMediaStatusText,
   getResultTitle,
   getResultYear,
+  MediaStatus,
   type SearchResponse,
   type SearchResult,
 } from "./types";
@@ -18,10 +19,26 @@ type SearchContentProps = {
   session: Session;
 };
 
+// Map Jellyseerr MediaStatus to DisplayableMedia status
+function mapToDisplayStatus(
+  mediaInfo?: { status: number } | null
+): DisplayableMedia["status"] {
+  if (!mediaInfo) return "missing";
+  switch (mediaInfo.status) {
+    case MediaStatus.AVAILABLE:
+      return "available";
+    case MediaStatus.PENDING:
+    case MediaStatus.PROCESSING:
+      return "requested";
+    default:
+      return "missing";
+  }
+}
+
 export const searchContent = ({ session }: SearchContentProps) =>
   tool({
     description:
-      "Search for movies or TV shows in Jellyseerr. Returns results with title, year, type, and availability/request status. Use this to find content before requesting it.",
+      "Search for movies or TV shows in Jellyseerr. Returns results with full display metadata including poster URLs. Use this to find content before requesting it.",
     inputSchema: z.object({
       query: z.string().describe("The search query (movie or TV show title)"),
       type: z
@@ -67,40 +84,30 @@ export const searchContent = ({ session }: SearchContentProps) =>
           );
         }
 
-        // Transform results into a more user-friendly format
-        const results = filteredResults.map((result: SearchResult) => {
-          const title = getResultTitle(result);
-          const year = getResultYear(result);
-          const mediaType = result.mediaType;
-          const tmdbId = result.id;
+        // Map to DisplayableMedia format - services are source of truth for display data
+        const results: DisplayableMedia[] = filteredResults.map(
+          (result: SearchResult) => ({
+            // Required display fields
+            title: getResultTitle(result),
+            posterUrl: getPosterUrl(result.posterPath),
+            mediaType: result.mediaType as "movie" | "tv",
 
-          // Determine status
-          let status = "Not Requested";
-          let isAvailable = false;
-          let isPending = false;
-
-          if (result.mediaInfo) {
-            status = getMediaStatusText(result.mediaInfo.status);
-            isAvailable = result.mediaInfo.status === 5; // AVAILABLE
-            isPending = result.mediaInfo.status === 2; // PENDING
-          }
-
-          return {
-            tmdbId,
-            title,
-            year,
-            mediaType,
+            // Rich metadata
+            year: getResultYear(result),
             overview:
               result.overview?.slice(0, 200) +
               (result.overview && result.overview.length > 200 ? "..." : ""),
-            voteAverage: result.voteAverage,
-            posterUrl: getPosterUrl(result.posterPath),
-            status,
-            isAvailable,
-            isPending,
-            canRequest: !isAvailable && !isPending,
-          };
-        });
+            rating: result.voteAverage,
+
+            // Status
+            status: mapToDisplayStatus(result.mediaInfo),
+
+            // Service IDs for actions
+            externalIds: {
+              tmdb: result.id,
+            },
+          })
+        );
 
         return {
           page: response.page,

@@ -49,6 +49,12 @@ export const chatModels: ChatModel[] = [
     description: "Ultra fast and affordable",
   },
   {
+    id: "google/gemini-2.5-flash",
+    name: "Gemini 2.5 Flash",
+    provider: "google",
+    description: "Fast and capable with 1M context",
+  },
+  {
     id: "google/gemini-2.5-pro",
     name: "Gemini 2.5 Pro",
     provider: "google",
@@ -60,25 +66,12 @@ export const chatModels: ChatModel[] = [
     provider: "google",
     description: "Most capable Google model",
   },
-  // xAI
-  {
-    id: "xai/grok-4.1-fast-non-reasoning",
-    name: "Grok 4.1 Fast",
-    provider: "xai",
-    description: "Fast with 30K context",
-  },
   // Reasoning models (extended thinking)
   {
     id: "anthropic/claude-3.7-sonnet-thinking",
     name: "Claude 3.7 Sonnet",
     provider: "reasoning",
     description: "Extended thinking for complex problems",
-  },
-  {
-    id: "xai/grok-code-fast-1-thinking",
-    name: "Grok Code Fast",
-    provider: "reasoning",
-    description: "Reasoning optimized for code",
   },
 ];
 

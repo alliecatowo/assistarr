@@ -27,7 +27,9 @@ export const getHistory = ({ session }: GetHistoryProps) =>
         .number()
         .optional()
         .default(20)
-        .describe("Number of history records to return (default: 20, max: 100)"),
+        .describe(
+          "Number of history records to return (default: 20, max: 100)"
+        ),
     }),
     execute: async ({ seriesId, seasonNumber, pageSize }) => {
       try {

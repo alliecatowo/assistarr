@@ -7,6 +7,7 @@ import { editMovie } from "./edit-movie";
 import { executeManualImport } from "./execute-manual-import";
 import { getBlocklist } from "./get-blocklist";
 import { getCalendar } from "./get-calendar";
+import { getCommandStatus } from "./get-command-status";
 import { getHistory } from "./get-history";
 import { getLibrary } from "./get-library";
 import { getManualImport } from "./get-manual-import";
@@ -155,6 +156,11 @@ export const radarrService: ServiceDefinition = {
       displayName: "Remove from Blocklist (Radarr)",
       category: "queue",
       description: "Remove items from the blocklist",
+    }),
+    getRadarrCommandStatus: defineTool(getCommandStatus, {
+      displayName: "Check Command Status (Radarr)",
+      category: "management",
+      description: "Check status of async commands like import/scan",
     }),
   },
   healthCheck: createHealthCheck({

@@ -13,9 +13,7 @@ export const renameEpisodeFiles = ({ session }: RenameEpisodeFilesProps) =>
     description:
       "Rename episode files to match Sonarr's naming format. You can rename all files for a series or specific episode files. Use getEpisodeFiles first to get file IDs.",
     inputSchema: z.object({
-      seriesId: z
-        .number()
-        .describe("The Sonarr series ID to rename files for"),
+      seriesId: z.number().describe("The Sonarr series ID to rename files for"),
       fileIds: z
         .array(z.number())
         .optional()

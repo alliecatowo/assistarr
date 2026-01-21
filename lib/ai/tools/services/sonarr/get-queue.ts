@@ -43,6 +43,7 @@ export const getQueue = ({ session }: GetQueueProps) =>
           return {
             id: item.id,
             seriesTitle: item.series?.title ?? "Unknown Series",
+            seriesId: item.seriesId,
             episodeTitle: item.episode?.title ?? "Unknown Episode",
             seasonNumber: item.episode?.seasonNumber ?? item.seasonNumber,
             episodeNumber: item.episode?.episodeNumber,
@@ -54,6 +55,9 @@ export const getQueue = ({ session }: GetQueueProps) =>
             timeLeft: item.timeleft ?? "Unknown",
             downloadClient: item.downloadClient,
             protocol: item.protocol,
+            // CRITICAL: downloadId is needed for manual import
+            downloadId: item.downloadId,
+            outputPath: item.outputPath,
           };
         });
 

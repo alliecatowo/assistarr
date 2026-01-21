@@ -2,6 +2,7 @@
 
 import {
   AlertCircleIcon,
+  ChevronDownIcon,
   ClockIcon,
   DownloadIcon,
   FilmIcon,
@@ -10,6 +11,8 @@ import {
   TvIcon,
   UploadIcon,
 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
   ArrQueueItem,
@@ -296,13 +299,34 @@ function TorrentEntry({ item }: { item: TorrentItem }) {
   );
 }
 
-/** Default max items for queue displays */
-const DEFAULT_MAX_QUEUE_ITEMS = 15;
+/** Initial items to display before "Load More" */
+const INITIAL_DISPLAY_COUNT = 10;
+/** Items to load per "Load More" click */
+const PAGE_SIZE = 10;
 
 /**
  * Arr queue view (Radarr/Sonarr)
  */
 export function ArrQueueView({ output }: ToolResultProps<ArrQueueShape>) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
+
+  const { visibleItems, hasMore, remaining } = useMemo(() => {
+    if (!output || !output.items || output.items.length === 0) {
+      return { visibleItems: [], hasMore: false, remaining: 0 };
+    }
+
+    const all = output.items;
+    const visible = all.slice(0, displayCount);
+    const more = all.length > displayCount;
+    const rem = all.length - displayCount;
+
+    return { visibleItems: visible, hasMore: more, remaining: rem };
+  }, [output, displayCount]);
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
   if (!output || !output.items || output.items.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
@@ -311,24 +335,28 @@ export function ArrQueueView({ output }: ToolResultProps<ArrQueueShape>) {
     );
   }
 
-  const allItems = output.items;
-  const items = allItems.slice(0, DEFAULT_MAX_QUEUE_ITEMS);
-  const isTruncated = allItems.length > DEFAULT_MAX_QUEUE_ITEMS;
-
   return (
     <div className="space-y-3">
       {output.message && (
         <p className="text-xs text-muted-foreground">{output.message}</p>
       )}
       <div className="space-y-2">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <ArrQueueEntry item={item} key={item.id} />
         ))}
       </div>
-      {isTruncated && (
-        <p className="text-xs text-muted-foreground text-center">
-          Showing {items.length} of {allItems.length} items (limited)
-        </p>
+      {hasMore && (
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            className="w-full max-w-xs"
+            onClick={handleLoadMore}
+            size="sm"
+            variant="ghost"
+          >
+            <ChevronDownIcon className="size-4 mr-1" />
+            Load {Math.min(PAGE_SIZE, remaining)} more ({remaining} remaining)
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -340,6 +368,25 @@ export function ArrQueueView({ output }: ToolResultProps<ArrQueueShape>) {
 export function TorrentQueueView({
   output,
 }: ToolResultProps<TorrentQueueShape>) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
+
+  const { visibleTorrents, hasMore, remaining } = useMemo(() => {
+    if (!output || !output.torrents || output.torrents.length === 0) {
+      return { visibleTorrents: [], hasMore: false, remaining: 0 };
+    }
+
+    const all = output.torrents;
+    const visible = all.slice(0, displayCount);
+    const more = all.length > displayCount;
+    const rem = all.length - displayCount;
+
+    return { visibleTorrents: visible, hasMore: more, remaining: rem };
+  }, [output, displayCount]);
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
   if (!output || !output.torrents || output.torrents.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
@@ -349,9 +396,6 @@ export function TorrentQueueView({
   }
 
   const { summary } = output;
-  const allTorrents = output.torrents;
-  const torrents = allTorrents.slice(0, DEFAULT_MAX_QUEUE_ITEMS);
-  const isTruncated = allTorrents.length > DEFAULT_MAX_QUEUE_ITEMS;
 
   return (
     <div className="space-y-3">
@@ -387,15 +431,23 @@ export function TorrentQueueView({
       )}
 
       <div className="space-y-2">
-        {torrents.map((item) => (
+        {visibleTorrents.map((item) => (
           <TorrentEntry item={item} key={item.hash} />
         ))}
       </div>
 
-      {isTruncated && (
-        <p className="text-xs text-muted-foreground text-center">
-          Showing {torrents.length} of {allTorrents.length} torrents (limited)
-        </p>
+      {hasMore && (
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            className="w-full max-w-xs"
+            onClick={handleLoadMore}
+            size="sm"
+            variant="ghost"
+          >
+            <ChevronDownIcon className="size-4 mr-1" />
+            Load {Math.min(PAGE_SIZE, remaining)} more ({remaining} remaining)
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,10 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import {
+  deriveMediaStatus,
+  type DisplayableMedia,
+} from "../base";
 import { SonarrClientError, sonarrRequest } from "./client";
 import type { SonarrSeries } from "./types";
 
@@ -11,7 +15,7 @@ type SearchSeriesProps = {
 export const searchSeries = ({ session }: SearchSeriesProps) =>
   tool({
     description:
-      "Search for TV series in Sonarr by name. Returns matching series with title, year, overview, and tvdbId that can be used to add the series to the library.",
+      "Search for TV series in Sonarr by name. Returns matching series with full display metadata including poster URLs that can be used directly in the UI.",
     inputSchema: z.object({
       query: z
         .string()
@@ -33,24 +37,41 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
           };
         }
 
-        const series = results.slice(0, 10).map((s) => ({
+        // Map to DisplayableMedia format - services are source of truth for display data
+        const series: DisplayableMedia[] = results.slice(0, 10).map((s) => ({
+          // Required display fields
           title: s.title,
+          posterUrl:
+            s.remotePoster ??
+            s.images.find((img) => img.coverType === "poster")?.remoteUrl ??
+            null,
+          mediaType: "tv" as const,
+
+          // Rich metadata
           year: s.year,
           overview:
             s.overview?.slice(0, 200) +
             (s.overview && s.overview.length > 200 ? "..." : ""),
-          tvdbId: s.tvdbId,
-          status: s.status,
-          network: s.network,
+          rating: s.ratings?.value,
           genres: s.genres,
           runtime: s.runtime,
           seasonCount:
             s.statistics?.seasonCount ??
             s.seasons?.filter((season) => season.seasonNumber > 0).length ??
             0,
-          posterUrl:
-            s.remotePoster ??
-            s.images.find((img) => img.coverType === "poster")?.remoteUrl,
+
+          // Status
+          status: deriveMediaStatus(
+            (s.statistics?.episodeFileCount ?? 0) > 0,
+            s.monitored
+          ),
+          monitored: s.monitored,
+
+          // Service IDs for actions
+          externalIds: {
+            tvdb: s.tvdbId,
+            imdb: s.imdbId,
+          },
         }));
 
         return {

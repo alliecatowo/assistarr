@@ -17,12 +17,22 @@ import {
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
-import { SparklesIcon } from "./icons";
+import { PlasmaOrb, StreamingIndicator } from "./ai-loading";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
-import { hasRichRenderer, ToolResultRenderer } from "./tool-results";
+import {
+  DEFAULT_DISPLAY_CONTEXT,
+  type DisplayContext,
+  hasRichRenderer,
+  SimpleArtifactWrapper,
+  ToolResultRenderer,
+} from "./tool-results";
+import {
+  ApprovalCard,
+  shouldUseApprovalCard,
+} from "./tool-results/approval-card";
 import { Weather } from "./weather";
 
 const PurePreviewMessage = ({
@@ -67,8 +77,8 @@ const PurePreviewMessage = ({
         })}
       >
         {message.role === "assistant" && (
-          <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-            <SparklesIcon size={14} />
+          <div className="-mt-1 flex size-8 shrink-0 items-center justify-center">
+            <PlasmaOrb size={32} />
           </div>
         )}
 
@@ -367,95 +377,118 @@ const PurePreviewMessage = ({
               const approvalId = (toolPart as { approval?: { id: string } })
                 .approval?.id;
 
-              // Rich inline results get full width, others are constrained
-              const isRichInline =
+              // Create display context for the artifact wrapper
+              const displayContext: DisplayContext = {
+                ...DEFAULT_DISPLAY_CONTEXT,
+                isLatestMessage: true, // Could be enhanced with actual latest check
+              };
+
+              // Rich results use ArtifactWrapper (full width), others use SimpleArtifactWrapper
+              const isRichResult =
                 state === "output-available" &&
                 hasRichRenderer(toolPart.output) &&
-                !("error" in toolPart.output);
-              const widthClass = isRichInline
-                ? "w-full"
-                : "w-[min(100%,450px)]";
+                !hasError;
 
               return (
-                <div className={widthClass} key={toolCallId}>
-                  {/* Approval requested: prominent display with buttons outside collapsible */}
+                <div className="w-full" key={toolCallId}>
+                  {/* Approval requested: use rich card for movie/series, generic for others */}
                   {isApprovalRequested && approvalId ? (
-                    <div className="rounded-md border-2 border-yellow-500/50 bg-yellow-500/5">
-                      <Tool className="w-full border-0" defaultOpen={true}>
-                        <ToolHeader
-                          state={displayState as any}
-                          type={displayName as any}
-                        />
-                        <ToolContent>
-                          <ToolInput input={toolPart.input} />
-                        </ToolContent>
-                      </Tool>
-                      {/* Approval buttons outside collapsible for visibility */}
-                      <div className="flex items-center justify-end gap-3 border-t border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
-                        <button
-                          className="rounded-md px-4 py-2 text-muted-foreground text-sm font-medium transition-colors hover:bg-muted hover:text-foreground"
-                          onClick={() => {
-                            addToolApprovalResponse({
-                              id: approvalId,
-                              approved: false,
-                              reason: "User denied this action",
-                            });
-                          }}
-                          type="button"
-                        >
-                          Deny Request
-                        </button>
-                        <button
-                          className="rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm font-medium transition-colors hover:bg-primary/90"
-                          onClick={() => {
-                            addToolApprovalResponse({
-                              id: approvalId,
-                              approved: true,
-                            });
-                          }}
-                          type="button"
-                        >
-                          Allow Request
-                        </button>
-                      </div>
-                    </div>
-                  ) : state === "output-available" &&
-                    hasRichRenderer(toolPart.output) &&
-                    !("error" in toolPart.output) ? (
-                    /* Rich results: render inline without Tool wrapper */
-                    <div className="w-full">
-                      <ToolResultRenderer
+                    shouldUseApprovalCard(rawToolName) ? (
+                      <ApprovalCard
                         input={toolPart.input}
-                        output={toolPart.output}
-                        state={state}
+                        // Extract metadata from tool input if AI passed it
+                        metadata={(toolPart.input as { metadata?: any })?.metadata}
+                        onApprove={() => {
+                          addToolApprovalResponse({
+                            id: approvalId,
+                            approved: true,
+                          });
+                        }}
+                        onDeny={() => {
+                          addToolApprovalResponse({
+                            id: approvalId,
+                            approved: false,
+                            reason: "User denied this action",
+                          });
+                        }}
                         toolName={rawToolName}
                       />
-                    </div>
+                    ) : (
+                      <div className="max-w-[min(100%,450px)] rounded-md border-2 border-yellow-500/50 bg-yellow-500/5">
+                        <Tool className="w-full border-0" defaultOpen={true}>
+                          <ToolHeader
+                            approval={toolPart.approval}
+                            state={displayState as any}
+                            type={displayName as any}
+                          />
+                          <ToolContent>
+                            <ToolInput input={toolPart.input} />
+                          </ToolContent>
+                        </Tool>
+                        {/* Approval buttons outside collapsible for visibility */}
+                        <div className="flex items-center justify-end gap-3 border-t border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
+                          <button
+                            className="rounded-md px-4 py-2 text-muted-foreground text-sm font-medium transition-colors hover:bg-muted hover:text-foreground"
+                            onClick={() => {
+                              addToolApprovalResponse({
+                                id: approvalId,
+                                approved: false,
+                                reason: "User denied this action",
+                              });
+                            }}
+                            type="button"
+                          >
+                            Deny Request
+                          </button>
+                          <button
+                            className="rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm font-medium transition-colors hover:bg-primary/90"
+                            onClick={() => {
+                              addToolApprovalResponse({
+                                id: approvalId,
+                                approved: true,
+                              });
+                            }}
+                            type="button"
+                          >
+                            Allow Request
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  ) : isRichResult ? (
+                    /* Rich results: use ArtifactWrapper with progressive disclosure */
+                    <ToolResultRenderer
+                      approval={toolPart.approval}
+                      displayContext={displayContext}
+                      input={toolPart.input}
+                      output={toolPart.output}
+                      state={state}
+                      toolName={displayName}
+                      useWrapper={true}
+                    />
                   ) : (
-                    /* Non-rich results: use collapsible Tool wrapper */
-                    <Tool className="w-full" defaultOpen={false}>
-                      <ToolHeader
+                    /* Non-rich results: use SimpleArtifactWrapper for consistent UI */
+                    <div className="max-w-[min(100%,450px)]">
+                      <SimpleArtifactWrapper
+                        approval={toolPart.approval}
+                        defaultOpen={false}
                         state={displayState as any}
-                        type={displayName as any}
-                      />
-                      <ToolContent>
+                        toolName={displayName}
+                      >
                         {state === "input-available" && (
                           <ToolInput input={toolPart.input} />
                         )}
 
                         {state === "output-available" && (
                           <ToolOutput
-                            errorText={
-                              toolPart.output && "error" in toolPart.output
-                                ? String(toolPart.output.error)
-                                : undefined
-                            }
+                            errorText={undefined}
                             output={
                               <ToolResultRenderer
                                 input={toolPart.input}
                                 output={toolPart.output}
                                 state={state}
                                 toolName={rawToolName}
+                                useWrapper={false}
                               />
                             }
                           />
@@ -466,8 +499,8 @@ const PurePreviewMessage = ({
                             Tool execution denied.
                           </div>
                         )}
-                      </ToolContent>
-                    </Tool>
+                      </SimpleArtifactWrapper>
+                    </div>
                   )}
                 </div>
               );
@@ -475,6 +508,18 @@ const PurePreviewMessage = ({
 
             return null;
           })}
+
+          {/* Show streaming indicator when loading and has visible content */}
+          {isLoading && message.role === "assistant" && message.parts?.some(
+            (part) =>
+              (part.type === "text" && part.text?.trim()) ||
+              (part.type === "reasoning" && part.text?.trim()) ||
+              part.type.startsWith("tool-")
+          ) && (
+            <div className="flex items-center text-muted-foreground">
+              <StreamingIndicator />
+            </div>
+          )}
 
           {!isReadonly && (
             <MessageActions
@@ -507,21 +552,14 @@ export const ThinkingMessage = () => {
       data-role="assistant"
       data-testid="message-assistant-loading"
     >
-      <div className="flex items-start justify-start gap-3">
-        <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-          <div className="animate-pulse">
-            <SparklesIcon size={14} />
-          </div>
+      <div className="flex items-start justify-start gap-2 md:gap-3">
+        <div className="-mt-1 flex size-8 shrink-0 items-center justify-center">
+          <PlasmaOrb size={32} />
         </div>
 
         <div className="flex w-full flex-col gap-2 md:gap-4">
-          <div className="flex items-center gap-1 p-0 text-muted-foreground text-sm">
-            <span className="animate-pulse">Thinking</span>
-            <span className="inline-flex">
-              <span className="animate-bounce [animation-delay:0ms]">.</span>
-              <span className="animate-bounce [animation-delay:150ms]">.</span>
-              <span className="animate-bounce [animation-delay:300ms]">.</span>
-            </span>
+          <div className="flex items-center text-muted-foreground">
+            <StreamingIndicator />
           </div>
         </div>
       </div>

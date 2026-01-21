@@ -4,10 +4,13 @@ import {
   AlertCircleIcon,
   CalendarIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
   ClockIcon,
   FilmIcon,
   TvIcon,
 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
   EpisodeCalendarItem,
@@ -17,8 +20,10 @@ import type {
   ToolResultProps,
 } from "./types";
 
-/** Default max items for calendar displays */
-const DEFAULT_MAX_CALENDAR_ITEMS = 25;
+/** Initial items to display before "Load More" */
+const INITIAL_DISPLAY_COUNT = 15;
+/** Items to load per "Load More" click */
+const PAGE_SIZE = 15;
 
 /**
  * Group items by date
@@ -204,6 +209,50 @@ function EpisodeCalendarEntry({ item }: { item: EpisodeCalendarItem }) {
 export function MovieCalendarView({
   output,
 }: ToolResultProps<MovieCalendarShape>) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
+
+  const { visibleMovies, hasMore, remaining, grouped, sortedDates } =
+    useMemo(() => {
+      if (!output || !output.movies || output.movies.length === 0) {
+        return {
+          visibleMovies: [],
+          hasMore: false,
+          remaining: 0,
+          grouped: new Map(),
+          sortedDates: [],
+        };
+      }
+
+      const all = output.movies;
+      const visible = all.slice(0, displayCount);
+      const more = all.length > displayCount;
+      const rem = all.length - displayCount;
+
+      // Transform and group by date
+      const itemsWithDate = visible.map((m) => ({
+        ...m,
+        date: m.releaseDate,
+      }));
+      const grp = groupByDate(itemsWithDate);
+
+      // Sort dates
+      const dates = Array.from(grp.keys()).sort(
+        (a, b) => new Date(a).getTime() - new Date(b).getTime()
+      );
+
+      return {
+        visibleMovies: visible,
+        hasMore: more,
+        remaining: rem,
+        grouped: grp,
+        sortedDates: dates,
+      };
+    }, [output, displayCount]);
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
   if (!output || !output.movies || output.movies.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
@@ -212,23 +261,6 @@ export function MovieCalendarView({
     );
   }
 
-  // Apply max limit
-  const allMovies = output.movies;
-  const movies = allMovies.slice(0, DEFAULT_MAX_CALENDAR_ITEMS);
-  const isTruncated = allMovies.length > DEFAULT_MAX_CALENDAR_ITEMS;
-
-  // Transform and group by date
-  const itemsWithDate = movies.map((m) => ({
-    ...m,
-    date: m.releaseDate,
-  }));
-  const grouped = groupByDate(itemsWithDate);
-
-  // Sort dates
-  const sortedDates = Array.from(grouped.keys()).sort(
-    (a, b) => new Date(a).getTime() - new Date(b).getTime()
-  );
-
   return (
     <div className="space-y-4">
       {output.message && (
@@ -236,7 +268,7 @@ export function MovieCalendarView({
       )}
 
       {sortedDates.map((dateKey) => {
-        const items = grouped.get(dateKey)!;
+        const items = grouped.get(dateKey) || [];
         const { label, isToday, isTomorrow, isPast } = formatDate(dateKey);
 
         return (
@@ -275,21 +307,31 @@ export function MovieCalendarView({
               </span>
             </div>
             <div className="space-y-2">
-              {items.map((item, idx) => (
-                <MovieCalendarEntry
-                  item={item}
-                  key={`${item.tmdbId || item.title}-${idx}`}
-                />
-              ))}
+              {items.map(
+                (item: MovieCalendarItem & { date: string }, idx: number) => (
+                  <MovieCalendarEntry
+                    item={item}
+                    key={`${item.tmdbId || item.title}-${idx}`}
+                  />
+                )
+              )}
             </div>
           </div>
         );
       })}
 
-      {isTruncated && (
-        <p className="text-xs text-muted-foreground text-center">
-          Showing {movies.length} of {allMovies.length} movies (limited)
-        </p>
+      {hasMore && (
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            className="w-full max-w-xs"
+            onClick={handleLoadMore}
+            size="sm"
+            variant="ghost"
+          >
+            <ChevronDownIcon className="size-4 mr-1" />
+            Load {Math.min(PAGE_SIZE, remaining)} more ({remaining} remaining)
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -301,6 +343,50 @@ export function MovieCalendarView({
 export function EpisodeCalendarView({
   output,
 }: ToolResultProps<EpisodeCalendarShape>) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
+
+  const { visibleEpisodes, hasMore, remaining, grouped, sortedDates } =
+    useMemo(() => {
+      if (!output || !output.episodes || output.episodes.length === 0) {
+        return {
+          visibleEpisodes: [],
+          hasMore: false,
+          remaining: 0,
+          grouped: new Map(),
+          sortedDates: [],
+        };
+      }
+
+      const all = output.episodes;
+      const visible = all.slice(0, displayCount);
+      const more = all.length > displayCount;
+      const rem = all.length - displayCount;
+
+      // Transform and group by date
+      const itemsWithDate = visible.map((e) => ({
+        ...e,
+        date: e.airDate,
+      }));
+      const grp = groupByDate(itemsWithDate);
+
+      // Sort dates
+      const dates = Array.from(grp.keys()).sort(
+        (a, b) => new Date(a).getTime() - new Date(b).getTime()
+      );
+
+      return {
+        visibleEpisodes: visible,
+        hasMore: more,
+        remaining: rem,
+        grouped: grp,
+        sortedDates: dates,
+      };
+    }, [output, displayCount]);
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
   if (!output || !output.episodes || output.episodes.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
@@ -308,23 +394,6 @@ export function EpisodeCalendarView({
       </div>
     );
   }
-
-  // Apply max limit
-  const allEpisodes = output.episodes;
-  const episodes = allEpisodes.slice(0, DEFAULT_MAX_CALENDAR_ITEMS);
-  const isTruncated = allEpisodes.length > DEFAULT_MAX_CALENDAR_ITEMS;
-
-  // Transform and group by date
-  const itemsWithDate = episodes.map((e) => ({
-    ...e,
-    date: e.airDate,
-  }));
-  const grouped = groupByDate(itemsWithDate);
-
-  // Sort dates
-  const sortedDates = Array.from(grouped.keys()).sort(
-    (a, b) => new Date(a).getTime() - new Date(b).getTime()
-  );
 
   return (
     <div className="space-y-4">
@@ -372,21 +441,31 @@ export function EpisodeCalendarView({
               </span>
             </div>
             <div className="space-y-2">
-              {items.map((item, idx) => (
-                <EpisodeCalendarEntry
-                  item={item}
-                  key={`${item.seriesTitle}-${item.seasonNumber}-${item.episodeNumber}-${idx}`}
-                />
-              ))}
+              {items.map(
+                (item: EpisodeCalendarItem & { date: string }, idx: number) => (
+                  <EpisodeCalendarEntry
+                    item={item}
+                    key={`${item.seriesTitle}-${item.seasonNumber}-${item.episodeNumber}-${idx}`}
+                  />
+                )
+              )}
             </div>
           </div>
         );
       })}
 
-      {isTruncated && (
-        <p className="text-xs text-muted-foreground text-center">
-          Showing {episodes.length} of {allEpisodes.length} episodes (limited)
-        </p>
+      {hasMore && (
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            className="w-full max-w-xs"
+            onClick={handleLoadMore}
+            size="sm"
+            variant="ghost"
+          >
+            <ChevronDownIcon className="size-4 mr-1" />
+            Load {Math.min(PAGE_SIZE, remaining)} more ({remaining} remaining)
+          </Button>
+        </div>
       )}
     </div>
   );

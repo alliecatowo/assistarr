@@ -147,9 +147,11 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
         // Check if this paragraph contains media links
         if (hasInlineMediaLinks(trimmed)) {
           // Check if it's a list (starts with - or *)
+          // Also match -[[ (dash followed by media link without space)
           const lines = trimmed.split(/\n/);
+          const listItemPattern = /^[\s]*[-*](\s|\[\[)/;
           const isList = lines.every(
-            (line) => /^[\s]*[-*]\s/.test(line) || line.trim() === ""
+            (line) => listItemPattern.test(line) || line.trim() === ""
           );
 
           if (isList) {
@@ -161,7 +163,8 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
                 {lines
                   .filter((l) => l.trim())
                   .map((line, lIndex) => {
-                    const content = line.replace(/^[\s]*[-*]\s/, "");
+                    // Remove list marker (- or *) with optional space
+                    const content = line.replace(/^[\s]*[-*]\s?/, "");
                     return (
                       <li key={`${baseKey}-p-${pIndex}-l-${lIndex}`}>
                         {renderParagraphWithLinks(
@@ -173,6 +176,41 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
                   })}
               </ul>
             );
+          }
+
+          // Check for inline items: "Header: -[[Item1]] desc -[[Item2]] desc"
+          // Split on " -[[" to separate inline list items
+          const inlineItemPattern = /\s-\[\[/;
+          if (inlineItemPattern.test(trimmed)) {
+            // Split into header and items
+            const parts = trimmed.split(/\s+-(?=\[\[)/);
+            const header = parts[0];
+            const items = parts.slice(1);
+
+            if (items.length > 0) {
+              return (
+                <div className="space-y-2" key={`${baseKey}-p-${pIndex}`}>
+                  {header && (
+                    <div>
+                      {renderParagraphWithLinks(
+                        header,
+                        `${baseKey}-p-${pIndex}-header`
+                      )}
+                    </div>
+                  )}
+                  <ul className="list-disc pl-6 space-y-1">
+                    {items.map((item, iIndex) => (
+                      <li key={`${baseKey}-p-${pIndex}-i-${iIndex}`}>
+                        {renderParagraphWithLinks(
+                          `[[${item}`,
+                          `${baseKey}-p-${pIndex}-i-${iIndex}`
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
           }
 
           // Use div instead of p to avoid hydration errors when Streamdown renders block elements

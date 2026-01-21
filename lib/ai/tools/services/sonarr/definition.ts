@@ -7,6 +7,7 @@ import { editSeries } from "./edit-series";
 import { executeManualImport } from "./execute-manual-import";
 import { getBlocklist } from "./get-blocklist";
 import { getCalendar } from "./get-calendar";
+import { getCommandStatus } from "./get-command-status";
 import { getEpisodeFiles } from "./get-episode-files";
 import { getHistory } from "./get-history";
 import { getLibrary } from "./get-library";
@@ -164,6 +165,11 @@ export const sonarrService: ServiceDefinition = {
       displayName: "Search Missing Episodes (Sonarr)",
       category: "download",
       description: "Search for all missing monitored episodes",
+    }),
+    getSonarrCommandStatus: defineTool(getCommandStatus, {
+      displayName: "Check Command Status (Sonarr)",
+      category: "management",
+      description: "Check status of async commands like import/scan",
     }),
   },
   healthCheck: createHealthCheck({

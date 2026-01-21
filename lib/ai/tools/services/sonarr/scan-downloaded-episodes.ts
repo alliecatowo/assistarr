@@ -44,9 +44,10 @@ export const scanDownloadedEpisodes = ({
         return {
           success: true,
           commandId: result.id,
+          status: result.status,
           message: path
-            ? `Scan started for folder: ${path}. Command ID: ${result.id}`
-            : `Scan started for all download folders. Command ID: ${result.id}`,
+            ? `Scan started for folder: ${path}. Command ID: ${result.id}. Use getCommandStatus to check completion.`
+            : `Scan started for all download folders. Command ID: ${result.id}. Use getCommandStatus to check completion.`,
         };
       } catch (error) {
         if (error instanceof SonarrClientError) {

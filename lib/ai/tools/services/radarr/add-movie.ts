@@ -12,6 +12,30 @@ type AddMovieProps = {
   session: Session;
 };
 
+// Schema for DisplayableMedia passed from search results
+const displayableMediaSchema = z
+  .object({
+    title: z.string(),
+    posterUrl: z.string().nullable(),
+    mediaType: z.enum(["movie", "tv", "episode"]),
+    year: z.number().optional(),
+    overview: z.string().optional(),
+    rating: z.number().optional(),
+    genres: z.array(z.string()).optional(),
+    runtime: z.number().optional(),
+    status: z
+      .enum(["available", "wanted", "downloading", "requested", "missing"])
+      .optional(),
+    externalIds: z
+      .object({
+        tmdb: z.number().optional(),
+        tvdb: z.number().optional(),
+        imdb: z.string().optional(),
+      })
+      .optional(),
+  })
+  .optional();
+
 export const addMovie = ({ session }: AddMovieProps) =>
   tool({
     description:
@@ -40,6 +64,10 @@ export const addMovie = ({ session }: AddMovieProps) =>
         .describe(
           "Whether to search for the movie immediately (default: true)"
         ),
+      // Metadata from prior search - used by ApprovalCard for rich display without extra fetch
+      metadata: displayableMediaSchema.describe(
+        "Display metadata from search results. Pass this so the approval UI can show rich info without fetching."
+      ),
     }),
     needsApproval: true,
     execute: async ({

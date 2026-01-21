@@ -88,7 +88,8 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
         return {
           success: true,
           commandId: result.id,
-          message: `Manual import started for ${files.length} file(s). Command ID: ${result.id}`,
+          status: result.status,
+          message: `Manual import started for ${files.length} file(s). Command ID: ${result.id}. Use getCommandStatus to check completion.`,
         };
       } catch (error) {
         if (error instanceof SonarrClientError) {

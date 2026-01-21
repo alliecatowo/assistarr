@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  CheckCircleIcon,
+  Loader2Icon,
+  SearchIcon,
+  XCircleIcon,
+  ZapIcon,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,16 +70,35 @@ const SERVICES: ServiceInfo[] = [
   },
 ];
 
+type ConnectionStatus = "idle" | "testing" | "success" | "error";
+
+interface TestResult {
+  status: ConnectionStatus;
+  message?: string;
+  latency?: number;
+}
+
+interface DiscoveredService {
+  baseUrl: string;
+  apiKey: string;
+}
+
 function ServiceCard({
   service,
   config,
   onSave,
   onDelete,
+  externalBaseUrl,
+  externalApiKey,
+  onTestSuccess,
 }: {
   service: ServiceInfo;
   config: ServiceConfig | undefined;
   onSave: (config: ServiceConfig) => Promise<void>;
   onDelete: (serviceName: string) => Promise<void>;
+  externalBaseUrl?: string;
+  externalApiKey?: string;
+  onTestSuccess?: () => void;
 }) {
   const [baseUrl, setBaseUrl] = useState(config?.baseUrl || "");
   const [apiKey, setApiKey] = useState(config?.apiKey || "");
@@ -80,13 +106,82 @@ function ServiceCard({
   const [isEnabled, setIsEnabled] = useState(config?.isEnabled ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [testResult, setTestResult] = useState<TestResult>({ status: "idle" });
+
+  // Track if external values have been applied to avoid re-applying
+  const appliedExternalRef = useRef<{ baseUrl?: string; apiKey?: string }>({});
 
   useEffect(() => {
     setBaseUrl(config?.baseUrl || "");
     setApiKey(config?.apiKey || "");
     // Default to disabled if no config exists
     setIsEnabled(config?.isEnabled ?? false);
+    // Reset test result when config changes
+    setTestResult({ status: "idle" });
   }, [config]);
+
+  // Apply external values when they change (from auto-discovery)
+  useEffect(() => {
+    if (
+      externalBaseUrl &&
+      externalApiKey &&
+      (appliedExternalRef.current.baseUrl !== externalBaseUrl ||
+        appliedExternalRef.current.apiKey !== externalApiKey)
+    ) {
+      setBaseUrl(externalBaseUrl);
+      setApiKey(externalApiKey);
+      setTestResult({ status: "idle" });
+      appliedExternalRef.current = {
+        baseUrl: externalBaseUrl,
+        apiKey: externalApiKey,
+      };
+    }
+  }, [externalBaseUrl, externalApiKey]);
+
+  const handleTest = async () => {
+    if (!baseUrl.trim() || !apiKey.trim()) {
+      toast.error("Base URL and API Key are required to test");
+      return;
+    }
+
+    setTestResult({ status: "testing" });
+
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceName: service.serviceName,
+          baseUrl: baseUrl.trim(),
+          apiKey: apiKey.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTestResult({
+          status: "success",
+          message: data.message,
+          latency: data.latency,
+        });
+        toast.success(data.message);
+        onTestSuccess?.();
+      } else {
+        setTestResult({
+          status: "error",
+          message: data.error,
+        });
+        toast.error(data.error);
+      }
+    } catch (_error) {
+      setTestResult({
+        status: "error",
+        message: "Failed to test connection",
+      });
+      toast.error("Failed to test connection");
+    }
+  };
 
   const handleSave = async () => {
     if (!baseUrl.trim() || !apiKey.trim()) {
@@ -198,9 +293,46 @@ function ServiceCard({
         >
           {isDeleting ? "Removing..." : "Remove"}
         </Button>
-        <Button disabled={isSaving || !hasChanges} onClick={handleSave}>
-          {isSaving ? "Saving..." : "Save"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Connection status indicator */}
+          {testResult.status === "success" && (
+            <div className="flex items-center gap-1 text-xs text-green-600">
+              <CheckCircleIcon className="size-4" />
+              <span>{testResult.latency}ms</span>
+            </div>
+          )}
+          {testResult.status === "error" && (
+            <div className="flex items-center gap-1 text-xs text-red-600">
+              <XCircleIcon className="size-4" />
+              <span>Failed</span>
+            </div>
+          )}
+          {/* Test button */}
+          <Button
+            disabled={
+              testResult.status === "testing" ||
+              !baseUrl.trim() ||
+              !apiKey.trim()
+            }
+            onClick={handleTest}
+            variant="outline"
+          >
+            {testResult.status === "testing" ? (
+              <>
+                <Loader2Icon className="size-4 mr-1 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              <>
+                <ZapIcon className="size-4 mr-1" />
+                Test
+              </>
+            )}
+          </Button>
+          <Button disabled={isSaving || !hasChanges} onClick={handleSave}>
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
@@ -209,6 +341,10 @@ function ServiceCard({
 export default function SettingsPage() {
   const [configs, setConfigs] = useState<ServiceConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [jellyseerrTested, setJellyseerrTested] = useState(false);
+  const [discoveredRadarr, setDiscoveredRadarr] = useState<DiscoveredService>();
+  const [discoveredSonarr, setDiscoveredSonarr] = useState<DiscoveredService>();
 
   const fetchConfigs = useCallback(async () => {
     try {
@@ -269,6 +405,61 @@ export default function SettingsPage() {
     return configs.find((c) => c.serviceName === serviceName);
   };
 
+  const jellyseerrConfig = getConfigForService("jellyseerr");
+  const canDiscover = jellyseerrConfig && jellyseerrTested;
+
+  const handleDiscover = async () => {
+    if (!jellyseerrConfig) {
+      toast.error("Jellyseerr configuration is required for auto-discovery");
+      return;
+    }
+
+    setIsDiscovering(true);
+    try {
+      const response = await fetch("/api/settings/discover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jellyseerrBaseUrl: jellyseerrConfig.baseUrl,
+          jellyseerrApiKey: jellyseerrConfig.apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.cause || "Failed to discover services");
+      }
+
+      const data = await response.json();
+      const found: string[] = [];
+
+      if (data.radarr) {
+        setDiscoveredRadarr(data.radarr);
+        found.push(`Radarr at ${data.radarr.baseUrl}`);
+      }
+
+      if (data.sonarr) {
+        setDiscoveredSonarr(data.sonarr);
+        found.push(`Sonarr at ${data.sonarr.baseUrl}`);
+      }
+
+      if (found.length > 0) {
+        toast.success(`Found: ${found.join(", ")}`, {
+          description: "Review the pre-filled configurations and save them.",
+          duration: 5000,
+        });
+      } else {
+        toast.info("No Radarr or Sonarr servers found in Jellyseerr settings");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Discovery failed";
+      toast.error(message);
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-dvh w-full items-center justify-center">
@@ -276,6 +467,12 @@ export default function SettingsPage() {
       </div>
     );
   }
+
+  // Separate Jellyseerr from other services for rendering order
+  const jellyseerrService = SERVICES.find(
+    (s) => s.serviceName === "jellyseerr"
+  );
+  const otherServices = SERVICES.filter((s) => s.serviceName !== "jellyseerr");
 
   return (
     <div className="flex h-dvh w-full flex-col">
@@ -290,9 +487,77 @@ export default function SettingsPage() {
             you want to use.
           </p>
           <div className="grid gap-4">
-            {SERVICES.map((service) => (
+            {/* Render Jellyseerr first */}
+            {jellyseerrService && (
+              <ServiceCard
+                config={getConfigForService(jellyseerrService.serviceName)}
+                key={jellyseerrService.serviceName}
+                onDelete={handleDelete}
+                onSave={handleSave}
+                onTestSuccess={() => setJellyseerrTested(true)}
+                service={jellyseerrService}
+              />
+            )}
+
+            {/* Auto-Discovery Card */}
+            {jellyseerrConfig && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <SearchIcon className="size-5" />
+                    Auto-Discovery
+                  </CardTitle>
+                  <CardDescription>
+                    Jellyseerr can share Radarr and Sonarr configurations
+                    automatically. Test your Jellyseerr connection first, then
+                    click discover to find connected services.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    disabled={!canDiscover || isDiscovering}
+                    onClick={handleDiscover}
+                  >
+                    {isDiscovering ? (
+                      <>
+                        <Loader2Icon className="size-4 mr-2 animate-spin" />
+                        Discovering...
+                      </>
+                    ) : (
+                      <>
+                        <SearchIcon className="size-4 mr-2" />
+                        Discover Services
+                      </>
+                    )}
+                  </Button>
+                  {!jellyseerrTested && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Test your Jellyseerr connection above to enable
+                      auto-discovery.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Render other services */}
+            {otherServices.map((service) => (
               <ServiceCard
                 config={getConfigForService(service.serviceName)}
+                externalApiKey={
+                  service.serviceName === "radarr"
+                    ? discoveredRadarr?.apiKey
+                    : service.serviceName === "sonarr"
+                      ? discoveredSonarr?.apiKey
+                      : undefined
+                }
+                externalBaseUrl={
+                  service.serviceName === "radarr"
+                    ? discoveredRadarr?.baseUrl
+                    : service.serviceName === "sonarr"
+                      ? discoveredSonarr?.baseUrl
+                      : undefined
+                }
                 key={service.serviceName}
                 onDelete={handleDelete}
                 onSave={handleSave}

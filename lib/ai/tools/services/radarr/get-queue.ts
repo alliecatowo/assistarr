@@ -42,8 +42,10 @@ export const getQueue = ({ session }: GetQueueProps) =>
 
           return {
             id: item.id,
+            movieId: item.movieId,
             movieTitle: item.movie?.title ?? "Unknown Movie",
             movieYear: item.movie?.year,
+            tmdbId: item.movie?.tmdbId,
             quality: item.quality.quality.name,
             status: item.status,
             progress: `${progress}%`,
@@ -53,6 +55,9 @@ export const getQueue = ({ session }: GetQueueProps) =>
             downloadClient: item.downloadClient,
             protocol: item.protocol,
             errorMessage: item.errorMessage,
+            // CRITICAL: downloadId is needed for manual import
+            downloadId: item.downloadId,
+            outputPath: item.outputPath,
           };
         });
 

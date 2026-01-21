@@ -116,6 +116,7 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   markRadarrFailed: "Mark Failed (Radarr)",
   getRadarrBlocklist: "Get Blocklist (Radarr)",
   deleteRadarrBlocklist: "Remove from Blocklist (Radarr)",
+  getRadarrCommandStatus: "Check Command Status (Radarr)",
   // Sonarr
   getSonarrLibrary: "Get Library (Sonarr)",
   getSonarrQualityProfiles: "List Quality Profiles (Sonarr)",
@@ -141,6 +142,7 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   markSonarrFailed: "Mark Failed (Sonarr)",
   deleteSonarrBlocklist: "Remove from Blocklist (Sonarr)",
   searchSonarrMissingEpisodes: "Search Missing Episodes (Sonarr)",
+  getSonarrCommandStatus: "Check Command Status (Sonarr)",
   // Jellyseerr
   searchContent: "Search Media (Jellyseerr)",
   requestMedia: "Request Media",
@@ -155,6 +157,11 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   getContinueWatching: "Continue Watching (Jellyfin)",
   getRecentlyAdded: "Recently Added (Jellyfin)",
   searchJellyfinMedia: "Search Media (Jellyfin)",
+  // Standard AI Tools
+  getWeather: "Get Weather",
+  createDocument: "Create Document",
+  updateDocument: "Update Document",
+  requestSuggestions: "Get Suggestions",
 };
 
 /**

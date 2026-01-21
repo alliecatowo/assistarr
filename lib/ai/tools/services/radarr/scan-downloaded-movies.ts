@@ -44,8 +44,8 @@ export const scanDownloadedMovies = ({ session }: ScanDownloadedMoviesProps) =>
           commandId: command.id,
           status: command.status,
           message: folder
-            ? `Scan started for folder: ${folder}. Command ID: ${command.id}`
-            : `Download folder scan started. Command ID: ${command.id}`,
+            ? `Scan started for folder: ${folder}. Command ID: ${command.id}. Use getCommandStatus to check completion.`
+            : `Download folder scan started. Command ID: ${command.id}. Use getCommandStatus to check completion.`,
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {

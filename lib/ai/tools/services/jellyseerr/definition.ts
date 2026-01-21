@@ -44,9 +44,10 @@ export const jellyseerrService: ServiceDefinition = {
       description: "Explore trending and popular content",
     }),
   },
+  // Use /auth/me endpoint - validates the API key and returns user info
   healthCheck: createHealthCheck({
     type: "api-key-header",
-    endpoint: "/api/v1/status",
+    endpoint: "/api/v1/auth/me",
     headerName: "X-Api-Key",
   }),
 };

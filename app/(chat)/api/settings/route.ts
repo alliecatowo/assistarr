@@ -1,4 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
+import { checkServiceHealth } from "@/lib/ai/tools/services/registry";
 import {
   deleteServiceConfig,
   getServiceConfigs,
@@ -110,5 +111,81 @@ export async function DELETE(request: Request) {
       "bad_request:settings",
       "Failed to delete service configuration"
     ).toResponse();
+  }
+}
+
+/**
+ * Test connection to a service without saving.
+ * PUT /api/settings
+ */
+export async function PUT(request: Request) {
+  const session = await auth();
+
+  if (!session?.user) {
+    return new ChatSDKError("unauthorized:settings").toResponse();
+  }
+
+  try {
+    const body = await request.json();
+    const { serviceName, baseUrl, apiKey } = body;
+
+    if (!serviceName || !baseUrl || !apiKey) {
+      return new ChatSDKError(
+        "bad_request:settings",
+        "serviceName, baseUrl, and apiKey are required"
+      ).toResponse();
+    }
+
+    const validServices = [
+      "radarr",
+      "sonarr",
+      "jellyfin",
+      "jellyseerr",
+      "qbittorrent",
+      "portainer",
+    ];
+    if (!validServices.includes(serviceName)) {
+      return new ChatSDKError(
+        "bad_request:settings",
+        "Invalid service name"
+      ).toResponse();
+    }
+
+    // Create a temporary config object for health check
+    const tempConfig = {
+      id: "",
+      userId: session.user.id,
+      serviceName,
+      baseUrl: baseUrl.replace(/\/$/, ""), // Remove trailing slash
+      apiKey,
+      isEnabled: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Measure latency
+    const startTime = performance.now();
+    const isHealthy = await checkServiceHealth(serviceName, tempConfig);
+    const latency = Math.round(performance.now() - startTime);
+
+    if (isHealthy) {
+      return Response.json({
+        success: true,
+        latency,
+        message: `Connected successfully (${latency}ms)`,
+      });
+    }
+
+    return Response.json({
+      success: false,
+      error: "Connection failed. Check your URL and API key.",
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Connection test failed";
+    return Response.json({
+      success: false,
+      error: message,
+    });
   }
 }
