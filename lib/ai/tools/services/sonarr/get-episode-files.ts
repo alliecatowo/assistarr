@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrEpisodeFile } from "./types";
 
 type GetEpisodeFilesProps = {
@@ -22,8 +23,9 @@ export const getEpisodeFiles = ({ session }: GetEpisodeFilesProps) =>
         .optional()
         .describe("A specific episode file ID to get details for"),
     }),
-    execute: async ({ seriesId, episodeFileId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get episode files" },
+      async ({ seriesId, episodeFileId }) => {
         if (!seriesId && !episodeFileId) {
           return {
             error:
@@ -32,7 +34,6 @@ export const getEpisodeFiles = ({ session }: GetEpisodeFilesProps) =>
         }
 
         if (episodeFileId) {
-          // Get specific episode file
           const file = await sonarrRequest<SonarrEpisodeFile>(
             session.user.id,
             `/episodefile/${episodeFileId}`
@@ -53,7 +54,6 @@ export const getEpisodeFiles = ({ session }: GetEpisodeFilesProps) =>
           };
         }
 
-        // Get all episode files for series
         const files = await sonarrRequest<SonarrEpisodeFile[]>(
           session.user.id,
           `/episodefile?seriesId=${seriesId}`
@@ -82,15 +82,8 @@ export const getEpisodeFiles = ({ session }: GetEpisodeFilesProps) =>
           totalFiles: files.length,
           message: `Found ${files.length} episode file(s) for series ID ${seriesId}.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: "Failed to get episode file information. Please try again.",
-        };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {

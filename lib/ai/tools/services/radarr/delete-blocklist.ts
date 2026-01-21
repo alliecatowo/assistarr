@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 type DeleteBlocklistProps = {
   session: Session;
@@ -25,8 +26,9 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
           "Array of blocklist item IDs to remove in bulk (use this OR id, not both)"
         ),
     }),
-    execute: async ({ id, ids }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "delete from blocklist" },
+      async ({ id, ids }) => {
         if (!id && (!ids || ids.length === 0)) {
           return {
             error:
@@ -62,19 +64,6 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
           success: true,
           message: `Removed ${ids!.length} item(s) from the blocklist.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Blocklist item not found. It may have already been removed.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to remove from blocklist: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

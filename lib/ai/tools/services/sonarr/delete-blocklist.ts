@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type DeleteBlocklistProps = {
   session: Session;
@@ -23,8 +24,9 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
         .optional()
         .describe("Array of blocklist item IDs to remove in bulk"),
     }),
-    execute: async ({ blocklistId, blocklistIds }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "delete blocklist" },
+      async ({ blocklistId, blocklistIds }) => {
         if (!blocklistId && (!blocklistIds || blocklistIds.length === 0)) {
           return {
             error:
@@ -33,7 +35,6 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
         }
 
         if (blocklistIds && blocklistIds.length > 0) {
-          // Bulk delete
           await sonarrRequest(session.user.id, "/blocklist/bulk", {
             method: "DELETE",
             body: JSON.stringify({ ids: blocklistIds }),
@@ -45,7 +46,6 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
           };
         }
 
-        // Single delete
         await sonarrRequest(session.user.id, `/blocklist/${blocklistId}`, {
           method: "DELETE",
         });
@@ -54,13 +54,6 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
           success: true,
           message: `Successfully removed item ${blocklistId} from the blocklist.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: "Failed to remove from blocklist. Please try again.",
-        };
       }
-    },
+    ),
   });

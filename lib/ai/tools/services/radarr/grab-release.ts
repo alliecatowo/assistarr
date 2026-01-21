@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 type GrabReleaseProps = {
   session: Session;
@@ -21,8 +22,9 @@ export const grabRelease = ({ session }: GrabReleaseProps) =>
         .number()
         .describe("The indexer ID for the release (from getReleases)"),
     }),
-    execute: async ({ guid, indexerId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "grab release" },
+      async ({ guid, indexerId }) => {
         await radarrRequest(session.user.id, "/release", {
           method: "POST",
           body: JSON.stringify({
@@ -36,22 +38,6 @@ export const grabRelease = ({ session }: GrabReleaseProps) =>
           message:
             "Release grabbed successfully. It should appear in the download queue shortly.",
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Release not found. The indexer may no longer have this release available.` };
-          }
-          if (error.statusCode === 400) {
-            return { error: `Failed to grab release: ${error.message}. The release may be invalid or already grabbed.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to grab release: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

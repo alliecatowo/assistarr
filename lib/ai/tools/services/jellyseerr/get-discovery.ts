@@ -2,22 +2,20 @@ import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import type { DisplayableMedia } from "../base";
-import {
-  getPosterUrl,
-  JellyseerrClientError,
-  jellyseerrRequest,
-} from "./client";
-import { getMediaStatusText, MediaStatus } from "./types";
+import { withToolErrorHandling } from "../core";
+import { getPosterUrl, jellyseerrRequest } from "./client";
+import { MediaStatus } from "./types";
 
 type GetDiscoveryProps = {
   session: Session;
 };
 
-// Map Jellyseerr MediaStatus to DisplayableMedia status
-function mapToDisplayStatus(
-  mediaInfo?: { status: number }
-): DisplayableMedia["status"] {
-  if (!mediaInfo) return "missing";
+function mapToDisplayStatus(mediaInfo?: {
+  status: number;
+}): DisplayableMedia["status"] {
+  if (!mediaInfo) {
+    return "missing";
+  }
   switch (mediaInfo.status) {
     case MediaStatus.AVAILABLE:
       return "available";
@@ -40,14 +38,14 @@ export const getDiscovery = ({ session }: GetDiscoveryProps) =>
         .default("trending")
         .describe("The type of discovery content to retrieve"),
     }),
-    execute: async ({ type }) => {
-      const userId = session.user?.id;
-      if (!userId) {
-        return { error: "You must be logged in to view discovery content." };
-      }
+    execute: withToolErrorHandling(
+      { serviceName: "Jellyseerr", operationName: "get discovery" },
+      async ({ type }) => {
+        const userId = session.user?.id;
+        if (!userId) {
+          return { error: "You must be logged in to view discovery content." };
+        }
 
-      try {
-        // Jellyseerr discovery endpoints
         const endpoints: Record<string, string> = {
           trending: "/discover/trending",
           popular: "/discover/movies",
@@ -77,7 +75,6 @@ export const getDiscovery = ({ session }: GetDiscoveryProps) =>
           };
         }
 
-        // Map to DisplayableMedia format
         const results: DisplayableMedia[] = response.results
           .slice(0, 10)
           .map((result) => ({
@@ -101,11 +98,6 @@ export const getDiscovery = ({ session }: GetDiscoveryProps) =>
           results,
           message: `Found ${results.length} ${type} items.`,
         };
-      } catch (error) {
-        if (error instanceof JellyseerrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get discovery content. Please try again." };
       }
-    },
+    ),
   });

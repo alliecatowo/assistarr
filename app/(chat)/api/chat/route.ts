@@ -14,7 +14,6 @@ import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
-import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { getEnabledTools } from "@/lib/ai/tools/services/registry";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -61,6 +60,63 @@ function configsToMap(configs: ServiceConfig[]): Map<string, ServiceConfig> {
   return map;
 }
 
+/**
+ * Validates session and checks rate limits
+ */
+async function validateSessionAndRateLimit() {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new ChatSDKError("unauthorized:chat");
+  }
+
+  const userType: UserType = session.user.type;
+  const messageCount = await getMessageCountByUserId({
+    id: session.user.id,
+    differenceInHours: 24,
+  });
+
+  if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    throw new ChatSDKError("rate_limit:chat");
+  }
+
+  return session;
+}
+
+/**
+ * Loads or initializes chat and messages
+ */
+async function loadChatAndMessages(
+  id: string,
+  message: ChatMessage | undefined,
+  isToolApprovalFlow: boolean,
+  userId: string,
+  visibility: "public" | "private"
+) {
+  const chat = await getChatById({ id });
+  let messagesFromDb: DBMessage[] = [];
+  let titlePromise: Promise<string> | null = null;
+
+  if (chat) {
+    if (chat.userId !== userId) {
+      throw new ChatSDKError("forbidden:chat");
+    }
+    if (!isToolApprovalFlow) {
+      messagesFromDb = await getMessagesByChatId({ id });
+    }
+  } else if (message?.role === "user") {
+    await saveChat({
+      id,
+      userId,
+      title: "New chat",
+      visibility,
+    });
+    titlePromise = generateTitleFromUserMessage({ message });
+  }
+
+  return { messagesFromDb, titlePromise };
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -81,58 +137,23 @@ export async function POST(request: Request) {
       debugMode,
     } = requestBody;
 
-    const session = await auth();
-
-    if (!session?.user) {
-      return new ChatSDKError("unauthorized:chat").toResponse();
-    }
-
-    const userType: UserType = session.user.type;
-
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 24,
-    });
-
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-      return new ChatSDKError("rate_limit:chat").toResponse();
-    }
-
+    const session = await validateSessionAndRateLimit();
     const isToolApprovalFlow = Boolean(messages);
 
-    const chat = await getChatById({ id });
-    let messagesFromDb: DBMessage[] = [];
-    let titlePromise: Promise<string> | null = null;
-
-    if (chat) {
-      if (chat.userId !== session.user.id) {
-        return new ChatSDKError("forbidden:chat").toResponse();
-      }
-      if (!isToolApprovalFlow) {
-        messagesFromDb = await getMessagesByChatId({ id });
-      }
-    } else if (message?.role === "user") {
-      await saveChat({
-        id,
-        userId: session.user.id,
-        title: "New chat",
-        visibility: selectedVisibilityType,
-      });
-      titlePromise = generateTitleFromUserMessage({ message });
-    }
+    const { messagesFromDb, titlePromise } = await loadChatAndMessages(
+      id,
+      message as ChatMessage,
+      isToolApprovalFlow,
+      session.user.id,
+      selectedVisibilityType
+    );
 
     const uiMessages = isToolApprovalFlow
       ? (messages as ChatMessage[])
       : [...convertToUIMessages(messagesFromDb), message as ChatMessage];
 
     const { longitude, latitude, city, country } = geolocation(request);
-
-    const requestHints: RequestHints = {
-      longitude,
-      latitude,
-      city,
-      country,
-    };
+    const requestHints: RequestHints = { longitude, latitude, city, country };
 
     if (message?.role === "user") {
       await saveMessages({
@@ -152,10 +173,8 @@ export async function POST(request: Request) {
     const isReasoningModel =
       selectedChatModel.includes("reasoning") ||
       selectedChatModel.includes("thinking");
-
     const modelMessages = await convertToModelMessages(uiMessages);
 
-    // Get service configurations and build enabled tools from registry
     const serviceConfigs = await getServiceConfigs({ userId: session.user.id });
     const configsMap = configsToMap(serviceConfigs);
     const { tools: serviceTools } = getEnabledTools(session, configsMap);
@@ -163,26 +182,21 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
-        // Build the complete tools object
         const allTools = {
-          // Core tools (always available)
-          getWeather,
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
-          // Service tools (from registry, filtered by enabled services)
           ...serviceTools,
         };
-
-        // Get all tool names from the combined tools object
-        const allToolNames = Object.keys(allTools) as (keyof typeof allTools)[];
 
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints, debugMode }),
           messages: modelMessages,
           stopWhen: stepCountIs(8),
-          experimental_activeTools: allToolNames,
+          experimental_activeTools: Object.keys(allTools) as Array<
+            keyof typeof allTools
+          >,
           providerOptions: {
             ...(isReasoningModel && selectedChatModel.includes("claude")
               ? {
@@ -195,14 +209,12 @@ export async function POST(request: Request) {
               ? {
                   google: selectedChatModel.includes("gemini-3")
                     ? {
-                        // Gemini 3 models use thinkingLevel
                         thinkingConfig: {
                           thinkingLevel: "high",
                           includeThoughts: true,
                         },
                       }
                     : {
-                        // Gemini 2.5 models use thinkingBudget
                         thinkingConfig: {
                           thinkingBudget: 8192,
                           includeThoughts: true,
@@ -284,27 +296,22 @@ export async function POST(request: Request) {
             );
           }
         } catch (_) {
-          // ignore redis errors
+          /* ignore redis errors */
         }
       },
     });
   } catch (error) {
-    const vercelId = request.headers.get("x-vercel-id");
-
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
 
     if (
       error instanceof Error &&
-      error.message?.includes(
-        "AI Gateway requires a valid credit card on file to service requests"
-      )
+      error.message?.includes("AI Gateway requires a valid credit card on file")
     ) {
       return new ChatSDKError("bad_request:activate_gateway").toResponse();
     }
 
-    console.error("Unhandled error in chat API:", error, { vercelId });
     return new ChatSDKError("offline:chat").toResponse();
   }
 }
@@ -318,18 +325,15 @@ export async function DELETE(request: Request) {
   }
 
   const session = await auth();
-
   if (!session?.user) {
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
 
   const chat = await getChatById({ id });
-
   if (chat?.userId !== session.user.id) {
     return new ChatSDKError("forbidden:chat").toResponse();
   }
 
   const deletedChat = await deleteChatById({ id });
-
   return Response.json(deletedChat, { status: 200 });
 }

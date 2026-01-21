@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrManualImportItem } from "./types";
 
 type GetManualImportProps = {
@@ -24,8 +25,9 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
           "Download client ID to get files for (from queue item's downloadId)"
         ),
     }),
-    execute: async ({ folder, downloadId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get manual import" },
+      async ({ folder, downloadId }) => {
         const params = new URLSearchParams();
         if (folder) {
           params.append("folder", folder);
@@ -70,21 +72,8 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
           totalFiles: items.length,
           message: `Found ${items.length} file(s) available for manual import.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Folder or download not found: ${error.message}. Verify the path exists.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get manual import files: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {

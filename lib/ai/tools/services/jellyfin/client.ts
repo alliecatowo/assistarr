@@ -22,7 +22,7 @@ export class JellyfinClientError extends Error {
 /**
  * Get Jellyfin service configuration for a user
  */
-export async function getJellyfinConfig(
+export function getJellyfinConfig(
   userId: string
 ): Promise<ServiceConfig | null> {
   return getServiceConfig({
@@ -36,6 +36,37 @@ export async function getJellyfinConfig(
  */
 function buildAuthHeader(apiKey: string): string {
   return `MediaBrowser Token="${apiKey}"`;
+}
+
+/**
+ * Parse Jellyfin error response into a readable message
+ */
+function parseJellyfinError(errorData: unknown): string | null {
+  if (Array.isArray(errorData) && errorData.length > 0) {
+    const validationErrors = errorData
+      .filter((e: { errorMessage?: string }) => e.errorMessage)
+      .map((e: { propertyName?: string; errorMessage: string }) =>
+        e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
+      );
+    if (validationErrors.length > 0) {
+      return validationErrors.join("; ");
+    }
+  }
+
+  if (errorData && typeof errorData === "object") {
+    const errObj = errorData as Record<string, unknown>;
+    if (errObj.message) {
+      return errObj.message as string;
+    }
+    if (errObj.Message) {
+      return errObj.Message as string;
+    }
+    if (errObj.error) {
+      return errObj.error as string;
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -64,25 +95,9 @@ export async function jellyfinRequest<T>(
 
     try {
       const errorData = await response.json();
-
-      // Handle different error response formats from Jellyfin
-      if (Array.isArray(errorData) && errorData.length > 0) {
-        // Validation errors: [{ propertyName, errorMessage }]
-        const validationErrors = errorData
-          .filter((e: { errorMessage?: string }) => e.errorMessage)
-          .map((e: { propertyName?: string; errorMessage: string }) =>
-            e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
-          );
-        if (validationErrors.length > 0) {
-          errorMessage = validationErrors.join("; ");
-        }
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
-      } else if (errorData.Message) {
-        // Jellyfin sometimes uses PascalCase
-        errorMessage = errorData.Message;
-      } else if (errorData.error) {
-        errorMessage = errorData.error;
+      const parsed = parseJellyfinError(errorData);
+      if (parsed) {
+        errorMessage = parsed;
       }
     } catch {
       // Ignore JSON parsing errors for error response
@@ -91,7 +106,6 @@ export async function jellyfinRequest<T>(
     throw new JellyfinClientError(errorMessage, response.status);
   }
 
-  // Handle 204 No Content
   if (response.status === 204) {
     return {} as T;
   }

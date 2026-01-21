@@ -7,22 +7,26 @@ export type MediaType = "movie" | "tv";
 /**
  * Media status values from Jellyseerr
  */
-export enum MediaStatus {
-  UNKNOWN = 1,
-  PENDING = 2,
-  PROCESSING = 3,
-  PARTIALLY_AVAILABLE = 4,
-  AVAILABLE = 5,
-}
+export const MediaStatus = {
+  UNKNOWN: 1,
+  PENDING: 2,
+  PROCESSING: 3,
+  PARTIALLY_AVAILABLE: 4,
+  AVAILABLE: 5,
+} as const;
+
+export type MediaStatus = (typeof MediaStatus)[keyof typeof MediaStatus];
 
 /**
  * Request status values from Jellyseerr
  */
-export enum RequestStatus {
-  PENDING = 1,
-  APPROVED = 2,
-  DECLINED = 3,
-}
+export const RequestStatus = {
+  PENDING: 1,
+  APPROVED: 2,
+  DECLINED: 3,
+} as const;
+
+export type RequestStatus = (typeof RequestStatus)[keyof typeof RequestStatus];
 
 export interface MediaInfo {
   id: number;

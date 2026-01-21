@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { JellyseerrClientError, jellyseerrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { jellyseerrRequest } from "./client";
 import {
   type CreateRequestBody,
   getRequestStatusText,
@@ -14,6 +15,63 @@ import {
 type RequestMediaProps = {
   session: Session;
 };
+
+/**
+ * Check if media is already available or requested
+ */
+function checkMediaAvailability(
+  details: MovieDetails | TvDetails,
+  title: string,
+  tmdbId: number,
+  mediaType: "movie" | "tv"
+) {
+  if (details.mediaInfo?.status === MediaStatus.AVAILABLE) {
+    return {
+      success: false as const,
+      error: `"${title}" is already available in the library.`,
+      tmdbId,
+      title,
+      mediaType,
+    };
+  }
+
+  if (
+    details.mediaInfo?.status === MediaStatus.PENDING ||
+    details.mediaInfo?.status === MediaStatus.PROCESSING
+  ) {
+    return {
+      success: false as const,
+      error: `"${title}" has already been requested and is being processed.`,
+      tmdbId,
+      title,
+      mediaType,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Build the request body for Jellyseerr
+ */
+function buildRequestBody(
+  tmdbId: number,
+  mediaType: "movie" | "tv",
+  seasons?: number[],
+  is4k?: boolean
+): CreateRequestBody {
+  const requestBody: CreateRequestBody = {
+    mediaType,
+    mediaId: tmdbId,
+    is4k,
+  };
+
+  if (mediaType === "tv") {
+    requestBody.seasons = seasons && seasons.length > 0 ? seasons : "all";
+  }
+
+  return requestBody;
+}
 
 export const requestMedia = ({ session }: RequestMediaProps) =>
   tool({
@@ -41,17 +99,17 @@ export const requestMedia = ({ session }: RequestMediaProps) =>
         .describe("Request the 4K version if available"),
     }),
     needsApproval: true,
-    execute: async ({ tmdbId, mediaType, seasons, is4k }) => {
-      const userId = session.user?.id;
+    execute: withToolErrorHandling(
+      { serviceName: "Jellyseerr", operationName: "request media" },
+      async ({ tmdbId, mediaType, seasons, is4k }) => {
+        const userId = session.user?.id;
 
-      if (!userId) {
-        return {
-          error: "You must be logged in to request media.",
-        };
-      }
+        if (!userId) {
+          return {
+            error: "You must be logged in to request media.",
+          };
+        }
 
-      try {
-        // First, check if the media already exists or is already requested
         const detailsEndpoint =
           mediaType === "movie" ? `/movie/${tmdbId}` : `/tv/${tmdbId}`;
 
@@ -61,50 +119,19 @@ export const requestMedia = ({ session }: RequestMediaProps) =>
         );
 
         const title = "title" in details ? details.title : details.name;
+        const availabilityError = checkMediaAvailability(
+          details,
+          title,
+          tmdbId,
+          mediaType
+        );
 
-        // Check if already available
-        if (details.mediaInfo?.status === MediaStatus.AVAILABLE) {
-          return {
-            success: false,
-            error: `"${title}" is already available in the library.`,
-            tmdbId,
-            title,
-            mediaType,
-          };
+        if (availabilityError) {
+          return availabilityError;
         }
 
-        // Check if already requested/pending
-        if (
-          details.mediaInfo?.status === MediaStatus.PENDING ||
-          details.mediaInfo?.status === MediaStatus.PROCESSING
-        ) {
-          return {
-            success: false,
-            error: `"${title}" has already been requested and is being processed.`,
-            tmdbId,
-            title,
-            mediaType,
-          };
-        }
+        const requestBody = buildRequestBody(tmdbId, mediaType, seasons, is4k);
 
-        // Build request body
-        const requestBody: CreateRequestBody = {
-          mediaType,
-          mediaId: tmdbId,
-          is4k,
-        };
-
-        // For TV shows, add seasons
-        if (mediaType === "tv") {
-          if (seasons && seasons.length > 0) {
-            requestBody.seasons = seasons;
-          } else {
-            // Request all seasons
-            requestBody.seasons = "all";
-          }
-        }
-
-        // Create the request
         const request = await jellyseerrRequest<MediaRequest>(
           userId,
           "/request",
@@ -130,34 +157,6 @@ export const requestMedia = ({ session }: RequestMediaProps) =>
               requestedSeasons: seasons,
             }),
         };
-      } catch (error) {
-        if (error instanceof JellyseerrClientError) {
-          // Handle specific error cases
-          if (error.statusCode === 409) {
-            return {
-              success: false,
-              error: "A request already exists for this media.",
-              tmdbId,
-              mediaType,
-            };
-          }
-          if (error.statusCode === 403) {
-            return {
-              success: false,
-              error:
-                "You do not have permission to request this media. You may have reached your request quota.",
-              tmdbId,
-              mediaType,
-            };
-          }
-          return {
-            success: false,
-            error: error.message,
-            tmdbId,
-            mediaType,
-          };
-        }
-        throw error;
       }
-    },
+    ),
   });

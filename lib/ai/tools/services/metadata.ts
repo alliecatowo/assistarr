@@ -158,7 +158,6 @@ export const TOOL_DISPLAY_NAMES: Record<string, string> = {
   getRecentlyAdded: "Recently Added (Jellyfin)",
   searchJellyfinMedia: "Search Media (Jellyfin)",
   // Standard AI Tools
-  getWeather: "Get Weather",
   createDocument: "Create Document",
   updateDocument: "Update Document",
   requestSuggestions: "Get Suggestions",

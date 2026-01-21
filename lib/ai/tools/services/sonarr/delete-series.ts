@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type DeleteSeriesProps = {
   session: Session;
@@ -32,8 +33,9 @@ export const deleteSeries = ({ session }: DeleteSeriesProps) =>
           "Whether to exclude this series from import lists to prevent re-adding (default: false)"
         ),
     }),
-    execute: async ({ seriesId, deleteFiles, addImportListExclusion }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "delete series" },
+      async ({ seriesId, deleteFiles, addImportListExclusion }) => {
         await sonarrRequest(
           session.user.id,
           `/series/${seriesId}?deleteFiles=${deleteFiles}&addImportListExclusion=${addImportListExclusion}`,
@@ -46,11 +48,6 @@ export const deleteSeries = ({ session }: DeleteSeriesProps) =>
           success: true,
           message: `Successfully deleted series with ID ${seriesId}${deleteFiles ? " and its files" : ""}.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to delete series. Please try again." };
       }
-    },
+    ),
   });

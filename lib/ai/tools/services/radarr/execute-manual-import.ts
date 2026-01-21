@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrCommand } from "./types";
 
 type ExecuteManualImportProps = {
@@ -51,8 +52,9 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
           "How to import files: auto (use Radarr settings), move, copy, hardlink, or symlink"
         ),
     }),
-    execute: async ({ files, importMode }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "execute manual import" },
+      async ({ files, importMode }) => {
         const command = await radarrRequest<RadarrCommand>(
           session.user.id,
           "/command",
@@ -78,22 +80,6 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
           status: command.status,
           message: `Manual import started for ${files.length} file(s). Command ID: ${command.id}. Use getCommandStatus to check completion.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 400) {
-            return { error: `Failed to import: ${error.message}. Check that file paths are correct and movies exist.` };
-          }
-          if (error.statusCode === 404) {
-            return { error: `File or movie not found: ${error.message}. Verify the paths and movie IDs.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to execute manual import: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 type RemoveFromQueueProps = {
   session: Session;
@@ -32,8 +33,9 @@ export const removeFromQueue = ({ session }: RemoveFromQueueProps) =>
           "Whether to blocklist this release to prevent re-grabbing (default: false)"
         ),
     }),
-    execute: async ({ queueId, removeFromClient, blocklist }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "remove from queue" },
+      async ({ queueId, removeFromClient, blocklist }) => {
         await radarrRequest(
           session.user.id,
           `/queue/${queueId}?removeFromClient=${removeFromClient}&blocklist=${blocklist}`,
@@ -46,19 +48,6 @@ export const removeFromQueue = ({ session }: RemoveFromQueueProps) =>
           success: true,
           message: `Removed item from queue.${blocklist ? " The release has been blocklisted." : ""}`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Queue item with ID ${queueId} not found. It may have already been removed.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to remove from queue: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

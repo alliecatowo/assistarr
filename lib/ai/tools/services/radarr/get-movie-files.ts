@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrMovieFile } from "./types";
 
 type GetMovieFilesProps = {
@@ -20,8 +21,9 @@ export const getMovieFiles = ({ session }: GetMovieFilesProps) =>
           "Optional movie ID to get files for a specific movie. If not provided, returns all movie files."
         ),
     }),
-    execute: async ({ movieId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get movie files" },
+      async ({ movieId }) => {
         const endpoint = movieId
           ? `/moviefile?movieId=${movieId}`
           : "/moviefile";
@@ -69,21 +71,8 @@ export const getMovieFiles = ({ session }: GetMovieFilesProps) =>
           totalFiles: files.length,
           message: `Found ${files.length} movie file(s).`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: movieId ? `Movie with ID ${movieId} not found in Radarr.` : `Radarr endpoint not found.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get movie files: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {

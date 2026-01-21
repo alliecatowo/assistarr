@@ -1,11 +1,9 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import {
-  deriveMediaStatus,
-  type DisplayableMedia,
-} from "../base";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { type DisplayableMedia, deriveMediaStatus } from "../base";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrSeries } from "./types";
 
 type SearchSeriesProps = {
@@ -23,8 +21,9 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
           "The TV series name to search for (e.g., 'Breaking Bad', 'The Office')"
         ),
     }),
-    execute: async ({ query }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "search series" },
+      async ({ query }) => {
         const results = await sonarrRequest<SonarrSeries[]>(
           session.user.id,
           `/series/lookup?term=${encodeURIComponent(query)}`
@@ -37,17 +36,13 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
           };
         }
 
-        // Map to DisplayableMedia format - services are source of truth for display data
         const series: DisplayableMedia[] = results.slice(0, 10).map((s) => ({
-          // Required display fields
           title: s.title,
           posterUrl:
             s.remotePoster ??
             s.images.find((img) => img.coverType === "poster")?.remoteUrl ??
             null,
           mediaType: "tv" as const,
-
-          // Rich metadata
           year: s.year,
           overview:
             s.overview?.slice(0, 200) +
@@ -59,15 +54,11 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
             s.statistics?.seasonCount ??
             s.seasons?.filter((season) => season.seasonNumber > 0).length ??
             0,
-
-          // Status
           status: deriveMediaStatus(
             (s.statistics?.episodeFileCount ?? 0) > 0,
             s.monitored
           ),
           monitored: s.monitored,
-
-          // Service IDs for actions
           externalIds: {
             tvdb: s.tvdbId,
             imdb: s.imdbId,
@@ -78,11 +69,6 @@ export const searchSeries = ({ session }: SearchSeriesProps) =>
           results: series,
           message: `Found ${results.length} TV series matching "${query}". Showing top ${series.length} results.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to search for TV series. Please try again." };
       }
-    },
+    ),
   });

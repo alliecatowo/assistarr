@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 type TriggerSearchProps = {
   session: Session;
@@ -18,8 +19,9 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
           "The Radarr movie ID to search for (get this from getLibrary or searchMovies)"
         ),
     }),
-    execute: async ({ movieId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "trigger movie search" },
+      async ({ movieId }) => {
         await radarrRequest(session.user.id, "/command", {
           method: "POST",
           body: JSON.stringify({
@@ -32,19 +34,6 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
           success: true,
           message: `Search triggered for movie ID ${movieId}. Radarr will now look for available releases.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Movie with ID ${movieId} not found in Radarr.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to trigger search: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

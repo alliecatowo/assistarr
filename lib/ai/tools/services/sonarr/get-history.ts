@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrHistoryResponse } from "./types";
 
 type GetHistoryProps = {
@@ -31,8 +32,9 @@ export const getHistory = ({ session }: GetHistoryProps) =>
           "Number of history records to return (default: 20, max: 100)"
         ),
     }),
-    execute: async ({ seriesId, seasonNumber, pageSize }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get history" },
+      async ({ seriesId, seasonNumber, pageSize }) => {
         const params = new URLSearchParams({
           page: "1",
           pageSize: Math.min(pageSize, 100).toString(),
@@ -80,11 +82,6 @@ export const getHistory = ({ session }: GetHistoryProps) =>
           totalRecords: history.totalRecords,
           message: `Found ${history.totalRecords} history record(s).`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get history. Please try again." };
       }
-    },
+    ),
   });

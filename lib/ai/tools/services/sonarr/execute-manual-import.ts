@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrCommand } from "./types";
 
 type ExecuteManualImportProps = {
@@ -59,8 +60,9 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
           "How to import the files (default: auto - uses Sonarr settings)"
         ),
     }),
-    execute: async ({ files, importMode }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "execute manual import" },
+      async ({ files, importMode }) => {
         const commandBody = {
           name: "ManualImport",
           files: files.map((file) => ({
@@ -91,11 +93,6 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
           status: result.status,
           message: `Manual import started for ${files.length} file(s). Command ID: ${result.id}. Use getCommandStatus to check completion.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to execute manual import. Please try again." };
       }
-    },
+    ),
   });

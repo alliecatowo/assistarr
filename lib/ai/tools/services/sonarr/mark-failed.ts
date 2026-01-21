@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type MarkFailedProps = {
   session: Session;
@@ -18,8 +19,9 @@ export const markFailed = ({ session }: MarkFailedProps) =>
           "The history record ID to mark as failed (from getHistory, this is the 'id' field of a 'grabbed' event)"
         ),
     }),
-    execute: async ({ historyId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "mark failed" },
+      async ({ historyId }) => {
         await sonarrRequest(session.user.id, `/history/failed/${historyId}`, {
           method: "POST",
         });
@@ -28,11 +30,6 @@ export const markFailed = ({ session }: MarkFailedProps) =>
           success: true,
           message: `Marked history item ${historyId} as failed. Sonarr may now search for an alternative.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to mark item as failed. Please try again." };
       }
-    },
+    ),
   });

@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrCommand } from "./types";
 
 type GetCommandStatusProps = {
@@ -15,8 +16,9 @@ export const getCommandStatus = ({ session }: GetCommandStatusProps) =>
     inputSchema: z.object({
       commandId: z.number().describe("The command ID to check status for"),
     }),
-    execute: async ({ commandId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get command status" },
+      async ({ commandId }) => {
         const command = await radarrRequest<RadarrCommand>(
           session.user.id,
           `/command/${commandId}`
@@ -65,19 +67,6 @@ export const getCommandStatus = ({ session }: GetCommandStatusProps) =>
           isRunning: command.status === "started",
           isPending: command.status === "queued",
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Command with ID ${commandId} not found. It may have expired or never existed.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get command status: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

@@ -1,11 +1,11 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import { withToolErrorHandling } from "../core";
 import {
   formatBytes,
   formatEta,
   getStateDescription,
-  QBittorrentClientError,
   qbittorrentRequest,
 } from "./client";
 import type { Torrent } from "./types";
@@ -53,14 +53,15 @@ export const getTorrents = ({ session }: GetTorrentsProps) =>
         .default("added_on")
         .describe("Sort torrents by field"),
     }),
-    execute: async ({ filter, limit, sort }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "qBittorrent", operationName: "get torrents" },
+      async ({ filter, limit, sort }) => {
         const params = new URLSearchParams();
         if (filter !== "all") {
           params.set("filter", filter);
         }
         params.set("sort", sort);
-        params.set("reverse", "true"); // Most recent first for added_on
+        params.set("reverse", "true");
         params.set("limit", limit.toString());
 
         const endpoint = `/torrents/info?${params.toString()}`;
@@ -99,7 +100,6 @@ export const getTorrents = ({ session }: GetTorrentsProps) =>
           addedOn: new Date(t.added_on * 1000).toISOString(),
         }));
 
-        // Summary statistics
         const downloading = torrents.filter((t) =>
           ["downloading", "metaDL", "stalledDL", "forcedDL"].includes(t.state)
         ).length;
@@ -120,13 +120,6 @@ export const getTorrents = ({ session }: GetTorrentsProps) =>
           },
           message: `Found ${torrents.length} torrent${torrents.length === 1 ? "" : "s"}${filter !== "all" ? ` (filtered by: ${filter})` : ""}.`,
         };
-      } catch (error) {
-        if (error instanceof QBittorrentClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: "Failed to get torrents from qBittorrent. Please try again.",
-        };
       }
-    },
+    ),
   });

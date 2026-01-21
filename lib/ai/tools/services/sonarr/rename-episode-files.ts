@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrCommand } from "./types";
 
 type RenameEpisodeFilesProps = {
@@ -21,8 +22,9 @@ export const renameEpisodeFiles = ({ session }: RenameEpisodeFilesProps) =>
           "Optional: Specific episode file IDs to rename. If not provided, renames all files that need renaming."
         ),
     }),
-    execute: async ({ seriesId, fileIds }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "rename episode files" },
+      async ({ seriesId, fileIds }) => {
         const commandBody: {
           name: string;
           seriesId: number;
@@ -52,11 +54,6 @@ export const renameEpisodeFiles = ({ session }: RenameEpisodeFilesProps) =>
             ? `Rename started for ${fileIds.length} file(s). Command ID: ${result.id}`
             : `Rename started for all files needing renaming in series ID ${seriesId}. Command ID: ${result.id}`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to rename episode files. Please try again." };
       }
-    },
+    ),
   });

@@ -26,22 +26,29 @@
   "linter": {
     "rules": {
       "suspicious": {
-        "noExplicitAny": "off",
+        "noExplicitAny": "warn",
         "noUnknownAtRules": "off",
-        "noConsole": "off",
+        "noConsole": "warn",
         "noBitwiseOperators": "off"
       },
       "style": {
         "noMagicNumbers": "off",
         "noNestedTernary": "off",
-        "useConsistentTypeDefinitions": "off"
+        "useConsistentTypeDefinitions": "off",
+        "noParameterProperties": "off",
+        "useConsistentMemberAccessibility": "off"
       },
       "nursery": {
         "noUnnecessaryConditions": "off",
         "useSortedClasses": "off"
       },
       "complexity": {
-        "noExcessiveCognitiveComplexity": "off",
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": {
+            "maxAllowedComplexity": 15
+          }
+        },
         "useSimplifiedLogicExpression": "off"
       },
       "a11y": {

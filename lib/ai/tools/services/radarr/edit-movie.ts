@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 type EditMovieProps = {
   session: Session;
@@ -27,22 +28,23 @@ export const editMovie = ({ session }: EditMovieProps) =>
         .describe("The root folder path for the movie"),
       tags: z.array(z.number()).optional().describe("Array of tag IDs"),
     }),
-    execute: async ({
-      movieId,
-      monitored,
-      qualityProfileId,
-      rootFolderPath,
-      tags,
-    }: {
-      movieId: number;
-      monitored?: boolean;
-      qualityProfileId?: number;
-      rootFolderPath?: string;
-      tags?: number[];
-    }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "edit movie" },
+      async ({
+        movieId,
+        monitored,
+        qualityProfileId,
+        rootFolderPath,
+        tags,
+      }: {
+        movieId: number;
+        monitored?: boolean;
+        qualityProfileId?: number;
+        rootFolderPath?: string;
+        tags?: number[];
+      }) => {
         // First, get the existing movie to merge updates
-        const existingMovie = await radarrRequest<any>(
+        const existingMovie = await radarrRequest<Record<string, unknown>>(
           session.user.id,
           `/movie/${movieId}`
         );
@@ -68,22 +70,6 @@ export const editMovie = ({ session }: EditMovieProps) =>
           success: true,
           movie: result,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Movie with ID ${movieId} not found in Radarr.` };
-          }
-          if (error.statusCode === 400) {
-            return { error: `Failed to update movie: ${error.message}. Check that all values are valid.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to edit movie: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

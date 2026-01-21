@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 type MarkFailedProps = {
   session: Session;
@@ -18,8 +19,9 @@ export const markFailed = ({ session }: MarkFailedProps) =>
           "The history record ID to mark as failed (from getHistory, this is the 'id' field)"
         ),
     }),
-    execute: async ({ historyId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "mark as failed" },
+      async ({ historyId }) => {
         await radarrRequest(session.user.id, `/history/failed/${historyId}`, {
           method: "POST",
         });
@@ -28,19 +30,6 @@ export const markFailed = ({ session }: MarkFailedProps) =>
           success: true,
           message: `History item ${historyId} marked as failed. Radarr will search for an alternative release.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `History item with ID ${historyId} not found.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to mark as failed: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type GrabReleaseProps = {
   session: Session;
@@ -21,8 +22,9 @@ export const grabRelease = ({ session }: GrabReleaseProps) =>
         .number()
         .describe("The indexer ID for the release (from getReleases)"),
     }),
-    execute: async ({ guid, indexerId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "grab release" },
+      async ({ guid, indexerId }) => {
         await sonarrRequest(session.user.id, "/release", {
           method: "POST",
           body: JSON.stringify({
@@ -36,11 +38,6 @@ export const grabRelease = ({ session }: GrabReleaseProps) =>
           message:
             "Release grabbed successfully. It should appear in the download queue shortly.",
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to grab release. Please try again." };
       }
-    },
+    ),
   });

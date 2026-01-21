@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type TriggerSearchProps = {
   session: Session;
@@ -24,25 +25,13 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
         .optional()
         .describe("Optional: List of episode IDs to search for."),
     }),
-    execute: async ({ seriesId, seasonNumber, episodeIds }) => {
-      try {
-        let _commandName = "SeriesSearch";
-        const _body: any = { seriesId };
-
-        // Logic for different search commands in Sonarr
-        if (episodeIds && episodeIds.length > 0) {
-          _commandName = "EpisodeSearch";
-          // EpisodeSearch takes episodeIds
-          // SeriesSearch takes seriesId
-          // SeasonSearch (if exists in v3) or just SeriesSearch with filtering?
-          // Actually Sonarr v3 uses distinct commands.
-          // Check API docs logic:
-          // SeriesSearch: { seriesId }
-          // EpisodeSearch: { episodeIds }
-          // SeasonSearch: { seriesId, seasonNumber }
-        }
-
-        let commandBody: any = { name: "SeriesSearch", seriesId };
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "trigger search" },
+      async ({ seriesId, seasonNumber, episodeIds }) => {
+        let commandBody: Record<string, unknown> = {
+          name: "SeriesSearch",
+          seriesId,
+        };
 
         if (episodeIds && episodeIds.length > 0) {
           commandBody = { name: "EpisodeSearch", episodeIds };
@@ -59,11 +48,6 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
           success: true,
           message: `Search triggered for series ID ${seriesId}${seasonNumber !== undefined ? ` season ${seasonNumber}` : ""}${episodeIds ? ` episodes ${episodeIds.join(",")}` : ""}.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to trigger search. Please try again." };
       }
-    },
+    ),
   });

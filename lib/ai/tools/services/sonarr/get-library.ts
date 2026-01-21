@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrSeries } from "./types";
 
 type GetLibraryProps = {
@@ -50,24 +51,24 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
         .default(50)
         .describe("Maximum number of series to return (default 50)"),
     }),
-    execute: async ({
-      genre,
-      status,
-      monitored,
-      hasEpisodes,
-      network,
-      yearFrom,
-      yearTo,
-      sortBy,
-      limit,
-    }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get library" },
+      async ({
+        genre,
+        status,
+        monitored,
+        hasEpisodes,
+        network,
+        yearFrom,
+        yearTo,
+        sortBy,
+        limit,
+      }) => {
         const series = await sonarrRequest<SonarrSeries[]>(
           session.user.id,
           "/series"
         );
 
-        // Apply filters
         let filteredSeries = series;
 
         if (genre) {
@@ -110,7 +111,6 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
           filteredSeries = filteredSeries.filter((s) => s.year <= yearTo);
         }
 
-        // Sort series
         const sortedSeries = [...filteredSeries].sort((a, b) => {
           switch (sortBy) {
             case "dateAdded":
@@ -127,32 +127,18 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
           }
         });
 
-        // Limit results
         const limitedSeries = sortedSeries.slice(0, limit);
 
-        // Build filter description for message
         const filters: string[] = [];
-        if (genre) {
-          filters.push(`genre: ${genre}`);
-        }
-        if (status) {
-          filters.push(`status: ${status}`);
-        }
-        if (hasEpisodes === true) {
-          filters.push("with episodes");
-        }
-        if (hasEpisodes === false) {
-          filters.push("missing episodes");
-        }
-        if (monitored !== undefined) {
+        if (genre) filters.push(`genre: ${genre}`);
+        if (status) filters.push(`status: ${status}`);
+        if (hasEpisodes === true) filters.push("with episodes");
+        if (hasEpisodes === false) filters.push("missing episodes");
+        if (monitored !== undefined)
           filters.push(monitored ? "monitored" : "unmonitored");
-        }
-        if (network) {
-          filters.push(`network: ${network}`);
-        }
-        if (yearFrom || yearTo) {
+        if (network) filters.push(`network: ${network}`);
+        if (yearFrom || yearTo)
           filters.push(`years: ${yearFrom ?? "any"}-${yearTo ?? "any"}`);
-        }
         const filterDesc = filters.length > 0 ? ` (${filters.join(", ")})` : "";
 
         return {
@@ -186,11 +172,6 @@ export const getLibrary = ({ session }: GetLibraryProps) =>
               ? `Found ${filteredSeries.length} series${filterDesc}. Showing ${limitedSeries.length}.`
               : `No series found${filterDesc}.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get library. Please try again." };
       }
-    },
+    ),
   });

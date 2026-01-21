@@ -1,12 +1,12 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import { withToolErrorHandling } from "../core";
 import {
   calculateProgressPercentage,
   formatDuration,
   getImageUrl,
   getJellyfinConfig,
-  JellyfinClientError,
   jellyfinRequest,
   ticksToMinutes,
 } from "./client";
@@ -28,18 +28,18 @@ export const getContinueWatching = ({ session }: GetContinueWatchingProps) =>
         .default(10)
         .describe("Maximum number of items to return"),
     }),
-    execute: async ({ limit }) => {
-      const config = await getJellyfinConfig(session.user.id);
+    execute: withToolErrorHandling(
+      { serviceName: "Jellyfin", operationName: "get continue watching" },
+      async ({ limit }) => {
+        const config = await getJellyfinConfig(session.user.id);
 
-      if (!config || !config.isEnabled) {
-        return {
-          error:
-            "Jellyfin is not configured. Please add your Jellyfin settings in the configuration page.",
-        };
-      }
+        if (!config || !config.isEnabled) {
+          return {
+            error:
+              "Jellyfin is not configured. Please add your Jellyfin settings in the configuration page.",
+          };
+        }
 
-      try {
-        // Get the Jellyfin user ID
         let jellyfinUserId: string;
 
         try {
@@ -104,7 +104,6 @@ export const getContinueWatching = ({ session }: GetContinueWatchingProps) =>
             ),
           };
 
-          // Add episode-specific info
           if (item.Type === "Episode" && item.SeriesName) {
             return {
               ...base,
@@ -126,13 +125,6 @@ export const getContinueWatching = ({ session }: GetContinueWatchingProps) =>
               ? `Found ${results.length} item(s) to continue watching`
               : "No in-progress content found",
         };
-      } catch (error) {
-        if (error instanceof JellyfinClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: "Failed to get continue watching list from Jellyfin",
-        };
       }
-    },
+    ),
   });

@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrBlocklistResponse } from "./types";
 
 type GetBlocklistProps = {
@@ -21,8 +22,9 @@ export const getBlocklist = ({ session }: GetBlocklistProps) =>
           "Number of blocklist items to return (default: 20, max: 100)"
         ),
     }),
-    execute: async ({ pageSize }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get blocklist" },
+      async ({ pageSize }) => {
         const blocklist = await sonarrRequest<SonarrBlocklistResponse>(
           session.user.id,
           `/blocklist?page=1&pageSize=${Math.min(pageSize, 100)}&sortKey=date&sortDirection=descending`
@@ -53,11 +55,6 @@ export const getBlocklist = ({ session }: GetBlocklistProps) =>
           totalRecords: blocklist.totalRecords,
           message: `Found ${blocklist.totalRecords} blocklisted release(s).`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get blocklist. Please try again." };
       }
-    },
+    ),
   });

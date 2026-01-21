@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrCalendarMovie } from "./types";
 
 type GetCalendarProps = {
@@ -26,8 +27,9 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
           "Include movies that released in the past few days (default: false)"
         ),
     }),
-    execute: async ({ days, includePast }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get calendar" },
+      async ({ days, includePast }) => {
         const now = new Date();
         const start = includePast
           ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
@@ -120,19 +122,6 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
           movies: calendarItems,
           message: `Found ${movies.length} movie(s) scheduled${includePast ? " (including recent releases)" : ""}.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key in settings.` };
-          }
-          if (error.statusCode === 404) {
-            return { error: `Radarr endpoint not found: ${error.message}. Please verify your Radarr URL in settings.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get calendar: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

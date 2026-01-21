@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type RemoveFromQueueProps = {
   session: Session;
@@ -32,8 +33,9 @@ export const removeFromQueue = ({ session }: RemoveFromQueueProps) =>
           "Whether to blocklist this release to prevent re-grabbing (default: false)"
         ),
     }),
-    execute: async ({ queueId, removeFromClient, blocklist }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "remove from queue" },
+      async ({ queueId, removeFromClient, blocklist }) => {
         await sonarrRequest(
           session.user.id,
           `/queue/${queueId}?removeFromClient=${removeFromClient}&blocklist=${blocklist}`,
@@ -46,11 +48,6 @@ export const removeFromQueue = ({ session }: RemoveFromQueueProps) =>
           success: true,
           message: `Removed item from queue.${blocklist ? " The release has been blocklisted." : ""}`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to remove from queue. Please try again." };
       }
-    },
+    ),
   });

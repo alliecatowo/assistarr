@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrQueueResponse } from "./types";
 
 type GetQueueProps = {
@@ -19,8 +20,9 @@ export const getQueue = ({ session }: GetQueueProps) =>
         .default(20)
         .describe("Number of items to return (default: 20, max: 100)"),
     }),
-    execute: async ({ pageSize }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get download queue" },
+      async ({ pageSize }) => {
         const queue = await radarrRequest<RadarrQueueResponse>(
           session.user.id,
           `/queue?page=1&pageSize=${Math.min(pageSize, 100)}&includeMovie=true`
@@ -66,21 +68,8 @@ export const getQueue = ({ session }: GetQueueProps) =>
           totalRecords: queue.totalRecords,
           message: `Found ${queue.totalRecords} movie(s) in the download queue.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key in settings.` };
-          }
-          if (error.statusCode === 404) {
-            return { error: `Radarr endpoint not found: ${error.message}. Please verify your Radarr URL in settings.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get download queue: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {

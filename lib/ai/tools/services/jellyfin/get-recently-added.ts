@@ -1,11 +1,11 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import { withToolErrorHandling } from "../core";
 import {
   formatDuration,
   getImageUrl,
   getJellyfinConfig,
-  JellyfinClientError,
   jellyfinRequest,
 } from "./client";
 import type { MediaItem } from "./types";
@@ -30,26 +30,25 @@ export const getRecentlyAdded = ({ session }: GetRecentlyAddedProps) =>
         .default("all")
         .describe("Filter by media type: movies, shows, or all"),
     }),
-    execute: async ({ limit, mediaType }) => {
-      const config = await getJellyfinConfig(session.user.id);
+    execute: withToolErrorHandling(
+      { serviceName: "Jellyfin", operationName: "get recently added" },
+      async ({ limit, mediaType }) => {
+        const config = await getJellyfinConfig(session.user.id);
 
-      if (!config || !config.isEnabled) {
-        return {
-          error:
-            "Jellyfin is not configured. Please add your Jellyfin settings in the configuration page.",
-        };
-      }
+        if (!config || !config.isEnabled) {
+          return {
+            error:
+              "Jellyfin is not configured. Please add your Jellyfin settings in the configuration page.",
+          };
+        }
 
-      // Build include item types based on filter
-      let includeItemTypes = "Movie,Episode";
-      if (mediaType === "movies") {
-        includeItemTypes = "Movie";
-      } else if (mediaType === "shows") {
-        includeItemTypes = "Episode";
-      }
+        let includeItemTypes = "Movie,Episode";
+        if (mediaType === "movies") {
+          includeItemTypes = "Movie";
+        } else if (mediaType === "shows") {
+          includeItemTypes = "Episode";
+        }
 
-      try {
-        // Get the Jellyfin user ID
         let jellyfinUserId: string;
 
         try {
@@ -78,7 +77,6 @@ export const getRecentlyAdded = ({ session }: GetRecentlyAddedProps) =>
 
         const endpoint = `/Users/${jellyfinUserId}/Items/Latest?${params.toString()}`;
 
-        // Note: Items/Latest returns an array directly, not wrapped in Items
         const response = await jellyfinRequest<MediaItem[]>(
           { baseUrl: config.baseUrl, apiKey: config.apiKey },
           endpoint
@@ -106,7 +104,6 @@ export const getRecentlyAdded = ({ session }: GetRecentlyAddedProps) =>
             ),
           };
 
-          // Add episode-specific info
           if (item.Type === "Episode" && item.SeriesName) {
             return {
               ...base,
@@ -124,11 +121,6 @@ export const getRecentlyAdded = ({ session }: GetRecentlyAddedProps) =>
           results,
           totalResults: results.length,
         };
-      } catch (error) {
-        if (error instanceof JellyfinClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get recently added content from Jellyfin" };
       }
-    },
+    ),
   });

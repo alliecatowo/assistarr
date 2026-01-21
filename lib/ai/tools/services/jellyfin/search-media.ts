@@ -1,11 +1,11 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import { withToolErrorHandling } from "../core";
 import {
   formatDuration,
   getImageUrl,
   getJellyfinConfig,
-  JellyfinClientError,
   jellyfinRequest,
 } from "./client";
 import type { ItemsResponse, MediaItem } from "./types";
@@ -34,35 +34,34 @@ export const searchMedia = ({ session }: SearchMediaProps) =>
         .default("all")
         .describe("Filter by media type: movies, shows, or all"),
     }),
-    execute: async ({ query, limit, mediaType }) => {
-      const config = await getJellyfinConfig(session.user.id);
+    execute: withToolErrorHandling(
+      { serviceName: "Jellyfin", operationName: "search media" },
+      async ({ query, limit, mediaType }) => {
+        const config = await getJellyfinConfig(session.user.id);
 
-      if (!config || !config.isEnabled) {
-        return {
-          error:
-            "Jellyfin is not configured. Please add your Jellyfin settings in the configuration page.",
-        };
-      }
+        if (!config || !config.isEnabled) {
+          return {
+            error:
+              "Jellyfin is not configured. Please add your Jellyfin settings in the configuration page.",
+          };
+        }
 
-      // Build include item types based on filter
-      let includeItemTypes = "Movie,Series";
-      if (mediaType === "movies") {
-        includeItemTypes = "Movie";
-      } else if (mediaType === "shows") {
-        includeItemTypes = "Series";
-      }
+        let includeItemTypes = "Movie,Series";
+        if (mediaType === "movies") {
+          includeItemTypes = "Movie";
+        } else if (mediaType === "shows") {
+          includeItemTypes = "Series";
+        }
 
-      const params = new URLSearchParams({
-        SearchTerm: query,
-        IncludeItemTypes: includeItemTypes,
-        Recursive: "true",
-        Limit: limit.toString(),
-        Fields: "Overview,Genres,CommunityRating,ProductionYear",
-        EnableImages: "true",
-      });
+        const params = new URLSearchParams({
+          SearchTerm: query,
+          IncludeItemTypes: includeItemTypes,
+          Recursive: "true",
+          Limit: limit.toString(),
+          Fields: "Overview,Genres,CommunityRating,ProductionYear",
+          EnableImages: "true",
+        });
 
-      try {
-        // We need a userId for the Items endpoint - try to get current user first
         const userEndpoint = "/Users/Me";
         let jellyfinUserId: string;
 
@@ -73,7 +72,6 @@ export const searchMedia = ({ session }: SearchMediaProps) =>
           );
           jellyfinUserId = userResponse.Id;
         } catch {
-          // Fallback: list users and use the first one (API key should have access)
           const usersResponse = await jellyfinRequest<Array<{ Id: string }>>(
             { baseUrl: config.baseUrl, apiKey: config.apiKey },
             "/Users"
@@ -116,11 +114,6 @@ export const searchMedia = ({ session }: SearchMediaProps) =>
           totalResults: response.TotalRecordCount,
           query,
         };
-      } catch (error) {
-        if (error instanceof JellyfinClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to search Jellyfin library" };
       }
-    },
+    ),
   });

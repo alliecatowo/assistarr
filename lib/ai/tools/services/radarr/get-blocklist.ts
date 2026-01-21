@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrBlocklistResponse } from "./types";
 
 type GetBlocklistProps = {
@@ -21,8 +22,9 @@ export const getBlocklist = ({ session }: GetBlocklistProps) =>
           "Number of blocklist items to return (default: 20, max: 100)"
         ),
     }),
-    execute: async ({ pageSize }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get blocklist" },
+      async ({ pageSize }) => {
         const params = new URLSearchParams({
           page: "1",
           pageSize: String(Math.min(pageSize, 100)),
@@ -64,19 +66,6 @@ export const getBlocklist = ({ session }: GetBlocklistProps) =>
           pageSize: blocklist.pageSize,
           message: `Found ${blocklist.totalRecords} blocklisted release(s).`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key in settings.` };
-          }
-          if (error.statusCode === 404) {
-            return { error: `Radarr endpoint not found: ${error.message}. Please verify your Radarr URL in settings.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get blocklist: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

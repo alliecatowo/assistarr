@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrCommand } from "./types";
 
 type GetCommandStatusProps = {
@@ -15,8 +16,9 @@ export const getCommandStatus = ({ session }: GetCommandStatusProps) =>
     inputSchema: z.object({
       commandId: z.number().describe("The command ID to check status for"),
     }),
-    execute: async ({ commandId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get command status" },
+      async ({ commandId }) => {
         const command = await sonarrRequest<SonarrCommand>(
           session.user.id,
           `/command/${commandId}`
@@ -35,7 +37,6 @@ export const getCommandStatus = ({ session }: GetCommandStatusProps) =>
           stateChangeTime: command.stateChangeTime,
         };
 
-        // Provide human-readable status message
         let statusMessage: string;
         switch (command.status) {
           case "completed":
@@ -65,11 +66,6 @@ export const getCommandStatus = ({ session }: GetCommandStatusProps) =>
           isRunning: command.status === "started",
           isPending: command.status === "queued",
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get command status. Please try again." };
       }
-    },
+    ),
   });

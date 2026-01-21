@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrSeries } from "./types";
 
 type EditSeriesProps = {
@@ -34,32 +35,30 @@ export const editSeries = ({ session }: EditSeriesProps) =>
         .describe("The new root folder path (e.g. /tv)"),
       tags: z.array(z.number()).optional().describe("List of tag IDs to apply"),
     }),
-    execute: async ({
-      seriesId,
-      monitored,
-      qualityProfileId,
-      rootFolderPath,
-      tags,
-    }) => {
-      try {
-        // 1. Get the current series first
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "edit series" },
+      async ({
+        seriesId,
+        monitored,
+        qualityProfileId,
+        rootFolderPath,
+        tags,
+      }) => {
         const currentSeries = await sonarrRequest<SonarrSeries>(
           session.user.id,
           `/series/${seriesId}`
         );
 
-        // 2. Update fields
         const updatedSeriesBody = {
           ...currentSeries,
           monitored: monitored ?? currentSeries.monitored,
           qualityProfileId: qualityProfileId ?? currentSeries.qualityProfileId,
           path: rootFolderPath
             ? `${rootFolderPath}/${currentSeries.title}`
-            : currentSeries.path, // Simplistic path update
+            : currentSeries.path,
           tags: tags ?? currentSeries.tags,
         };
 
-        // 3. Send update
         const result = await sonarrRequest<SonarrSeries>(
           session.user.id,
           `/series/${seriesId}`,
@@ -80,11 +79,6 @@ export const editSeries = ({ session }: EditSeriesProps) =>
             path: result.path,
           },
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to edit series. Please try again." };
       }
-    },
+    ),
   });

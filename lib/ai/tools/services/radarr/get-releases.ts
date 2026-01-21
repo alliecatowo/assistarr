@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 
 interface RadarrRelease {
   guid: string;
@@ -55,8 +56,9 @@ export const getReleases = ({ session }: GetReleasesProps) =>
           "The Radarr movie ID to get releases for (get this from getLibrary or getQueue)"
         ),
     }),
-    execute: async ({ movieId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get releases" },
+      async ({ movieId }) => {
         const releases = await radarrRequest<RadarrRelease[]>(
           session.user.id,
           `/release?movieId=${movieId}`
@@ -114,21 +116,8 @@ export const getReleases = ({ session }: GetReleasesProps) =>
           totalFound: releases.length,
           message: `Found ${releases.length} releases. Showing top ${formattedReleases.length} sorted by quality.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: `Movie with ID ${movieId} not found in Radarr.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get releases: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {

@@ -23,6 +23,23 @@ function stripBoldFromMediaLinks(text: string): string {
 }
 
 /**
+ * Ensure spaces exist around inline media links
+ * AI sometimes generates "requested[[Title|123]]for" without spaces
+ * This normalizes to "requested [[Title|123]] for"
+ */
+function normalizeMediaLinkSpacing(text: string): string {
+  // Add space before [[ if preceded by a word character (letter, digit, or some punctuation)
+  // Don't add space after newlines, list markers, or at start
+  let result = text.replace(/(\w)(\[\[)/g, "$1 $2");
+
+  // Add space after ]] if followed by a word character
+  // Don't add space before punctuation like . , ! ? : ; or at end
+  result = result.replace(/(\]\])(\w)/g, "$1 $2");
+
+  return result;
+}
+
+/**
  * Check if text contains inline media links
  */
 function hasInlineMediaLinks(text: string): boolean {
@@ -79,6 +96,16 @@ function splitLineByMediaLinks(text: string): Part[] {
 }
 
 /**
+ * Check if text is simple (no markdown formatting that needs processing)
+ * Simple text can be rendered directly without Streamdown
+ */
+function isSimpleText(text: string): boolean {
+  // Check for common markdown patterns that need processing
+  const markdownPatterns = /[*_`~#\[\]()>|\\]/;
+  return !markdownPatterns.test(text);
+}
+
+/**
  * Render a single paragraph that may contain inline media links
  */
 function renderParagraphWithLinks(text: string, keyPrefix: string): ReactNode {
@@ -106,7 +133,14 @@ function renderParagraphWithLinks(text: string, keyPrefix: string): ReactNode {
             />
           );
         }
-        // Render text through Streamdown for markdown processing
+        // For simple text (no markdown), render directly to preserve whitespace
+        // Streamdown can strip leading/trailing spaces during markdown processing
+        if (isSimpleText(part.content)) {
+          return (
+            <span key={`${keyPrefix}-text-${index}`}>{part.content}</span>
+          );
+        }
+        // For text with markdown formatting, use Streamdown
         return (
           <Streamdown
             className="inline [&>p]:inline [&>*]:inline [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
@@ -179,10 +213,11 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
           }
 
           // Check for inline items: "Header: -[[Item1]] desc -[[Item2]] desc"
-          // Split on " -[[" to separate inline list items
+          // Use a capturing split to preserve what comes after the dash
           const inlineItemPattern = /\s-\[\[/;
           if (inlineItemPattern.test(trimmed)) {
-            // Split into header and items
+            // Split into header and items, but keep the [[ prefix
+            // Use lookahead to split without consuming the [[
             const parts = trimmed.split(/\s+-(?=\[\[)/);
             const header = parts[0];
             const items = parts.slice(1);
@@ -199,14 +234,19 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
                     </div>
                   )}
                   <ul className="list-disc pl-6 space-y-1">
-                    {items.map((item, iIndex) => (
-                      <li key={`${baseKey}-p-${pIndex}-i-${iIndex}`}>
-                        {renderParagraphWithLinks(
-                          `[[${item}`,
-                          `${baseKey}-p-${pIndex}-i-${iIndex}`
-                        )}
-                      </li>
-                    ))}
+                    {items.map((item, iIndex) => {
+                      // Restore the [[ that was consumed by the lookahead split
+                      // and ensure any description text has proper spacing
+                      const fullItem = `[[${item}`;
+                      return (
+                        <li key={`${baseKey}-p-${pIndex}-i-${iIndex}`}>
+                          {renderParagraphWithLinks(
+                            fullItem,
+                            `${baseKey}-p-${pIndex}-i-${iIndex}`
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               );
@@ -238,8 +278,8 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
 export function Response({ className, children, ...props }: ResponseProps) {
   // Check if children is a string with inline media links
   if (typeof children === "string" && hasInlineMediaLinks(children)) {
-    // Strip ** bold markers from around media links before processing
-    const processedText = stripBoldFromMediaLinks(children);
+    // Normalize spacing around media links and strip bold markers
+    const processedText = normalizeMediaLinkSpacing(stripBoldFromMediaLinks(children));
     return (
       <div
         className={cn(

@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrHistoryResponse } from "./types";
 
 type GetHistoryProps = {
@@ -28,8 +29,9 @@ export const getHistory = ({ session }: GetHistoryProps) =>
         .default(true)
         .describe("Include movie details in the response (default: true)"),
     }),
-    execute: async ({ movieId, pageSize, includeMovie }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "get history" },
+      async ({ movieId, pageSize, includeMovie }) => {
         const params = new URLSearchParams({
           page: "1",
           pageSize: String(Math.min(pageSize, 100)),
@@ -80,21 +82,8 @@ export const getHistory = ({ session }: GetHistoryProps) =>
           pageSize: history.pageSize,
           message: `Found ${history.totalRecords} history record(s).`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key in settings.` };
-          }
-          if (error.statusCode === 404) {
-            return { error: `Radarr endpoint not found: ${error.message}. Please verify your Radarr URL in settings.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to get history: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });
 
 function getEventDescription(eventType: string): string {

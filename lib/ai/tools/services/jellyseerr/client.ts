@@ -16,13 +16,59 @@ export class JellyseerrClientError extends Error {
 /**
  * Get Jellyseerr service configuration for a user
  */
-export async function getJellyseerrConfig(
+export function getJellyseerrConfig(
   userId: string
 ): Promise<ServiceConfig | null> {
   return getServiceConfig({
     userId,
     serviceName: SERVICE_NAME,
   });
+}
+
+/**
+ * Parse error response into a message
+ */
+function parseValidationErrors(errorDetails: unknown[]): string | null {
+  const validationErrors = (
+    errorDetails as Array<{ errorMessage?: string; propertyName?: string }>
+  )
+    .filter((e) => e.errorMessage)
+    .map((e) =>
+      e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
+    );
+  return validationErrors.length > 0 ? validationErrors.join("; ") : null;
+}
+
+function parseObjectError(errObj: Record<string, unknown>): string | null {
+  if (errObj.message) {
+    return errObj.message as string;
+  }
+  if (errObj.error) {
+    return errObj.error as string;
+  }
+
+  if (errObj.errors && typeof errObj.errors === "object") {
+    const messages = Object.entries(
+      errObj.errors as Record<string, string[]>
+    ).flatMap(([field, msgs]) => msgs.map((msg) => `${field}: ${msg}`));
+    if (messages.length > 0) {
+      return messages.join("; ");
+    }
+  }
+
+  return null;
+}
+
+function parseErrorDetails(errorDetails: unknown): string | null {
+  if (Array.isArray(errorDetails) && errorDetails.length > 0) {
+    return parseValidationErrors(errorDetails);
+  }
+
+  if (errorDetails && typeof errorDetails === "object") {
+    return parseObjectError(errorDetails as Record<string, unknown>);
+  }
+
+  return null;
 }
 
 /**
@@ -47,18 +93,14 @@ export async function jellyseerrRequest<T>(
     );
   }
 
-  // Validate API key is present
   if (!config.apiKey || config.apiKey.trim() === "") {
     throw new JellyseerrClientError(
       "Jellyseerr API key is not configured. Please add your API key in settings."
     );
   }
 
-  // Normalize baseUrl - remove trailing slash if present
   const baseUrl = config.baseUrl.replace(/\/+$/, "");
   const url = `${baseUrl}/api/v1${endpoint}`;
-
-  console.log(`[Jellyseerr] Request: ${options.method || "GET"} ${url}`);
 
   const response = await fetch(url, {
     ...options,
@@ -71,55 +113,20 @@ export async function jellyseerrRequest<T>(
 
   if (!response.ok) {
     let errorMessage = `Jellyseerr API error: ${response.status} ${response.statusText}`;
-    let errorDetails: unknown = null;
 
     try {
-      errorDetails = await response.json();
-
-      // Handle different error response formats from Jellyseerr
-      if (Array.isArray(errorDetails) && errorDetails.length > 0) {
-        // Validation errors: [{ propertyName, errorMessage }]
-        const validationErrors = (errorDetails as Array<{ errorMessage?: string; propertyName?: string }>)
-          .filter((e) => e.errorMessage)
-          .map((e) =>
-            e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
-          );
-        if (validationErrors.length > 0) {
-          errorMessage = validationErrors.join("; ");
-        }
-      } else if (
-        errorDetails &&
-        typeof errorDetails === "object"
-      ) {
-        const errObj = errorDetails as Record<string, unknown>;
-        if (errObj.message) {
-          errorMessage = errObj.message as string;
-        } else if (errObj.error) {
-          errorMessage = errObj.error as string;
-        } else if (errObj.errors && typeof errObj.errors === "object") {
-          // Handle { errors: { field: ["message"] } } format
-          const messages = Object.entries(errObj.errors as Record<string, string[]>)
-            .flatMap(([field, msgs]) => msgs.map((msg) => `${field}: ${msg}`));
-          if (messages.length > 0) {
-            errorMessage = messages.join("; ");
-          }
-        }
+      const errorDetails = await response.json();
+      const parsed = parseErrorDetails(errorDetails);
+      if (parsed) {
+        errorMessage = parsed;
       }
     } catch {
       // Ignore JSON parse errors
     }
 
-    console.error(`[Jellyseerr] API Error:`, {
-      status: response.status,
-      statusText: response.statusText,
-      url,
-      errorDetails,
-    });
-
     throw new JellyseerrClientError(errorMessage, response.status);
   }
 
-  // Handle 204 No Content
   if (response.status === 204) {
     return {} as T;
   }

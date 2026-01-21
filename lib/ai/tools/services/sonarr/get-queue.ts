@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrQueueResponse } from "./types";
 
 type GetQueueProps = {
@@ -19,8 +20,9 @@ export const getQueue = ({ session }: GetQueueProps) =>
         .default(20)
         .describe("Number of items to return (default: 20, max: 100)"),
     }),
-    execute: async ({ pageSize }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get queue" },
+      async ({ pageSize }) => {
         const queue = await sonarrRequest<SonarrQueueResponse>(
           session.user.id,
           `/queue?page=1&pageSize=${Math.min(pageSize, 100)}&includeSeries=true&includeEpisode=true`
@@ -55,7 +57,6 @@ export const getQueue = ({ session }: GetQueueProps) =>
             timeLeft: item.timeleft ?? "Unknown",
             downloadClient: item.downloadClient,
             protocol: item.protocol,
-            // CRITICAL: downloadId is needed for manual import
             downloadId: item.downloadId,
             outputPath: item.outputPath,
           };
@@ -66,13 +67,8 @@ export const getQueue = ({ session }: GetQueueProps) =>
           totalRecords: queue.totalRecords,
           message: `Found ${queue.totalRecords} item(s) in the download queue.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get download queue. Please try again." };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {

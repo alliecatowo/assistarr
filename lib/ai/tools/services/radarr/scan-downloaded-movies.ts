@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { RadarrClientError, radarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { radarrRequest } from "./client";
 import type { RadarrCommand } from "./types";
 
 type ScanDownloadedMoviesProps = {
@@ -20,8 +21,9 @@ export const scanDownloadedMovies = ({ session }: ScanDownloadedMoviesProps) =>
           "Optional specific folder path to scan. If not provided, scans the default download folder."
         ),
     }),
-    execute: async ({ folder }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Radarr", operationName: "scan downloaded movies" },
+      async ({ folder }) => {
         const commandBody: Record<string, unknown> = {
           name: "DownloadedMoviesScan",
         };
@@ -47,22 +49,6 @@ export const scanDownloadedMovies = ({ session }: ScanDownloadedMoviesProps) =>
             ? `Scan started for folder: ${folder}. Command ID: ${command.id}. Use getCommandStatus to check completion.`
             : `Download folder scan started. Command ID: ${command.id}. Use getCommandStatus to check completion.`,
         };
-      } catch (error) {
-        if (error instanceof RadarrClientError) {
-          if (error.statusCode === 404) {
-            return { error: folder ? `Folder not found: ${folder}. Verify the path exists.` : `Radarr endpoint not found.` };
-          }
-          if (error.statusCode === 400) {
-            return { error: `Invalid request: ${error.message}. Check that the folder path is valid.` };
-          }
-          if (error.statusCode === 401 || error.statusCode === 403) {
-            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
-          }
-          return { error: `Radarr error: ${error.message}` };
-        }
-        return {
-          error: `Failed to start scan: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
-        };
       }
-    },
+    ),
   });

@@ -37,6 +37,148 @@ interface ServiceInfo {
   placeholder: string;
 }
 
+// Tool names extracted from each service's definition.ts
+const SERVICE_TOOLS: Record<string, string[]> = {
+  radarr: [
+    "searchRadarrMovies",
+    "addRadarrMovie",
+    "editRadarrMovie",
+    "deleteRadarrMovie",
+    "triggerRadarrSearch",
+    "refreshRadarrMovie",
+    "getRadarrLibrary",
+    "getRadarrQualityProfiles",
+    "getRadarrQueue",
+    "getRadarrCalendar",
+    "getRadarrReleases",
+    "grabRadarrRelease",
+    "removeFromRadarrQueue",
+    "getRadarrManualImport",
+    "executeRadarrManualImport",
+    "scanRadarrDownloadedMovies",
+    "getRadarrMovieFiles",
+    "renameRadarrMovieFiles",
+    "deleteRadarrMovieFile",
+    "getRadarrHistory",
+    "markRadarrFailed",
+    "getRadarrBlocklist",
+    "deleteRadarrBlocklist",
+    "getRadarrCommandStatus",
+  ],
+  sonarr: [
+    "getSonarrLibrary",
+    "getSonarrQualityProfiles",
+    "getSonarrQueue",
+    "getSonarrCalendar",
+    "searchSonarrSeries",
+    "getSonarrReleases",
+    "getSonarrHistory",
+    "getSonarrBlocklist",
+    "getSonarrEpisodeFiles",
+    "getSonarrManualImport",
+    "addSonarrSeries",
+    "editSonarrSeries",
+    "deleteSonarrSeries",
+    "triggerSonarrSearch",
+    "refreshSonarrSeries",
+    "grabSonarrRelease",
+    "removeFromSonarrQueue",
+    "executeSonarrManualImport",
+    "scanSonarrDownloadedEpisodes",
+    "renameSonarrEpisodeFiles",
+    "deleteSonarrEpisodeFile",
+    "markSonarrFailed",
+    "deleteSonarrBlocklist",
+    "searchSonarrMissingEpisodes",
+    "getSonarrCommandStatus",
+  ],
+  jellyfin: [
+    "getContinueWatching",
+    "getRecentlyAdded",
+    "searchJellyfinMedia",
+  ],
+  jellyseerr: [
+    "searchContent",
+    "requestMedia",
+    "getRequests",
+    "deleteRequest",
+    "getDiscovery",
+  ],
+  qbittorrent: [
+    "getTorrents",
+    "getTransferInfo",
+    "pauseResumeTorrent",
+  ],
+};
+
+// Convert camelCase tool names to readable format
+function formatToolName(toolName: string): string {
+  // Remove service prefix (e.g., "searchRadarrMovies" -> "searchMovies")
+  const prefixes = ["Radarr", "Sonarr", "Jellyfin", "Jellyseerr"];
+  let name = toolName;
+  for (const prefix of prefixes) {
+    name = name.replace(prefix, "");
+  }
+  // Convert camelCase to spaced words and capitalize
+  return name
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+}
+
+// Tool pills component for displaying available tools
+function ToolPills({ serviceName }: { serviceName: string }) {
+  const tools = SERVICE_TOOLS[serviceName] || [];
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (tools.length === 0) return null;
+
+  const displayLimit = 6;
+  const hasMore = tools.length > displayLimit;
+  const displayedTools = isExpanded ? tools : tools.slice(0, displayLimit);
+  const hiddenCount = tools.length - displayLimit;
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border/50">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Available Tools
+        </span>
+        <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+          {tools.length}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {displayedTools.map((tool) => (
+          <span
+            key={tool}
+            className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors cursor-default"
+            title={tool}
+          >
+            {formatToolName(tool)}
+          </span>
+        ))}
+        {hasMore && !isExpanded && (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+          >
+            +{hiddenCount} more
+          </button>
+        )}
+        {isExpanded && hasMore && (
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+          >
+            Show less
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const SERVICES: ServiceInfo[] = [
   {
     name: "Radarr",
@@ -284,6 +426,7 @@ function ServiceCard({
             </p>
           )}
         </div>
+        <ToolPills serviceName={service.serviceName} />
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button

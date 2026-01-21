@@ -2,11 +2,8 @@ import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import type { DisplayableMedia } from "../base";
-import {
-  getPosterUrl,
-  JellyseerrClientError,
-  jellyseerrRequest,
-} from "./client";
+import { withToolErrorHandling } from "../core";
+import { getPosterUrl, jellyseerrRequest } from "./client";
 import {
   getResultTitle,
   getResultYear,
@@ -19,11 +16,12 @@ type SearchContentProps = {
   session: Session;
 };
 
-// Map Jellyseerr MediaStatus to DisplayableMedia status
 function mapToDisplayStatus(
   mediaInfo?: { status: number } | null
 ): DisplayableMedia["status"] {
-  if (!mediaInfo) return "missing";
+  if (!mediaInfo) {
+    return "missing";
+  }
   switch (mediaInfo.status) {
     case MediaStatus.AVAILABLE:
       return "available";
@@ -54,17 +52,17 @@ export const searchContent = ({ session }: SearchContentProps) =>
         .default(1)
         .describe("Page number for paginated results"),
     }),
-    execute: async ({ query, type, page }) => {
-      const userId = session.user?.id;
+    execute: withToolErrorHandling(
+      { serviceName: "Jellyseerr", operationName: "search content" },
+      async ({ query, type, page }) => {
+        const userId = session.user?.id;
 
-      if (!userId) {
-        return {
-          error: "You must be logged in to search for content.",
-        };
-      }
+        if (!userId) {
+          return {
+            error: "You must be logged in to search for content.",
+          };
+        }
 
-      try {
-        // Jellyseerr uses a single /search endpoint - filter results client-side
         const endpoint = `/search?query=${encodeURIComponent(query)}&page=${page}`;
 
         const response = await jellyseerrRequest<SearchResponse>(
@@ -72,7 +70,6 @@ export const searchContent = ({ session }: SearchContentProps) =>
           endpoint
         );
 
-        // Filter results by type if specified
         let filteredResults = response.results;
         if (type === "movie") {
           filteredResults = response.results.filter(
@@ -84,25 +81,17 @@ export const searchContent = ({ session }: SearchContentProps) =>
           );
         }
 
-        // Map to DisplayableMedia format - services are source of truth for display data
         const results: DisplayableMedia[] = filteredResults.map(
           (result: SearchResult) => ({
-            // Required display fields
             title: getResultTitle(result),
             posterUrl: getPosterUrl(result.posterPath),
             mediaType: result.mediaType as "movie" | "tv",
-
-            // Rich metadata
             year: getResultYear(result),
             overview:
               result.overview?.slice(0, 200) +
               (result.overview && result.overview.length > 200 ? "..." : ""),
             rating: result.voteAverage,
-
-            // Status
             status: mapToDisplayStatus(result.mediaInfo),
-
-            // Service IDs for actions
             externalIds: {
               tmdb: result.id,
             },
@@ -119,19 +108,6 @@ export const searchContent = ({ session }: SearchContentProps) =>
               ? `Found ${results.length} result(s) for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`
               : `No results found for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`,
         };
-      } catch (error) {
-        if (error instanceof JellyseerrClientError) {
-          console.error(`[Jellyseerr] Search failed: ${error.message}`, {
-            statusCode: error.statusCode,
-            query,
-            type,
-          });
-          return {
-            error: error.message,
-          };
-        }
-        console.error("[Jellyseerr] Unexpected error during search:", error);
-        throw error;
       }
-    },
+    ),
   });

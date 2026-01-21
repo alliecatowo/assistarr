@@ -1,11 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import {
-  QBittorrentClientError,
-  qbittorrentPostForm,
-  qbittorrentRequest,
-} from "./client";
+import { withToolErrorHandling } from "../core";
+import { qbittorrentPostForm, qbittorrentRequest } from "./client";
 import type { Torrent } from "./types";
 
 interface PauseResumeTorrentProps {
@@ -27,9 +24,9 @@ export const pauseResumeTorrent = ({ session }: PauseResumeTorrentProps) =>
         .describe("The action to perform: pause or resume"),
     }),
     needsApproval: true,
-    execute: async ({ hash, action }) => {
-      try {
-        // Validate the hash exists (unless it's "all")
+    execute: withToolErrorHandling(
+      { serviceName: "qBittorrent", operationName: "pause/resume torrent" },
+      async ({ hash, action }) => {
         if (hash !== "all") {
           const torrents = await qbittorrentRequest<Torrent[]>(
             session.user.id,
@@ -45,7 +42,6 @@ export const pauseResumeTorrent = ({ session }: PauseResumeTorrentProps) =>
           const torrent = torrents[0];
           const torrentName = torrent.name;
 
-          // Check if action is redundant
           const isPaused = ["pausedDL", "pausedUP"].includes(torrent.state);
           if (action === "pause" && isPaused) {
             return {
@@ -71,7 +67,6 @@ export const pauseResumeTorrent = ({ session }: PauseResumeTorrentProps) =>
           }
         }
 
-        // Perform the action
         const endpoint =
           action === "pause" ? "/torrents/pause" : "/torrents/resume";
 
@@ -79,7 +74,6 @@ export const pauseResumeTorrent = ({ session }: PauseResumeTorrentProps) =>
           hashes: hash,
         });
 
-        // Get updated torrent info
         if (hash !== "all") {
           const updatedTorrents = await qbittorrentRequest<Torrent[]>(
             session.user.id,
@@ -109,13 +103,6 @@ export const pauseResumeTorrent = ({ session }: PauseResumeTorrentProps) =>
               ? `Successfully ${action === "pause" ? "paused" : "resumed"} all torrents.`
               : `Successfully ${action === "pause" ? "paused" : "resumed"} torrent.`,
         };
-      } catch (error) {
-        if (error instanceof QBittorrentClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: `Failed to ${action} torrent. Please try again.`,
-        };
       }
-    },
+    ),
   });

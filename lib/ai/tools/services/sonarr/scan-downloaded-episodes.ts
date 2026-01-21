@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrCommand } from "./types";
 
 type ScanDownloadedEpisodesProps = {
@@ -22,8 +23,9 @@ export const scanDownloadedEpisodes = ({
           "Optional: The folder path to scan. If not provided, scans all configured download folders."
         ),
     }),
-    execute: async ({ path }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "scan downloaded episodes" },
+      async ({ path }) => {
         const commandBody: { name: string; path?: string } = {
           name: "DownloadedEpisodesScan",
         };
@@ -49,13 +51,6 @@ export const scanDownloadedEpisodes = ({
             ? `Scan started for folder: ${path}. Command ID: ${result.id}. Use getCommandStatus to check completion.`
             : `Scan started for all download folders. Command ID: ${result.id}. Use getCommandStatus to check completion.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: "Failed to start download folder scan. Please try again.",
-        };
       }
-    },
+    ),
   });

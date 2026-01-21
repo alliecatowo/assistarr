@@ -1,0 +1,4 @@
+{
+  "*.{ts,tsx}": ["pnpm exec ultracite fix"],
+  "*.{json,md}": ["pnpm exec ultracite fix"]
+}

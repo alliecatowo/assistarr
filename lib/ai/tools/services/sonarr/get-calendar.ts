@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrCalendarEpisode } from "./types";
 
 type GetCalendarProps = {
@@ -26,11 +27,12 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
           "Include episodes that aired in the past few days (default: false)"
         ),
     }),
-    execute: async ({ days, includePast }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get calendar" },
+      async ({ days, includePast }) => {
         const now = new Date();
         const start = includePast
-          ? new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+          ? new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
           : now;
         const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
@@ -78,7 +80,6 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
           };
         });
 
-        // Sort by air date
         calendarItems.sort(
           (a, b) =>
             new Date(a.airDateUtc).getTime() - new Date(b.airDateUtc).getTime()
@@ -88,11 +89,6 @@ export const getCalendar = ({ session }: GetCalendarProps) =>
           episodes: calendarItems,
           message: `Found ${episodes.length} episode(s) scheduled${includePast ? " (including recent)" : ""}.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get calendar. Please try again." };
       }
-    },
+    ),
   });

@@ -4,11 +4,11 @@ import { useMemo } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { updateChatVisibility } from "@/app/(chat)/actions";
+import type { VisibilityType } from "@/components/elements/visibility-selector";
 import {
   type ChatHistory,
   getChatHistoryPaginationKey,
 } from "@/components/sidebar-history";
-import type { VisibilityType } from "@/components/visibility-selector";
 
 export function useChatVisibility({
   chatId,

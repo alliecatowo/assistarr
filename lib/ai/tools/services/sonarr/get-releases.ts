@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 interface SonarrRelease {
   guid: string;
@@ -66,8 +67,9 @@ export const getReleases = ({ session }: GetReleasesProps) =>
         .optional()
         .describe("The season number to get releases for (use with seriesId)"),
     }),
-    execute: async ({ episodeId, seriesId, seasonNumber }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get releases" },
+      async ({ episodeId, seriesId, seasonNumber }) => {
         let endpoint = "/release";
         if (episodeId) {
           endpoint = `/release?episodeId=${episodeId}`;
@@ -92,19 +94,13 @@ export const getReleases = ({ session }: GetReleasesProps) =>
           };
         }
 
-        // Sort by quality score and seeders, filter to approved releases
         const sortedReleases = releases
           .filter((r) => r.approved || r.temporarilyRejected)
           .sort((a, b) => {
-            if (a.approved && !b.approved) {
-              return -1;
-            }
-            if (!a.approved && b.approved) {
-              return 1;
-            }
-            if (b.qualityWeight !== a.qualityWeight) {
+            if (a.approved && !b.approved) return -1;
+            if (!a.approved && b.approved) return 1;
+            if (b.qualityWeight !== a.qualityWeight)
               return b.qualityWeight - a.qualityWeight;
-            }
             return (b.seeders ?? 0) - (a.seeders ?? 0);
           })
           .slice(0, 15);
@@ -136,19 +132,12 @@ export const getReleases = ({ session }: GetReleasesProps) =>
           totalFound: releases.length,
           message: `Found ${releases.length} releases. Showing top ${formattedReleases.length} sorted by quality.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to get releases. Please try again." };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) {
-    return "0 B";
-  }
+  if (bytes === 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -156,15 +145,9 @@ function formatBytes(bytes: number): string {
 }
 
 function formatAge(hours: number): string {
-  if (hours < 1) {
-    return "< 1 hour";
-  }
-  if (hours < 24) {
-    return `${Math.round(hours)} hours`;
-  }
+  if (hours < 1) return "< 1 hour";
+  if (hours < 24) return `${Math.round(hours)} hours`;
   const days = Math.round(hours / 24);
-  if (days === 1) {
-    return "1 day";
-  }
+  if (days === 1) return "1 day";
   return `${days} days`;
 }

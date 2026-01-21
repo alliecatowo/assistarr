@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 
 type RefreshSeriesProps = {
   session: Session;
@@ -13,8 +14,9 @@ export const refreshSeries = ({ session }: RefreshSeriesProps) =>
     inputSchema: z.object({
       seriesId: z.number().describe("The Sonarr series ID to refresh"),
     }),
-    execute: async ({ seriesId }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "refresh series" },
+      async ({ seriesId }) => {
         await sonarrRequest(session.user.id, "/command", {
           method: "POST",
           body: JSON.stringify({
@@ -27,11 +29,6 @@ export const refreshSeries = ({ session }: RefreshSeriesProps) =>
           success: true,
           message: `Refresh triggered for series ID ${seriesId}.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return { error: "Failed to refresh series. Please try again." };
       }
-    },
+    ),
   });

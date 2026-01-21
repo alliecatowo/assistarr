@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { SonarrClientError, sonarrRequest } from "./client";
+import { withToolErrorHandling } from "../core";
+import { sonarrRequest } from "./client";
 import type { SonarrManualImportItem } from "./types";
 
 type GetManualImportProps = {
@@ -32,8 +33,9 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
         .optional()
         .describe("Optional: Filter results for a specific season"),
     }),
-    execute: async ({ folder, downloadId, seriesId, seasonNumber }) => {
-      try {
+    execute: withToolErrorHandling(
+      { serviceName: "Sonarr", operationName: "get manual import" },
+      async ({ folder, downloadId, seriesId, seasonNumber }) => {
         if (!folder && !downloadId) {
           return {
             error:
@@ -42,18 +44,12 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
         }
 
         const params = new URLSearchParams();
-        if (folder) {
-          params.append("folder", folder);
-        }
-        if (downloadId) {
-          params.append("downloadId", downloadId);
-        }
-        if (seriesId !== undefined) {
+        if (folder) params.append("folder", folder);
+        if (downloadId) params.append("downloadId", downloadId);
+        if (seriesId !== undefined)
           params.append("seriesId", seriesId.toString());
-        }
-        if (seasonNumber !== undefined) {
+        if (seasonNumber !== undefined)
           params.append("seasonNumber", seasonNumber.toString());
-        }
 
         const items = await sonarrRequest<SonarrManualImportItem[]>(
           session.user.id,
@@ -93,21 +89,12 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
           totalFiles: items.length,
           message: `Found ${items.length} file(s) available for import.`,
         };
-      } catch (error) {
-        if (error instanceof SonarrClientError) {
-          return { error: error.message };
-        }
-        return {
-          error: "Failed to get manual import files. Please try again.",
-        };
       }
-    },
+    ),
   });
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) {
-    return "0 B";
-  }
+  if (bytes === 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
