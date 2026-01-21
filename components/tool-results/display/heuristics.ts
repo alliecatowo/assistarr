@@ -27,6 +27,7 @@ function detectActionableIssues(output: unknown): boolean {
 
   // Check queue items for errors/stalled
   if (Array.isArray(obj.items)) {
+    // biome-ignore lint/suspicious/noExplicitAny: Generic item check
     return obj.items.some((item: any) => {
       const status = item.status?.toLowerCase() || "";
       return (
@@ -41,6 +42,7 @@ function detectActionableIssues(output: unknown): boolean {
 
   // Check torrents for errors/stalled
   if (Array.isArray(obj.torrents)) {
+    // biome-ignore lint/suspicious/noExplicitAny: Generic torrent check
     return obj.torrents.some((item: any) => {
       const state =
         item.rawState?.toLowerCase() || item.state?.toLowerCase() || "";

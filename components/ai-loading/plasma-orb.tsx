@@ -281,6 +281,7 @@ export function PlasmaOrb({ size = 40, className = "" }: PlasmaOrbProps) {
             }}
             fill="white"
             filter="url(#particle-blur)"
+            // biome-ignore lint/suspicious/noArrayIndexKey: Visual particles
             key={i}
             r="1.2"
             transition={{

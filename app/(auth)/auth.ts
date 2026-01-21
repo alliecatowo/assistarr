@@ -40,6 +40,7 @@ export const {
   providers: [
     Credentials({
       credentials: {},
+      // biome-ignore lint/suspicious/noExplicitAny: Auth types are complex
       async authorize({ email, password }: any) {
         const users = await getUser(email);
 

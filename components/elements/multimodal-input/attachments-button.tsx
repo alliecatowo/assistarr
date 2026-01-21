@@ -2,8 +2,8 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { memo } from "react";
-import { PaperclipIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { PaperclipIcon } from "@/components/ui/icons";
 import type { ChatMessage } from "@/lib/types";
 
 function PureAttachmentsButton({

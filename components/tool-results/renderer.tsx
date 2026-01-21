@@ -47,14 +47,17 @@ function renderResultView(
       );
 
     case "calendar":
+      // biome-ignore lint/suspicious/noExplicitAny: Generic output
       return <CalendarView output={output as any} state={state} />;
 
     case "queue":
+      // biome-ignore lint/suspicious/noExplicitAny: Generic output
       return <QueueView output={output as any} state={state} />;
 
     case "media-results":
       return (
         <MediaResultsView
+          // biome-ignore lint/suspicious/noExplicitAny: Generic output
           output={output as any}
           state={state}
           toolName={toolName}
@@ -65,6 +68,7 @@ function renderResultView(
       // Discovery uses media results view (sections are flattened)
       return (
         <MediaResultsView
+          // biome-ignore lint/suspicious/noExplicitAny: Generic output
           output={output as any}
           state={state}
           toolName={toolName}

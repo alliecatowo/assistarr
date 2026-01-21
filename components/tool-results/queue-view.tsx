@@ -200,6 +200,7 @@ function ArrQueueEntry({ item }: { item: ArrQueueItem }) {
 /**
  * qBittorrent torrent item component
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View logic is complex
 function TorrentEntry({ item }: { item: TorrentItem }) {
   const progress = item.progressValue * 100;
   const statusColor = getStatusColor(item.state);

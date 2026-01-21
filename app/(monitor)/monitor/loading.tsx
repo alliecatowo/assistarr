@@ -24,6 +24,7 @@ function QueueWidgetSkeleton() {
       </CardHeader>
       <CardContent className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton list
           <div className="space-y-2 py-3 border-b last:border-b-0" key={i}>
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1 flex-1">
@@ -58,6 +59,7 @@ function SidebarWidgetSkeleton() {
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             className="flex items-center justify-between py-3 border-b last:border-b-0"
+            // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton list
             key={i}
           >
             <div className="space-y-1 flex-1">
@@ -93,6 +95,7 @@ export default function MonitorLoading() {
             <Skeleton className="mb-4 h-4 w-16" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {Array.from({ length: 5 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton list
                 <ServiceCardSkeleton key={i} />
               ))}
             </div>

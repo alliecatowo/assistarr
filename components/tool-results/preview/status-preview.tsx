@@ -19,6 +19,7 @@ interface StatusPreviewProps {
  * Status summary for queue results.
  * Shows counts of items in different states (downloading, seeding, etc.)
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View logic is complex
 export function StatusPreview({ output, className }: StatusPreviewProps) {
   // Handle torrent queue with summary
   if ("torrents" in output && output.summary) {

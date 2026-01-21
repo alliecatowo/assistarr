@@ -5,7 +5,7 @@ import { CheckIcon, Loader2Icon, XIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { DisplayableMedia } from "@/lib/ai/tools/services/base";
+import type { DisplayableMedia } from "@/lib/plugins/base";
 
 interface MediaMetadata {
   title: string;
@@ -39,6 +39,7 @@ interface ApprovalCardProps {
  * Rich approval card for movie and TV show additions.
  * Uses metadata from tool input when available, falls back to API fetch.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View logic is complex
 export function ApprovalCard({
   toolName,
   input,
@@ -103,6 +104,7 @@ export function ApprovalCard({
       return;
     }
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Logic is complex
     const fetchMetadata = async () => {
       // Jellyseerr uses TMDB for both movies and TV shows
       // Radarr uses TMDB for movies, Sonarr uses TVDB for series

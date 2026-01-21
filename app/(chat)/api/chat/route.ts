@@ -15,7 +15,6 @@ import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import { getEnabledTools } from "@/lib/ai/tools/services/registry";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
@@ -32,6 +31,7 @@ import {
 } from "@/lib/db/queries/index";
 import type { DBMessage, ServiceConfig } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { pluginManager } from "@/lib/plugins/registry";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
@@ -175,17 +175,44 @@ export async function POST(request: Request) {
       selectedChatModel.includes("thinking");
     const modelMessages = await convertToModelMessages(uiMessages);
 
+    // Fetch configs and initialize tools
     const serviceConfigs = await getServiceConfigs({ userId: session.user.id });
     const configsMap = configsToMap(serviceConfigs);
-    const { tools: serviceTools } = getEnabledTools(session, configsMap);
+
+    // Base tools defined/collected inside stream execution for dataStream access
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Chat stream logic is complex
       execute: async ({ writer: dataStream }) => {
-        const allTools = {
+        // Re-initialize tools with dataStream
+        const baseTools = {
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
+        };
+
+        // biome-ignore lint/suspicious/noExplicitAny: Plugin tools map
+        const serviceTools: Record<string, any> = {};
+
+        // Dynamically load service tools based on config
+        const plugins = pluginManager.getPlugins();
+        for (const plugin of plugins) {
+          const config = configsMap.get(plugin.name);
+          if (config?.isEnabled) {
+            // Check if config is valid? plugin.validateConfig?
+            // For now assumes valid if enabled
+            for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
+              serviceTools[toolName] = toolDef.factory({
+                session,
+                config,
+              });
+            }
+          }
+        }
+
+        const effectiveTools = {
+          ...baseTools,
           ...serviceTools,
         };
 
@@ -194,8 +221,8 @@ export async function POST(request: Request) {
           system: systemPrompt({ selectedChatModel, requestHints, debugMode }),
           messages: modelMessages,
           stopWhen: stepCountIs(8),
-          experimental_activeTools: Object.keys(allTools) as Array<
-            keyof typeof allTools
+          experimental_activeTools: Object.keys(effectiveTools) as Array<
+            keyof typeof effectiveTools
           >,
           providerOptions: {
             ...(isReasoningModel && selectedChatModel.includes("claude")
@@ -223,7 +250,7 @@ export async function POST(request: Request) {
                 }
               : {}),
           },
-          tools: allTools,
+          tools: effectiveTools,
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",

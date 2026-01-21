@@ -8,7 +8,7 @@ import type { VisibilityType } from "@/components/elements/visibility-selector";
 import {
   type ChatHistory,
   getChatHistoryPaginationKey,
-} from "@/components/sidebar-history";
+} from "@/components/sidebar/sidebar-history";
 
 export function useChatVisibility({
   chatId,

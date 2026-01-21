@@ -22,14 +22,14 @@ interface SpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
+  // biome-ignore lint/suspicious/noExplicitAny: External type
   onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  // biome-ignore lint/suspicious/noExplicitAny: External type
   onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
-    | null;
-  onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any)
-    | null;
+  onresult: // biome-ignore lint/suspicious/noExplicitAny: External type
+  ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: // biome-ignore lint/suspicious/noExplicitAny: External type
+  ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -114,7 +114,8 @@ export const PromptInputSpeechButton = ({
         setIsListening(false);
       };
 
-      speechRecognition.onresult = (event) => {
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Speech logic is complex
+      speechRecognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = "";
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -136,7 +137,7 @@ export const PromptInputSpeechButton = ({
         }
       };
 
-      speechRecognition.onerror = (_event) => {
+      speechRecognition.onerror = (_event: SpeechRecognitionErrorEvent) => {
         setIsListening(false);
       };
 

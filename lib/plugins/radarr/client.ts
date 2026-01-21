@@ -1,10 +1,15 @@
 import { ApiClient } from "../core/client";
+import type { RadarrQueueItem, RadarrSystemStatus } from "./types";
 
 export class RadarrClient extends ApiClient {
-  // Add Radarr-specific methods if needed, or just use generic get/post/put/delete
+  async getSystemStatus(): Promise<RadarrSystemStatus> {
+    return await this.get<RadarrSystemStatus>("/api/v3/system/status");
+  }
 
-  // Example of a specific method if we wanted it here, but mostly tools will call generic methods
-  getSystemStatus() {
-    return this.get("/api/v3/system/status");
+  async getQueue(): Promise<RadarrQueueItem[]> {
+    const response = await this.get<{ records: RadarrQueueItem[] }>(
+      "/api/v3/queue"
+    );
+    return response.records;
   }
 }

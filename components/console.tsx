@@ -6,11 +6,11 @@ import {
   useRef,
   useState,
 } from "react";
+import { Loader } from "@/components/elements/loader";
+import { Button } from "@/components/ui/button";
+import { CrossSmallIcon, TerminalWindowIcon } from "@/components/ui/icons";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
-import { Loader } from "./elements/loader";
-import { CrossSmallIcon, TerminalWindowIcon } from "./icons";
-import { Button } from "./ui/button";
 
 export type ConsoleOutputContent = {
   type: "text" | "image";

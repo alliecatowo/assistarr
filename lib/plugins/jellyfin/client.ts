@@ -1,66 +1,82 @@
 import { ApiClient } from "../core/client";
 
 export class JellyfinClient extends ApiClient {
-  getStatus() {
-    return this.get<{ version: string }>("/status");
+  // biome-ignore lint/suspicious/noExplicitAny: Generic system info
+  async getSystemInfo(): Promise<any> {
+    // biome-ignore lint/suspicious/noExplicitAny: Generic system info
+    return await this.get<any>("/System/Info/Public");
   }
 
-  protected getHeaders(): Promise<HeadersInit> {
-    return Promise.resolve({
-      "X-Emby-Token": this.config.apiKey || "",
-      Authorization: `MediaBrowser Token="${this.config.apiKey}"`,
-      "Content-Type": "application/json",
-    });
+  // Helper for health check
+  async getStatus(): Promise<boolean> {
+    try {
+      await this.getSystemInfo();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Helpers methods (optional if we prefer standalone functions exclusively)
+  getImageUrl(
+    itemId: string,
+    options: { type?: string; maxWidth?: number } = {}
+  ): string {
+    return getImageUrl(
+      this.config.baseUrl,
+      itemId,
+      options.type,
+      options.maxWidth
+    );
+  }
+
+  formatDuration(ticks: number): string {
+    return formatDuration(ticks);
+  }
+
+  calculateProgressPercentage(
+    positionTicks: number,
+    runTimeTicks: number
+  ): number {
+    return calculateProgressPercentage(positionTicks, runTimeTicks);
+  }
+
+  ticksToMinutes(ticks: number): number {
+    return ticksToMinutes(ticks);
   }
 }
 
-/**
- * Helper to convert Jellyfin ticks to human-readable time
- * Jellyfin uses ticks (1 tick = 100 nanoseconds)
- */
-export function ticksToMinutes(ticks: number): number {
-  return Math.floor(ticks / 600_000_000);
-}
-
-export function ticksToSeconds(ticks: number): number {
-  return Math.floor(ticks / 10_000_000);
-}
-
-export function formatDuration(ticks: number): string {
-  const totalMinutes = ticksToMinutes(ticks);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-}
-
-/**
- * Calculate playback progress percentage
- */
-export function calculateProgressPercentage(
-  positionTicks: number,
-  totalTicks: number
-): number {
-  if (totalTicks === 0) {
-    return 0;
-  }
-  return Math.round((positionTicks / totalTicks) * 100);
-}
-
-/**
- * Build image URL for a Jellyfin item
- */
+// Standalone exports for tools
 export function getImageUrl(
   baseUrl: string,
   itemId: string,
-  imageTag?: string,
-  width = 300
-): string | null {
-  if (!imageTag) {
-    return null;
+  type = "Primary",
+  maxWidth?: number
+): string {
+  const maxWidthParam = maxWidth ? `&maxWidth=${maxWidth}` : "";
+  return `${baseUrl}/Items/${itemId}/Images/${type}?quality=90${maxWidthParam}`;
+}
+
+export function formatDuration(ticks: number): string {
+  const minutes = Math.round(ticks / 600_000_000);
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0) {
+    return `${h}h ${m}m`;
   }
-  return `${baseUrl}/Items/${itemId}/Images/Primary?tag=${imageTag}&fillWidth=${width}`;
+  return `${m}m`;
+}
+
+export function calculateProgressPercentage(
+  positionTicks: number,
+  runTimeTicks: number
+): number {
+  if (!runTimeTicks) {
+    return 0;
+  }
+  return Math.min(100, Math.round((positionTicks / runTimeTicks) * 100));
+}
+
+export function ticksToMinutes(ticks: number): number {
+  return Math.round(ticks / 600_000_000);
 }

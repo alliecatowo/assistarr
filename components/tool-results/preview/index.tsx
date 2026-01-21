@@ -141,6 +141,7 @@ export function PreviewRouter({
         typeof output === "object" &&
         ("items" in output || "torrents" in output)
       ) {
+        // biome-ignore lint/suspicious/noExplicitAny: Generic output
         return <StatusPreview className={className} output={output as any} />;
       }
       // Fallback to count

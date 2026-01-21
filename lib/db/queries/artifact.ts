@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gt } from "drizzle-orm";
-import type { ArtifactKind } from "@/components/artifact";
+import type { ArtifactKind } from "@/components/artifact/artifact";
 import { ChatSDKError } from "../../errors";
 import { db } from "../db";
 import { document, type Suggestion, suggestion } from "../schema";

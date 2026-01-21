@@ -28,3 +28,26 @@ export function registerPlugins() {
 registerPlugins();
 
 export const pluginManager = PluginManager.getInstance();
+
+export type ServiceIconId =
+  | "radarr"
+  | "sonarr"
+  | "jellyfin"
+  | "jellyseerr"
+  | "qbittorrent"
+  | "prowlarr"
+  | "readarr"
+  | "lidarr"
+  | "whisparr"
+  | "bazarr"
+  | "plex"
+  | "emby"
+  | "generic";
+
+export function getToolDisplayName(toolName: string): string {
+  // convert snake_case or camelCase to Title Case
+  return toolName
+    .split(/_|-|(?=[A-Z])/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}

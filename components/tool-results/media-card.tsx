@@ -68,6 +68,7 @@ const STATUS_CONFIG: Record<
  * Media card for displaying in carousels or grids.
  * Shows poster, title, year, rating, media type, and availability status.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View logic is complex
 export function MediaCard({
   title,
   year,

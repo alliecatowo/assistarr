@@ -407,16 +407,22 @@ export const PromptInput = ({
                   controller.textInput.clear();
                 }
               })
-              .catch(() => {});
+              .catch(() => {
+                // Ignore
+              });
           } else {
             clear();
             if (usingProvider) {
               controller.textInput.clear();
             }
           }
-        } catch {}
+        } catch {
+          // Ignore
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Ignore
+      });
   };
 
   return (

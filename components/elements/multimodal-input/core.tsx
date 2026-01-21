@@ -22,7 +22,7 @@ import {
   PromptInputTools,
 } from "@/components/elements/prompt-input";
 import type { VisibilityType } from "@/components/elements/visibility-selector";
-import { ArrowUpIcon } from "@/components/icons";
+import { ArrowUpIcon } from "@/components/ui/icons";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PreviewAttachment } from "../preview-attachment";
@@ -211,6 +211,7 @@ function PureMultimodalInput({
           ...successfullyUploadedAttachments,
         ]);
       } catch (_error) {
+        // Ignore errors for now
       } finally {
         setUploadQueue([]);
       }

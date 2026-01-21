@@ -28,6 +28,10 @@ export class PluginManager {
     return this.services.get(name);
   }
 
+  public getPlugins(): ServicePlugin[] {
+    return Array.from(this.services.values());
+  }
+
   public getAllServices(): ServicePlugin[] {
     return Array.from(this.services.values());
   }

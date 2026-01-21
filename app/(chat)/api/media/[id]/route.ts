@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { jellyseerrRequest } from "@/lib/ai/tools/services/jellyseerr/client";
+import { getServiceConfig } from "@/lib/db/queries/service-config";
+import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 
 interface MediaDetails {
   id: number;
@@ -109,14 +110,23 @@ export async function GET(
       );
     }
 
+    const config = await getServiceConfig({
+      userId: session.user.id,
+      serviceName: "jellyseerr",
+    });
+
+    if (!config || !config.isEnabled) {
+      return NextResponse.json(
+        { error: "Jellyseerr is not configured or enabled" },
+        { status: 503 }
+      );
+    }
+
+    const client = new JellyseerrClient(config);
     const endpoint = mediaType === "movie" ? `/movie/${id}` : `/tv/${id}`;
 
     if (mediaType === "movie") {
-      const data = await jellyseerrRequest<JellyseerrMovieDetails>(
-        session.user.id,
-        endpoint
-      );
-
+      const data = await client.get<JellyseerrMovieDetails>(endpoint);
       const { isAvailable, isPending } = getAvailabilityStatus(
         data.mediaInfo?.status
       );
@@ -138,10 +148,7 @@ export async function GET(
 
       return NextResponse.json(result);
     }
-    const data = await jellyseerrRequest<JellyseerrTvDetails>(
-      session.user.id,
-      endpoint
-    );
+    const data = await client.get<JellyseerrTvDetails>(endpoint);
 
     const { isAvailable, isPending } = getAvailabilityStatus(
       data.mediaInfo?.status

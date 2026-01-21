@@ -1,191 +1,141 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
-import { checkServiceHealth } from "@/lib/ai/tools/services/registry";
 import {
   deleteServiceConfig,
   getServiceConfigs,
   upsertServiceConfig,
-} from "@/lib/db/queries/index";
-import { ChatSDKError } from "@/lib/errors";
+} from "@/lib/db/queries/service-config";
+import type { ServiceConfig } from "@/lib/db/schema";
+import { JellyfinClient } from "@/lib/plugins/jellyfin/client";
+import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
+import { QBittorrentClient } from "@/lib/plugins/qbittorrent/client";
+import { RadarrClient } from "@/lib/plugins/radarr/client";
+import { SonarrClient } from "@/lib/plugins/sonarr/client";
+
+const settingsSchema = z.object({
+  serviceName: z.string(),
+  baseUrl: z.string().url(),
+  apiKey: z.string().min(1),
+  isEnabled: z.boolean().optional(),
+});
+
+async function checkServiceHealth(config: ServiceConfig): Promise<boolean> {
+  try {
+    switch (config.serviceName) {
+      case "radarr": {
+        const client = new RadarrClient(config);
+        await client.get("/api/v3/system/status");
+        return true;
+      }
+      case "sonarr": {
+        const client = new SonarrClient(config);
+        await client.get("/api/v3/system/status");
+        return true;
+      }
+      case "jellyseerr": {
+        const client = new JellyseerrClient(config);
+        await client.get("/api/v1/status");
+        return true;
+      }
+      case "jellyfin": {
+        const client = new JellyfinClient(config);
+        await client.get("/System/Info/Public");
+        return true;
+      }
+      case "qbittorrent": {
+        const client = new QBittorrentClient(config);
+        await client.get("/api/v2/app/version");
+        return true;
+      }
+      default:
+        // For unknown services, assume healthy if configured
+        return true;
+    }
+  } catch {
+    // console.error(`Health check failed for ${config.serviceName}:`, error);
+    return false;
+  }
+}
 
 export async function GET() {
   const session = await auth();
-
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:settings").toResponse();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const configs = await getServiceConfigs({ userId: session.user.id });
-    return Response.json(configs);
-  } catch (_error) {
-    return new ChatSDKError(
-      "bad_request:settings",
-      "Failed to fetch service configurations"
-    ).toResponse();
-  }
+  const configs = await getServiceConfigs({ userId: session.user.id });
+  return NextResponse.json(configs);
 }
 
 export async function POST(request: Request) {
   const session = await auth();
-
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:settings").toResponse();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const body = await request.json();
-    const { serviceName, baseUrl, apiKey, isEnabled } = body;
+    const json = await request.json();
+    const body = settingsSchema.parse(json);
 
-    if (!serviceName || !baseUrl || !apiKey) {
-      return new ChatSDKError(
-        "bad_request:settings",
-        "serviceName, baseUrl, and apiKey are required"
-      ).toResponse();
-    }
+    // Initial config for testing
+    const tempConfig: ServiceConfig = {
+      ...body,
+      id: "temp",
+      userId: session.user.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isEnabled: body.isEnabled ?? true,
+    };
 
-    const validServices = [
-      "radarr",
-      "sonarr",
-      "jellyfin",
-      "jellyseerr",
-      "qbittorrent",
-      "portainer",
-    ];
-    if (!validServices.includes(serviceName)) {
-      return new ChatSDKError(
-        "bad_request:settings",
-        "Invalid service name"
-      ).toResponse();
+    // Verify connection
+    const isHealthy = await checkServiceHealth(tempConfig);
+    if (!isHealthy) {
+      return NextResponse.json(
+        {
+          error: "Could not connect to service. Please check URL and API Key.",
+        },
+        { status: 400 }
+      );
     }
 
     const config = await upsertServiceConfig({
       userId: session.user.id,
-      serviceName,
-      baseUrl,
-      apiKey,
-      isEnabled: isEnabled ?? true,
+      ...body,
     });
 
-    return Response.json(config);
-  } catch (_error) {
-    return new ChatSDKError(
-      "bad_request:settings",
-      "Failed to save service configuration"
-    ).toResponse();
+    return NextResponse.json(config);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: "Failed to save settings" },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(request: Request) {
   const session = await auth();
-
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:settings").toResponse();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const body = await request.json();
-    const { serviceName } = body;
+  const { searchParams } = new URL(request.url);
+  const serviceName = searchParams.get("serviceName");
 
-    if (!serviceName) {
-      return new ChatSDKError(
-        "bad_request:settings",
-        "serviceName is required"
-      ).toResponse();
-    }
-
-    const deleted = await deleteServiceConfig({
-      userId: session.user.id,
-      serviceName,
-    });
-
-    if (!deleted) {
-      return new ChatSDKError(
-        "not_found:settings",
-        "Service configuration not found"
-      ).toResponse();
-    }
-
-    return Response.json({ success: true });
-  } catch (_error) {
-    return new ChatSDKError(
-      "bad_request:settings",
-      "Failed to delete service configuration"
-    ).toResponse();
-  }
-}
-
-/**
- * Test connection to a service without saving.
- * PUT /api/settings
- */
-export async function PUT(request: Request) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:settings").toResponse();
+  if (!serviceName) {
+    return NextResponse.json(
+      { error: "Service name required" },
+      { status: 400 }
+    );
   }
 
-  try {
-    const body = await request.json();
-    const { serviceName, baseUrl, apiKey } = body;
+  await deleteServiceConfig({
+    userId: session.user.id,
+    serviceName,
+  });
 
-    if (!serviceName || !baseUrl || !apiKey) {
-      return new ChatSDKError(
-        "bad_request:settings",
-        "serviceName, baseUrl, and apiKey are required"
-      ).toResponse();
-    }
-
-    const validServices = [
-      "radarr",
-      "sonarr",
-      "jellyfin",
-      "jellyseerr",
-      "qbittorrent",
-      "portainer",
-    ];
-    if (!validServices.includes(serviceName)) {
-      return new ChatSDKError(
-        "bad_request:settings",
-        "Invalid service name"
-      ).toResponse();
-    }
-
-    // Create a temporary config object for health check
-    const tempConfig = {
-      id: "",
-      userId: session.user.id,
-      serviceName,
-      baseUrl: baseUrl.replace(/\/$/, ""), // Remove trailing slash
-      apiKey,
-      isEnabled: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Measure latency
-    const startTime = performance.now();
-    const isHealthy = await checkServiceHealth(serviceName, tempConfig);
-    const latency = Math.round(performance.now() - startTime);
-
-    if (isHealthy) {
-      return Response.json({
-        success: true,
-        latency,
-        message: `Connected successfully (${latency}ms)`,
-      });
-    }
-
-    return Response.json({
-      success: false,
-      error: "Connection failed. Check your URL and API key.",
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Connection test failed";
-    return Response.json({
-      success: false,
-      error: message,
-    });
-  }
+  return NextResponse.json({ success: true });
 }

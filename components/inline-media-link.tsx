@@ -219,10 +219,12 @@ export function parseInlineMediaLinks(text: string): (string | JSX.Element)[] {
   const pattern = /\[\[([^|\]]+)\|(\d+)(?:\|(movie|tv))?\]\]/g;
   const parts: (string | JSX.Element)[] = [];
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
   let keyIndex = 0;
 
-  while ((match = pattern.exec(text)) !== null) {
+  // Fix: Declaration and assignment in one place
+  let match = pattern.exec(text);
+
+  while (match !== null) {
     // Add text before the match
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
@@ -240,6 +242,7 @@ export function parseInlineMediaLinks(text: string): (string | JSX.Element)[] {
     );
 
     lastIndex = match.index + match[0].length;
+    match = pattern.exec(text);
   }
 
   // Add remaining text

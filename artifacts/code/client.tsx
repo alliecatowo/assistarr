@@ -1,11 +1,11 @@
 import { toast } from "sonner";
-import { CodeEditor } from "@/components/code-editor";
+import { CodeEditor } from "@/components/artifact/code-editor";
+import { Artifact } from "@/components/artifact/create-artifact";
 import {
   Console,
   type ConsoleOutput,
   type ConsoleOutputContent,
 } from "@/components/console";
-import { Artifact } from "@/components/create-artifact";
 import {
   CopyIcon,
   LogsIcon,
@@ -13,7 +13,7 @@ import {
   PlayIcon,
   RedoIcon,
   UndoIcon,
-} from "@/components/icons";
+} from "@/components/ui/icons";
 import { generateUUID } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {
@@ -193,14 +193,16 @@ export const codeArtifact = new Artifact<"code", Metadata>({
               },
             ],
           }));
-        } catch (error: any) {
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error occurred";
           setMetadata((metadata) => ({
             ...metadata,
             outputs: [
               ...metadata.outputs.filter((output) => output.id !== runId),
               {
                 id: runId,
-                contents: [{ type: "text", value: error.message }],
+                contents: [{ type: "text", value: errorMessage }],
                 status: "failed",
               },
             ],

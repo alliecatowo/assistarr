@@ -1,10 +1,15 @@
 import { ApiClient } from "../core/client";
+import type { SonarrQueueItem, SonarrSystemStatus } from "./types";
 
 export class SonarrClient extends ApiClient {
-  // Add Sonarr-specific methods if needed, or just use generic get/post/put/delete
+  async getSystemStatus(): Promise<SonarrSystemStatus> {
+    return await this.get<SonarrSystemStatus>("/api/v3/system/status");
+  }
 
-  // Example of a specific method if we wanted it here, but mostly tools will call generic methods
-  getSystemStatus() {
-    return this.get("/api/v3/system/status");
+  async getQueue(): Promise<SonarrQueueItem[]> {
+    const response = await this.get<{ records: SonarrQueueItem[] }>(
+      "/api/v3/queue"
+    );
+    return response.records;
   }
 }

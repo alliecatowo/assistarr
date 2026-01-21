@@ -67,9 +67,9 @@ function splitLineByMediaLinks(text: string): Part[] {
   const parts: Part[] = [];
   let lastIndex = 0;
   const pattern = new RegExp(INLINE_MEDIA_PATTERN_SOURCE.source, "g");
-  let match: RegExpExecArray | null;
+  let match = pattern.exec(text);
 
-  while ((match = pattern.exec(text)) !== null) {
+  while (match !== null) {
     // Add text before the match
     if (match.index > lastIndex) {
       parts.push({ type: "text", content: text.slice(lastIndex, match.index) });
@@ -85,6 +85,7 @@ function splitLineByMediaLinks(text: string): Part[] {
     });
 
     lastIndex = match.index + match[0].length;
+    match = pattern.exec(text);
   }
 
   // Add remaining text
@@ -126,6 +127,7 @@ function renderParagraphWithLinks(text: string, keyPrefix: string): ReactNode {
         if (part.type === "media") {
           return (
             <InlineMediaLink
+              // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
               key={`${keyPrefix}-media-${index}`}
               mediaType={part.mediaType as "movie" | "tv"}
               title={part.content}
@@ -136,12 +138,14 @@ function renderParagraphWithLinks(text: string, keyPrefix: string): ReactNode {
         // For simple text (no markdown), render directly to preserve whitespace
         // Streamdown can strip leading/trailing spaces during markdown processing
         if (isSimpleText(part.content)) {
+          // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
           return <span key={`${keyPrefix}-text-${index}`}>{part.content}</span>;
         }
         // For text with markdown formatting, use Streamdown
         return (
           <Streamdown
             className="inline [&>p]:inline [&>*]:inline [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+            // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
             key={`${keyPrefix}-text-${index}`}
           >
             {part.content}
@@ -190,6 +194,7 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
             return (
               <ul
                 className="list-disc pl-6 space-y-1"
+                // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
                 key={`${baseKey}-p-${pIndex}`}
               >
                 {lines
@@ -198,6 +203,7 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
                     // Remove list marker (- or *) with optional space
                     const content = line.replace(/^[\s]*[-*]\s?/, "");
                     return (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
                       <li key={`${baseKey}-p-${pIndex}-l-${lIndex}`}>
                         {renderParagraphWithLinks(
                           content,
@@ -222,6 +228,7 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
 
             if (items.length > 0) {
               return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
                 <div className="space-y-2" key={`${baseKey}-p-${pIndex}`}>
                   {header && (
                     <div>
@@ -237,6 +244,7 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
                       // and ensure any description text has proper spacing
                       const fullItem = `[[${item}`;
                       return (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
                         <li key={`${baseKey}-p-${pIndex}-i-${iIndex}`}>
                           {renderParagraphWithLinks(
                             fullItem,
@@ -253,6 +261,7 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
 
           // Use div instead of p to avoid hydration errors when Streamdown renders block elements
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
             <div key={`${baseKey}-p-${pIndex}`}>
               {renderParagraphWithLinks(trimmed, `${baseKey}-p-${pIndex}`)}
             </div>
@@ -263,6 +272,7 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
         return (
           <Streamdown
             className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+            // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
             key={`${baseKey}-p-${pIndex}`}
           >
             {trimmed}

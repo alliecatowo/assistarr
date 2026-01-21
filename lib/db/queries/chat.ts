@@ -80,6 +80,7 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
 
 // Internal helper for pagination
 const query =
+  // biome-ignore lint/suspicious/noExplicitAny: Drizzle internal types
   (userId: string, extendedLimit: number) => (whereCondition?: SQL<any>) =>
     db
       .select()

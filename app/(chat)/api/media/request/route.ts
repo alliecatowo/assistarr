@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { jellyseerrRequest } from "@/lib/ai/tools/services/jellyseerr/client";
+import { getServiceConfig } from "@/lib/db/queries/service-config";
+import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import {
   type CreateRequestBody,
   getRequestStatusText,
@@ -8,13 +9,83 @@ import {
   MediaStatus,
   type MovieDetails,
   type TvDetails,
-} from "@/lib/ai/tools/services/jellyseerr/types";
+} from "@/lib/plugins/jellyseerr/types";
 
 interface RequestBody {
   tmdbId: number;
   mediaType: "movie" | "tv";
   seasons?: number[];
   is4k?: boolean;
+}
+
+function handleRequestError(error: unknown) {
+  if (error instanceof Error) {
+    const msg = error.message;
+    if (msg.includes("not configured") || msg.includes("disabled")) {
+      return NextResponse.json({ error: msg }, { status: 503 });
+    }
+    if (msg.includes("409") || msg.includes("exists")) {
+      return NextResponse.json(
+        { error: "A request already exists for this media." },
+        { status: 409 }
+      );
+    }
+    if (msg.includes("403") || msg.includes("permission")) {
+      return NextResponse.json(
+        { error: "You do not have permission to request this media." },
+        { status: 403 }
+      );
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+  return NextResponse.json(
+    { error: "Failed to request media" },
+    { status: 500 }
+  );
+}
+
+// ... other helper functions ...
+function validateBody(body: Partial<RequestBody>) {
+  if (!body.tmdbId || typeof body.tmdbId !== "number") {
+    return "tmdbId is required and must be a number";
+  }
+  if (!body.mediaType || !["movie", "tv"].includes(body.mediaType)) {
+    return "mediaType is required and must be 'movie' or 'tv'";
+  }
+  return null;
+}
+
+async function checkMediaStatus(
+  client: JellyseerrClient,
+  tmdbId: number,
+  mediaType: "movie" | "tv"
+) {
+  const detailsEndpoint =
+    mediaType === "movie" ? `/movie/${tmdbId}` : `/tv/${tmdbId}`;
+
+  const details = await client.get<MovieDetails | TvDetails>(detailsEndpoint);
+  const title = "title" in details ? details.title : details.name;
+
+  if (details.mediaInfo?.status === MediaStatus.AVAILABLE) {
+    return {
+      status: "conflict",
+      error: `"${title}" is already available in the library.`,
+      title,
+    };
+  }
+
+  if (
+    details.mediaInfo?.status === MediaStatus.PENDING ||
+    details.mediaInfo?.status === MediaStatus.PROCESSING
+  ) {
+    return {
+      status: "conflict",
+      error: `"${title}" has already been requested and is being processed.`,
+      title,
+    };
+  }
+
+  return { status: "ok", title };
 }
 
 export async function POST(request: Request) {
@@ -25,150 +96,67 @@ export async function POST(request: Request) {
     }
 
     const body: RequestBody = await request.json();
+    const validationError = validateBody(body);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
     const { tmdbId, mediaType, seasons, is4k = false } = body;
-
-    // Validate required fields
-    if (!tmdbId || typeof tmdbId !== "number") {
-      return NextResponse.json(
-        { error: "tmdbId is required and must be a number" },
-        { status: 400 }
-      );
-    }
-
-    if (!mediaType || !["movie", "tv"].includes(mediaType)) {
-      return NextResponse.json(
-        { error: "mediaType is required and must be 'movie' or 'tv'" },
-        { status: 400 }
-      );
-    }
-
     const userId = session.user.id;
-
-    // First, check if the media already exists or is already requested
-    const detailsEndpoint =
-      mediaType === "movie" ? `/movie/${tmdbId}` : `/tv/${tmdbId}`;
-
-    const details = await jellyseerrRequest<MovieDetails | TvDetails>(
+    const config = await getServiceConfig({
       userId,
-      detailsEndpoint
-    );
+      serviceName: "jellyseerr",
+    });
 
-    const title = "title" in details ? details.title : details.name;
+    if (!config?.isEnabled) {
+      return NextResponse.json(
+        { error: "Jellyseerr is not configured or enabled" },
+        { status: 503 }
+      );
+    }
 
-    // Check if already available
-    if (details.mediaInfo?.status === MediaStatus.AVAILABLE) {
+    const client = new JellyseerrClient(config);
+    const check = await checkMediaStatus(client, tmdbId, mediaType);
+
+    if (check.status === "conflict") {
       return NextResponse.json(
         {
           success: false,
-          error: `"${title}" is already available in the library.`,
+          error: check.error,
           tmdbId,
-          title,
+          title: check.title,
           mediaType,
         },
         { status: 409 }
       );
     }
 
-    // Check if already requested/pending
-    if (
-      details.mediaInfo?.status === MediaStatus.PENDING ||
-      details.mediaInfo?.status === MediaStatus.PROCESSING
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `"${title}" has already been requested and is being processed.`,
-          tmdbId,
-          title,
-          mediaType,
-        },
-        { status: 409 }
-      );
-    }
-
-    // Build request body
     const requestBody: CreateRequestBody = {
       mediaType,
       mediaId: tmdbId,
       is4k,
+      seasons:
+        mediaType === "tv" ? (seasons?.length ? seasons : "all") : undefined,
     };
 
-    // For TV shows, add seasons
-    if (mediaType === "tv") {
-      if (seasons && seasons.length > 0) {
-        requestBody.seasons = seasons;
-      } else {
-        // Request all seasons
-        requestBody.seasons = "all";
-      }
-    }
-
-    // Create the request
-    const mediaRequest = await jellyseerrRequest<MediaRequest>(
-      userId,
+    const mediaRequest = await client.post<MediaRequest>(
       "/request",
-      {
-        method: "POST",
-        body: JSON.stringify(requestBody),
-      }
+      requestBody
     );
-
     const statusText = getRequestStatusText(mediaRequest.status);
 
     return NextResponse.json({
       success: true,
       requestId: mediaRequest.id,
       tmdbId,
-      title,
+      title: check.title,
       mediaType,
       is4k: mediaRequest.is4k,
       status: statusText,
-      message: `Successfully requested "${title}". Status: ${statusText}.`,
-      ...(mediaType === "tv" &&
-        seasons && {
-          requestedSeasons: seasons,
-        }),
+      message: `Successfully requested "${check.title}". Status: ${statusText}.`,
+      ...(mediaType === "tv" && seasons && { requestedSeasons: seasons }),
     });
   } catch (error) {
-    if (error instanceof Error) {
-      // Check if it's a configuration error
-      if (
-        error.message.includes("not configured") ||
-        error.message.includes("disabled")
-      ) {
-        return NextResponse.json({ error: error.message }, { status: 503 });
-      }
-
-      // Handle specific error cases from Jellyseerr
-      if (
-        error.message.includes("409") ||
-        error.message.includes("already exists")
-      ) {
-        return NextResponse.json(
-          { error: "A request already exists for this media." },
-          { status: 409 }
-        );
-      }
-
-      if (
-        error.message.includes("403") ||
-        error.message.includes("permission")
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              "You do not have permission to request this media. You may have reached your request quota.",
-          },
-          { status: 403 }
-        );
-      }
-
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(
-      { error: "Failed to request media" },
-      { status: 500 }
-    );
+    return handleRequestError(error);
   }
 }

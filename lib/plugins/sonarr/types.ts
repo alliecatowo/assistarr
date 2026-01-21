@@ -314,3 +314,33 @@ export interface SonarrCommand {
   trigger: string;
   stateChangeTime: string;
 }
+
+// System types
+export interface SonarrSystemStatus {
+  version: string;
+  buildTime: string;
+  isDebug: boolean;
+  isProduction: boolean;
+  isAdmin: boolean;
+  isUserInteractive: boolean;
+  startupPath: string;
+  appData: string;
+  osName: string;
+  osVersion: string;
+  isNetCore: boolean;
+  isLinux: boolean;
+  isOsx: boolean;
+  isWindows: boolean;
+  isDocker: boolean;
+  mode: string;
+  branch: string;
+  authentication: string;
+  sqliteVersion: string;
+  urlBase: string;
+  runtimeVersion: string;
+  runtimeName: string;
+  startTime: string;
+  packageVersion: string;
+  packageAuthor: string;
+  packageUpdateMechanism: string;
+}

@@ -25,6 +25,7 @@ interface SuccessCardProps {
  * Rich success card for completed media requests.
  * Shows the movie/series poster and confirmation message.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View logic is complex
 export function SuccessCard({ output, toolName }: SuccessCardProps) {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -53,6 +54,7 @@ export function SuccessCard({ output, toolName }: SuccessCardProps) {
       return;
     }
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Logic is complex
     const fetchMetadata = async () => {
       const id = isJellyseerr || isMovie ? tmdbId : tvdbId;
       if (!id) {

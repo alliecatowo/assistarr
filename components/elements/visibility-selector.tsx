@@ -8,14 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useChatVisibility } from "@/hooks/use-chat-visibility";
-import { cn } from "@/lib/utils";
 import {
   CheckCircleFillIcon,
   ChevronDownIcon,
   GlobeIcon,
   LockIcon,
-} from "../icons";
+} from "@/components/ui/icons";
+import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import { cn } from "@/lib/utils";
 
 export type VisibilityType = "private" | "public";
 

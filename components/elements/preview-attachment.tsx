@@ -1,7 +1,7 @@
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { CrossSmallIcon } from "@/components/ui/icons";
 import type { Attachment } from "@/lib/types";
-import { CrossSmallIcon } from "../icons";
-import { Button } from "../ui/button";
 import { Loader } from "./loader";
 
 export const PreviewAttachment = ({

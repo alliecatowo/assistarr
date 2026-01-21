@@ -1,10 +1,8 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-
-import { LoaderIcon } from "@/components/icons";
-
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
+import { LoaderIcon } from "@/components/ui/icons";
 
 export function SubmitButton({
   children,

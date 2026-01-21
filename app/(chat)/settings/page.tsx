@@ -156,6 +156,7 @@ function ToolPills({ serviceName }: { serviceName: string }) {
           <button
             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
             onClick={() => setIsExpanded(true)}
+            type="button"
           >
             +{hiddenCount} more
           </button>
@@ -164,6 +165,7 @@ function ToolPills({ serviceName }: { serviceName: string }) {
           <button
             className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
             onClick={() => setIsExpanded(false)}
+            type="button"
           >
             Show less
           </button>
@@ -219,6 +221,7 @@ interface DiscoveredService {
   apiKey: string;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Component is complex
 function ServiceCard({
   service,
   config,
@@ -491,6 +494,7 @@ export default function SettingsPage() {
         setConfigs(data);
       }
     } catch (_error) {
+      // Ignore error during initial load
     } finally {
       setIsLoading(false);
     }
@@ -544,6 +548,7 @@ export default function SettingsPage() {
   const jellyseerrConfig = getConfigForService("jellyseerr");
   const canDiscover = jellyseerrConfig && jellyseerrTested;
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Setup logic is complex
   const handleDiscover = async () => {
     if (!jellyseerrConfig) {
       toast.error("Jellyseerr configuration is required for auto-discovery");
