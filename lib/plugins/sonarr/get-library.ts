@@ -50,7 +50,7 @@ export const getLibrary = ({ session: _session, config }: ToolFactoryProps) => {
     }),
     execute: async (params) => {
       try {
-        const series = await client.get<SonarrSeries[]>("/series");
+        const series = await client.get<SonarrSeries[]>("/api/v3/series");
 
         const filteredSeries = filterSeries(series, params);
         const sortedSeries = sortSeries(filteredSeries, params.sortBy);

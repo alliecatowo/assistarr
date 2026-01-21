@@ -16,7 +16,7 @@ export const refreshSeries = ({
     }),
     execute: async ({ seriesId }) => {
       try {
-        await client.post("/command", {
+        await client.post("/api/v3/command", {
           name: "RefreshSeries",
           seriesId,
         });

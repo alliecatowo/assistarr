@@ -54,7 +54,7 @@ export const executeManualImport = ({
     }),
     execute: async ({ files, importMode }) => {
       try {
-        const command = await client.post<RadarrCommand>("/command", {
+        const command = await client.post<RadarrCommand>("/api/v3/command", {
           name: "ManualImport",
           files: files.map((f) => ({
             path: f.path,

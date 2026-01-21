@@ -35,7 +35,7 @@ export const removeFromQueue = ({
     }),
     execute: async ({ queueId, removeFromClient, blocklist }) => {
       try {
-        await client.delete(`/queue/${queueId}`, {
+        await client.delete(`/api/v3/queue/${queueId}`, {
           removeFromClient,
           blocklist,
         });

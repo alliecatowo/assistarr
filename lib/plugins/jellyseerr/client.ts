@@ -4,7 +4,7 @@ export class JellyseerrClient extends ApiClient {
   // Add Jellyseerr-specific methods if needed, or just use generic get/post/put/delete
 
   getStatus() {
-    return this.get<{ version: string }>("/status");
+    return this.get<{ version: string }>("/api/v1/status");
   }
 }
 

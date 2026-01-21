@@ -116,6 +116,61 @@ export async function POST(request: Request) {
   }
 }
 
+// PUT - Test connection only (does not save)
+export async function PUT(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const json = await request.json();
+    const body = settingsSchema.parse(json);
+
+    // Create temp config for testing
+    const tempConfig: ServiceConfig = {
+      ...body,
+      id: "temp",
+      userId: session.user.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isEnabled: body.isEnabled ?? true,
+    };
+
+    // Measure latency
+    const startTime = Date.now();
+    const isHealthy = await checkServiceHealth(tempConfig);
+    const latency = Date.now() - startTime;
+
+    if (!isHealthy) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Could not connect to service. Please check URL and API Key.",
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Connection successful",
+      latency,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: "Invalid data" },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: "Failed to test connection" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {

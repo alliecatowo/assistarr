@@ -356,15 +356,21 @@ const MessagePartGenericTool = ({
 
         {state === "output-available" && (
           <ToolOutput
-            errorText={undefined}
+            errorText={
+              hasError && toolPart.output
+                ? String((toolPart.output as { error: unknown }).error)
+                : undefined
+            }
             output={
-              <ToolResultRenderer
-                input={toolPart.input}
-                output={toolPart.output}
-                state={state}
-                toolName={rawToolName}
-                useWrapper={false}
-              />
+              !hasError && (
+                <ToolResultRenderer
+                  input={toolPart.input}
+                  output={toolPart.output}
+                  state={state}
+                  toolName={rawToolName}
+                  useWrapper={false}
+                />
+              )
             }
           />
         )}

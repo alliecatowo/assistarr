@@ -38,7 +38,7 @@ export const getLibrary = ({ session: _session, config }: ToolFactoryProps) => {
       limit,
     }) => {
       try {
-        const movies = await client.get<RadarrMovie[]>("/movie");
+        const movies = await client.get<RadarrMovie[]>("/api/v3/movie");
 
         const filteredMovies = filterMovies(movies, {
           genre,

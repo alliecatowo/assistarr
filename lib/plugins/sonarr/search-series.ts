@@ -23,9 +23,12 @@ export const searchSeries = ({
     }),
     execute: async ({ query }) => {
       try {
-        const results = await client.get<SonarrSeries[]>("/series/lookup", {
-          term: query,
-        });
+        const results = await client.get<SonarrSeries[]>(
+          "/api/v3/series/lookup",
+          {
+            term: query,
+          }
+        );
 
         if (results.length === 0) {
           return {

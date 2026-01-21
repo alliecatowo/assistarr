@@ -7,6 +7,14 @@ export class JellyfinClient extends ApiClient {
     return await this.get<any>("/System/Info/Public");
   }
 
+  protected getHeaders(): Promise<HeadersInit> {
+    return Promise.resolve({
+      "X-Emby-Token": this.config.apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    });
+  }
+
   // Helper for health check
   async getStatus(): Promise<boolean> {
     try {
@@ -51,10 +59,22 @@ export function getImageUrl(
   baseUrl: string,
   itemId: string,
   type = "Primary",
-  maxWidth?: number
+  maxWidth?: number,
+  apiKey?: string
 ): string {
-  const maxWidthParam = maxWidth ? `&maxWidth=${maxWidth}` : "";
-  return `${baseUrl}/Items/${itemId}/Images/${type}?quality=90${maxWidthParam}`;
+  const params = new URLSearchParams({
+    quality: "90",
+  });
+
+  if (maxWidth) {
+    params.set("maxWidth", maxWidth.toString());
+  }
+
+  if (apiKey) {
+    params.set("api_key", apiKey);
+  }
+
+  return `${baseUrl}/Items/${itemId}/Images/${type}?${params.toString()}`;
 }
 
 export function formatDuration(ticks: number): string {

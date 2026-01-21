@@ -16,7 +16,11 @@ export class ApiClient {
     path: string,
     params?: Record<string, string | number | boolean | undefined>
   ): string {
-    const baseUrl = this.config.baseUrl.replace(/\/$/, "");
+    // Strip trailing slashes and common API suffixes to ensure clean path appending
+    const baseUrl = this.config.baseUrl
+      .replace(/\/$/, "")
+      .replace(/\/api\/v[0-9]+$/, "")
+      .replace(/\/api$/, "");
     const url = new URL(`${baseUrl}${path}`);
 
     if (params) {
@@ -34,18 +38,36 @@ export class ApiClient {
     path: string,
     params?: Record<string, string | number | boolean | undefined>
   ): Promise<T> {
+    const url = this.getUrl(path, params);
     const headers = await this.getHeaders();
-    const response = await fetch(this.getUrl(path, params), {
+
+    console.log(`[ApiClient] GET ${url}`);
+    console.log("[ApiClient] Headers:", {
+      ...headers,
+      "X-Api-Key": headers["X-Api-Key"] ? "***" : undefined,
+      "X-Emby-Token": headers["X-Emby-Token"] ? "***" : undefined,
+    });
+
+    const response = await fetch(url, {
       headers,
     });
 
+    console.log(
+      `[ApiClient] Response: ${response.status} ${response.statusText}`
+    );
+
     if (!response.ok) {
+      const text = await response.text();
+      console.error(
+        "[ApiClient] Error Body (first 500 chars):",
+        text.slice(0, 500)
+      );
       throw new Error(
         `GET ${path} failed: ${response.status} ${response.statusText}`
       );
     }
 
-    return response.json();
+    return this.handleJson<T>(response);
   }
 
   async post<T>(path: string, body?: unknown): Promise<T> {
@@ -62,9 +84,7 @@ export class ApiClient {
       );
     }
 
-    // Handle empty responses
-    const text = await response.text();
-    return text ? JSON.parse(text) : ({} as T);
+    return this.handleJson<T>(response);
   }
 
   async put<T>(path: string, body?: unknown): Promise<T> {
@@ -81,8 +101,7 @@ export class ApiClient {
       );
     }
 
-    const text = await response.text();
-    return text ? JSON.parse(text) : ({} as T);
+    return this.handleJson<T>(response);
   }
 
   async delete<T>(
@@ -103,7 +122,25 @@ export class ApiClient {
       );
     }
 
+    return this.handleJson<T>(response);
+  }
+
+  private async handleJson<T>(response: Response): Promise<T> {
     const text = await response.text();
-    return text ? JSON.parse(text) : ({} as T);
+    if (!text) {
+      return {} as T;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (_) {
+      // If parsing fails, throw a more helpful error with context
+      const preview = text.slice(0, 200);
+      throw new Error(
+        `Failed to parse JSON response: ${preview}${
+          text.length > 200 ? "..." : ""
+        }`
+      );
+    }
   }
 }

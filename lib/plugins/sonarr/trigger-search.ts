@@ -38,7 +38,7 @@ export const triggerSearch = ({
           commandBody = { name: "SeasonSearch", seriesId, seasonNumber };
         }
 
-        await client.post("/command", commandBody);
+        await client.post("/api/v3/command", commandBody);
 
         return {
           success: true,

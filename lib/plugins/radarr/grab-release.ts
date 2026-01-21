@@ -24,7 +24,7 @@ export const grabRelease = ({
     }),
     execute: async ({ guid, indexerId }) => {
       try {
-        await client.post("/release", {
+        await client.post("/api/v3/release", {
           guid,
           indexerId,
         });

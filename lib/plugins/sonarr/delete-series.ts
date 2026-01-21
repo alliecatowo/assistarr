@@ -35,7 +35,7 @@ export const deleteSeries = ({
     }),
     execute: async ({ seriesId, deleteFiles, addImportListExclusion }) => {
       try {
-        await client.delete(`/series/${seriesId}`, {
+        await client.delete(`/api/v3/series/${seriesId}`, {
           deleteFiles,
           addImportListExclusion,
         });

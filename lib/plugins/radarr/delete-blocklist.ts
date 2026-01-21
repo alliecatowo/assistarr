@@ -43,7 +43,7 @@ export const deleteBlocklist = ({
 
         if (id) {
           // Single item deletion
-          await client.delete(`/blocklist/${id}`);
+          await client.delete(`/api/v3/blocklist/${id}`);
 
           return {
             success: true,
@@ -52,7 +52,7 @@ export const deleteBlocklist = ({
         }
 
         // Bulk deletion
-        await client.delete("/blocklist/bulk", {
+        await client.delete("/api/v3/blocklist/bulk", {
           body: JSON.stringify({ ids }),
         });
 

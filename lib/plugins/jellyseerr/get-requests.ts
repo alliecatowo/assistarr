@@ -53,7 +53,7 @@ export const getRequests = ({
     }),
     execute: async ({ filter, take, skip }) => {
       try {
-        const endpoint = `/request?take=${take}&skip=${skip}&filter=${filter}&sort=added`;
+        const endpoint = `/api/v1/request?take=${take}&skip=${skip}&filter=${filter}&sort=added`;
 
         const response = await client.get<RequestsResponse>(endpoint);
 
@@ -93,8 +93,8 @@ async function fetchDetails(client: JellyseerrClient, request: MediaRequest) {
   try {
     const detailsEndpoint =
       request.type === "movie"
-        ? `/movie/${request.media?.tmdbId}`
-        : `/tv/${request.media?.tmdbId}`;
+        ? `/api/v1/movie/${request.media?.tmdbId}`
+        : `/api/v1/tv/${request.media?.tmdbId}`;
 
     const details = await client.get<MovieDetails | TvDetails>(detailsEndpoint);
 

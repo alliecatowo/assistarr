@@ -86,7 +86,7 @@ export const addSeries = ({ session: _session, config }: ToolFactoryProps) => {
       try {
         // First, lookup the series to get full details
         const lookupResults = await client.get<SonarrSeries[]>(
-          "/series/lookup",
+          "/api/v3/series/lookup",
           {
             term: `tvdb:${tvdbId}`,
           }
@@ -99,9 +99,12 @@ export const addSeries = ({ session: _session, config }: ToolFactoryProps) => {
         const seriesData = lookupResults[0];
 
         // Check if series already exists
-        const existingSeries = await client.get<SonarrSeries[]>("/series", {
-          tvdbId,
-        });
+        const existingSeries = await client.get<SonarrSeries[]>(
+          "/api/v3/series",
+          {
+            tvdbId,
+          }
+        );
 
         if (existingSeries.length > 0) {
           return {
@@ -153,7 +156,7 @@ export const addSeries = ({ session: _session, config }: ToolFactoryProps) => {
         };
 
         const addedSeries = await client.post<SonarrSeries>(
-          "/series",
+          "/api/v3/series",
           addPayload
         );
 
@@ -185,7 +188,9 @@ async function getQualityProfileId(client: SonarrClient, requestedId?: number) {
     return requestedId;
   }
 
-  const profiles = await client.get<SonarrQualityProfile[]>("/qualityprofile");
+  const profiles = await client.get<SonarrQualityProfile[]>(
+    "/api/v3/qualityprofile"
+  );
   if (profiles.length === 0) {
     return null;
   }
@@ -194,7 +199,8 @@ async function getQualityProfileId(client: SonarrClient, requestedId?: number) {
 }
 
 async function getRootFolderPath(client: SonarrClient) {
-  const rootFolders = await client.get<SonarrRootFolder[]>("/rootfolder");
+  const rootFolders =
+    await client.get<SonarrRootFolder[]>("/api/v3/rootfolder");
   if (rootFolders.length === 0) {
     return null;
   }

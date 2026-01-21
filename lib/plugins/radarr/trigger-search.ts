@@ -21,7 +21,7 @@ export const triggerSearch = ({
     }),
     execute: async ({ movieId }) => {
       try {
-        await client.post("/command", {
+        await client.post("/api/v3/command", {
           name: "MoviesSearch",
           movieIds: [movieId],
         });

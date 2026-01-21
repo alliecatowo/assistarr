@@ -19,7 +19,7 @@ export const getQueue = ({ session: _session, config }: ToolFactoryProps) => {
     }),
     execute: async ({ pageSize }) => {
       try {
-        const queue = await client.get<RadarrQueueResponse>("/queue", {
+        const queue = await client.get<RadarrQueueResponse>("/api/v3/queue", {
           page: 1,
           pageSize: Math.min(pageSize, 100),
           includeMovie: true,
