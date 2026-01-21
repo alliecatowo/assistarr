@@ -34,9 +34,17 @@ export const triggerSearch = ({ session }: TriggerSearchProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `Movie with ID ${movieId} not found in Radarr.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to trigger search. Please try again." };
+        return {
+          error: `Failed to trigger search: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

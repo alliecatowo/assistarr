@@ -80,9 +80,20 @@ export const executeManualImport = ({ session }: ExecuteManualImportProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 400) {
+            return { error: `Failed to import: ${error.message}. Check that file paths are correct and movies exist.` };
+          }
+          if (error.statusCode === 404) {
+            return { error: `File or movie not found: ${error.message}. Verify the paths and movie IDs.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to execute manual import. Please try again." };
+        return {
+          error: `Failed to execute manual import: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

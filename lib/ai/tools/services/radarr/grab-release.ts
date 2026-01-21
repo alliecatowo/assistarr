@@ -38,9 +38,20 @@ export const grabRelease = ({ session }: GrabReleaseProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `Release not found. The indexer may no longer have this release available.` };
+          }
+          if (error.statusCode === 400) {
+            return { error: `Failed to grab release: ${error.message}. The release may be invalid or already grabbed.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to grab release. Please try again." };
+        return {
+          error: `Failed to grab release: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

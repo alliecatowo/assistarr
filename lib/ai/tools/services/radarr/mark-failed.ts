@@ -30,10 +30,16 @@ export const markFailed = ({ session }: MarkFailedProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `History item with ID ${historyId} not found.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
         return {
-          error: "Failed to mark history item as failed. Please try again.",
+          error: `Failed to mark as failed: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
         };
       }
     },

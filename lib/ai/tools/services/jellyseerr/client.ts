@@ -75,12 +75,35 @@ export async function jellyseerrRequest<T>(
 
     try {
       errorDetails = await response.json();
-      if (
+
+      // Handle different error response formats from Jellyseerr
+      if (Array.isArray(errorDetails) && errorDetails.length > 0) {
+        // Validation errors: [{ propertyName, errorMessage }]
+        const validationErrors = (errorDetails as Array<{ errorMessage?: string; propertyName?: string }>)
+          .filter((e) => e.errorMessage)
+          .map((e) =>
+            e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
+          );
+        if (validationErrors.length > 0) {
+          errorMessage = validationErrors.join("; ");
+        }
+      } else if (
         errorDetails &&
-        typeof errorDetails === "object" &&
-        "message" in errorDetails
+        typeof errorDetails === "object"
       ) {
-        errorMessage = (errorDetails as { message: string }).message;
+        const errObj = errorDetails as Record<string, unknown>;
+        if (errObj.message) {
+          errorMessage = errObj.message as string;
+        } else if (errObj.error) {
+          errorMessage = errObj.error as string;
+        } else if (errObj.errors && typeof errObj.errors === "object") {
+          // Handle { errors: { field: ["message"] } } format
+          const messages = Object.entries(errObj.errors as Record<string, string[]>)
+            .flatMap(([field, msgs]) => msgs.map((msg) => `${field}: ${msg}`));
+          if (messages.length > 0) {
+            errorMessage = messages.join("; ");
+          }
+        }
       }
     } catch {
       // Ignore JSON parse errors

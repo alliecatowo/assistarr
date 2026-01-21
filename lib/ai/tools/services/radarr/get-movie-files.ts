@@ -71,9 +71,17 @@ export const getMovieFiles = ({ session }: GetMovieFilesProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: movieId ? `Movie with ID ${movieId} not found in Radarr.` : `Radarr endpoint not found.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to get movie files. Please try again." };
+        return {
+          error: `Failed to get movie files: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

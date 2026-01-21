@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { radarrRequest } from "./client";
+import { RadarrClientError, radarrRequest } from "./client";
 
 type EditMovieProps = {
   session: Session;
@@ -69,9 +69,20 @@ export const editMovie = ({ session }: EditMovieProps) =>
           movie: result,
         };
       } catch (error) {
+        if (error instanceof RadarrClientError) {
+          if (error.statusCode === 404) {
+            return { error: `Movie with ID ${movieId} not found in Radarr.` };
+          }
+          if (error.statusCode === 400) {
+            return { error: `Failed to update movie: ${error.message}. Check that all values are valid.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
+        }
         return {
-          error:
-            error instanceof Error ? error.message : "Refused to edit movie",
+          error: `Failed to edit movie: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
         };
       }
     },

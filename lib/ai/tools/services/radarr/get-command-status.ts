@@ -67,9 +67,17 @@ export const getCommandStatus = ({ session }: GetCommandStatusProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `Command with ID ${commandId} not found. It may have expired or never existed.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to get command status. Please try again." };
+        return {
+          error: `Failed to get command status: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

@@ -72,10 +72,16 @@ export const getManualImport = ({ session }: GetManualImportProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `Folder or download not found: ${error.message}. Verify the path exists.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
         return {
-          error: "Failed to get manual import files. Please try again.",
+          error: `Failed to get manual import files: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
         };
       }
     },

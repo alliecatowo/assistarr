@@ -48,9 +48,17 @@ export const removeFromQueue = ({ session }: RemoveFromQueueProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `Queue item with ID ${queueId} not found. It may have already been removed.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to remove from queue. Please try again." };
+        return {
+          error: `Failed to remove from queue: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

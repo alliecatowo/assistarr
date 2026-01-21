@@ -31,9 +31,17 @@ export const getQualityProfiles = ({ session }: GetQualityProfilesProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key in settings.` };
+          }
+          if (error.statusCode === 404) {
+            return { error: `Radarr endpoint not found: ${error.message}. Please verify your Radarr URL in settings.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to get quality profiles. Please try again." };
+        return {
+          error: `Failed to get quality profiles: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

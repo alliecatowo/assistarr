@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { radarrRequest } from "./client";
+import { RadarrClientError, radarrRequest } from "./client";
 
 type DeleteMovieProps = {
   session: Session;
@@ -53,9 +53,17 @@ export const deleteMovie = ({ session }: DeleteMovieProps) =>
           message: `Movie with ID ${movieId} deleted successfully`,
         };
       } catch (error) {
+        if (error instanceof RadarrClientError) {
+          if (error.statusCode === 404) {
+            return { error: `Movie with ID ${movieId} not found in Radarr.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
+        }
         return {
-          error:
-            error instanceof Error ? error.message : "Refused to delete movie",
+          error: `Failed to delete movie: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
         };
       }
     },

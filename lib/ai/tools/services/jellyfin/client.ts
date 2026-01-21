@@ -63,9 +63,26 @@ export async function jellyfinRequest<T>(
     let errorMessage = `Jellyfin API error: ${response.status} ${response.statusText}`;
 
     try {
-      const errorBody = await response.json();
-      if (errorBody.message) {
-        errorMessage = errorBody.message;
+      const errorData = await response.json();
+
+      // Handle different error response formats from Jellyfin
+      if (Array.isArray(errorData) && errorData.length > 0) {
+        // Validation errors: [{ propertyName, errorMessage }]
+        const validationErrors = errorData
+          .filter((e: { errorMessage?: string }) => e.errorMessage)
+          .map((e: { propertyName?: string; errorMessage: string }) =>
+            e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
+          );
+        if (validationErrors.length > 0) {
+          errorMessage = validationErrors.join("; ");
+        }
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      } else if (errorData.Message) {
+        // Jellyfin sometimes uses PascalCase
+        errorMessage = errorData.Message;
+      } else if (errorData.error) {
+        errorMessage = errorData.error;
       }
     } catch {
       // Ignore JSON parsing errors for error response

@@ -64,10 +64,16 @@ export const deleteBlocklist = ({ session }: DeleteBlocklistProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: `Blocklist item not found. It may have already been removed.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
         return {
-          error: "Failed to remove from blocklist. Please try again.",
+          error: `Failed to remove from blocklist: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
         };
       }
     },

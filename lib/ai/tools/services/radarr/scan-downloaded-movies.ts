@@ -49,10 +49,19 @@ export const scanDownloadedMovies = ({ session }: ScanDownloadedMoviesProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          if (error.statusCode === 404) {
+            return { error: folder ? `Folder not found: ${folder}. Verify the path exists.` : `Radarr endpoint not found.` };
+          }
+          if (error.statusCode === 400) {
+            return { error: `Invalid request: ${error.message}. Check that the folder path is valid.` };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return { error: `Radarr authentication failed: ${error.message}. Please check your API key.` };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
         return {
-          error: "Failed to start downloaded movies scan. Please try again.",
+          error: `Failed to start scan: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
         };
       }
     },
