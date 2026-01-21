@@ -172,9 +172,32 @@ export const addMovie = ({ session }: AddMovieProps) =>
         };
       } catch (error) {
         if (error instanceof RadarrClientError) {
-          return { error: error.message };
+          // Provide context based on status code
+          if (error.statusCode === 400) {
+            return {
+              error: `Failed to add movie: ${error.message}. This may be due to invalid data or a configuration issue.`,
+            };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return {
+              error: `Radarr authentication failed: ${error.message}. Please check your API key in settings.`,
+            };
+          }
+          if (error.statusCode === 404) {
+            return {
+              error: `Radarr endpoint not found: ${error.message}. Please verify your Radarr URL in settings.`,
+            };
+          }
+          if (error.statusCode === 409) {
+            return {
+              error: `Movie already exists or conflicts with existing entry: ${error.message}`,
+            };
+          }
+          return { error: `Radarr error: ${error.message}` };
         }
-        return { error: "Failed to add movie. Please try again." };
+        return {
+          error: `Failed to add movie: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });

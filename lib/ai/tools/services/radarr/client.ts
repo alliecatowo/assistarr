@@ -52,8 +52,24 @@ export async function radarrRequest<T>(
 
     try {
       const errorData = await response.json();
-      if (errorData.message) {
+
+      // Handle different error response formats from Radarr
+      if (Array.isArray(errorData) && errorData.length > 0) {
+        // Validation errors: [{ propertyName, errorMessage, severity }]
+        const validationErrors = errorData
+          .filter((e: { errorMessage?: string }) => e.errorMessage)
+          .map((e: { propertyName?: string; errorMessage: string }) =>
+            e.propertyName ? `${e.propertyName}: ${e.errorMessage}` : e.errorMessage
+          );
+        if (validationErrors.length > 0) {
+          errorMessage = validationErrors.join("; ");
+        }
+      } else if (errorData.message) {
         errorMessage = errorData.message;
+      } else if (errorData.errorMessage) {
+        errorMessage = errorData.errorMessage;
+      } else if (errorData.error) {
+        errorMessage = errorData.error;
       }
     } catch {
       // Ignore JSON parse errors

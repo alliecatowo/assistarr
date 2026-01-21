@@ -193,9 +193,32 @@ export const addSeries = ({ session }: AddSeriesProps) =>
         };
       } catch (error) {
         if (error instanceof SonarrClientError) {
-          return { error: error.message };
+          // Provide context based on status code
+          if (error.statusCode === 400) {
+            return {
+              error: `Failed to add series: ${error.message}. This may be due to invalid data or a configuration issue.`,
+            };
+          }
+          if (error.statusCode === 401 || error.statusCode === 403) {
+            return {
+              error: `Sonarr authentication failed: ${error.message}. Please check your API key in settings.`,
+            };
+          }
+          if (error.statusCode === 404) {
+            return {
+              error: `Sonarr endpoint not found: ${error.message}. Please verify your Sonarr URL in settings.`,
+            };
+          }
+          if (error.statusCode === 409) {
+            return {
+              error: `Series already exists or conflicts with existing entry: ${error.message}`,
+            };
+          }
+          return { error: `Sonarr error: ${error.message}` };
         }
-        return { error: "Failed to add TV series. Please try again." };
+        return {
+          error: `Failed to add TV series: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        };
       }
     },
   });
