@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getPosterUrl } from "@/lib/utils";
 import { type DiscoverItem, useDiscover } from "./discover-context";
 
 interface DiscoverCardProps {
@@ -19,6 +19,8 @@ interface DiscoverCardProps {
   showReason?: boolean;
   onRequest: (tmdbId: number, mediaType: "movie" | "tv") => void;
   isRequesting?: boolean;
+  /** When true, card fills container width instead of fixed 160px */
+  fillContainer?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -45,14 +47,13 @@ export function DiscoverCard({
   showReason,
   onRequest,
   isRequesting,
+  fillContainer,
 }: DiscoverCardProps) {
   const { expandItem } = useDiscover();
   const config = STATUS_CONFIG[item.status];
   const canRequest = item.status === "unavailable" && item.tmdbId;
 
-  const posterUrl = item.posterUrl?.startsWith("/")
-    ? `https://image.tmdb.org/t/p/w342${item.posterUrl}`
-    : item.posterUrl;
+  const posterUrl = getPosterUrl(item.posterUrl);
 
   const handleCardClick = () => {
     if (item.tmdbId) {
@@ -65,7 +66,8 @@ export function DiscoverCard({
       className={cn(
         "group flex flex-col overflow-hidden rounded-lg border bg-card shadow-sm",
         "transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-primary/30",
-        "w-[160px] shrink-0 cursor-pointer"
+        fillContainer ? "w-full" : "w-[160px] shrink-0",
+        "cursor-pointer"
       )}
     >
       {/* Poster - clickable for expand */}

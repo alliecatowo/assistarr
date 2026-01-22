@@ -1,3 +1,4 @@
+/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
@@ -413,7 +414,7 @@ function BrowseContent({
         <>
           <div
             className={cn(
-              "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+              "grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7",
               expandedItem && "opacity-50 pointer-events-none"
             )}
           >
@@ -468,17 +469,19 @@ function BrowseCard({
   isRequesting,
 }: BrowseCardProps) {
   return (
-    <button
-      className="border-0 bg-transparent p-0 cursor-pointer text-left w-full"
+    <div
       onClick={onExpand}
-      type="button"
+      onKeyDown={(e) => e.key === "Enter" && onExpand()}
+      role="button"
+      tabIndex={0}
     >
       <DiscoverCard
+        fillContainer
         isRequesting={isRequesting}
         item={item}
         onRequest={onRequest}
       />
-    </button>
+    </div>
   );
 }
 

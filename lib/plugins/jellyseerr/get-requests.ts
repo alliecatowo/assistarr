@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { getPosterUrl } from "@/lib/utils";
 import type { ToolFactoryProps } from "../core/types";
-import { getPosterUrl, JellyseerrClient } from "./client";
+import { JellyseerrClient } from "./client";
 import {
   getMediaStatusText,
   getRequestStatusText,

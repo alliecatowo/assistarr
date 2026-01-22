@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getPosterUrl } from "@/lib/utils";
 
 interface ExpandedCardPosterProps {
   title: string;
@@ -9,14 +10,16 @@ export function ExpandedCardPoster({
   title,
   posterUrl,
 }: ExpandedCardPosterProps) {
+  const fullPosterUrl = getPosterUrl(posterUrl);
+
   return (
     <div className="shrink-0">
-      {posterUrl ? (
+      {fullPosterUrl ? (
         <Image
           alt={title}
           className="rounded-lg shadow-md"
           height={192}
-          src={posterUrl}
+          src={fullPosterUrl}
           unoptimized
           width={128}
         />

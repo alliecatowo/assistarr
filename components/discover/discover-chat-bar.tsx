@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { SendIcon, SparklesIcon } from "lucide-react";
+import { LoaderIcon, SendIcon, SparklesIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   isMediaResultsShape,
@@ -12,6 +12,7 @@ import {
 } from "@/components/tool-results/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
 import { type DiscoverItem, useDiscover } from "./discover-context";
@@ -126,12 +127,23 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
     sendMessage,
     status,
     messages,
-    error: _error,
+    error,
   } = useChat<ChatMessage>({
     id: chatId,
     generateId: generateUUID,
     transport,
   });
+
+  // Show error toast when chat errors occur
+  useEffect(() => {
+    if (error) {
+      setLoading(false);
+      toast({
+        type: "error",
+        description: error.message || "Failed to get recommendations. Please try again.",
+      });
+    }
+  }, [error, setLoading]);
 
   // Process AI responses and extract recommendations
   useEffect(() => {
@@ -233,7 +245,11 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
           onClick={handleSubmit}
           size="icon"
         >
-          <SendIcon className="size-5" />
+          {isLoading ? (
+            <LoaderIcon className="size-5 animate-spin" />
+          ) : (
+            <SendIcon className="size-5" />
+          )}
         </Button>
       </div>
     </div>

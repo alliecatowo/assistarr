@@ -13,7 +13,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, getBackdropUrl, getPosterUrl } from "@/lib/utils";
 import { useDiscover } from "./discover-context";
 
 // =============================================================================
@@ -74,13 +74,8 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
   const { expandItem } = useDiscover();
   const canRequest = pick.status === "unavailable" && pick.tmdbId;
 
-  const backdropUrl = pick.backdropUrl?.startsWith("/")
-    ? `https://image.tmdb.org/t/p/w1280${pick.backdropUrl}`
-    : pick.backdropUrl;
-
-  const posterUrl = pick.posterUrl?.startsWith("/")
-    ? `https://image.tmdb.org/t/p/w342${pick.posterUrl}`
-    : pick.posterUrl;
+  const backdropUrl = getBackdropUrl(pick.backdropUrl);
+  const posterUrl = getPosterUrl(pick.posterUrl);
 
   const handleCardClick = () => {
     if (pick.tmdbId) {

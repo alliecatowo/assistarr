@@ -9,6 +9,7 @@ import { DiscoverShell } from "@/components/discover/discover-shell";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { MediaStatus } from "@/lib/plugins/jellyseerr/types";
+import { getPosterUrl } from "@/lib/utils";
 import DiscoverLoading from "./loading";
 
 export default function DiscoverPage() {
@@ -114,9 +115,7 @@ async function fetchDiscoverySections(
                 "0",
               10
             ) || undefined,
-          posterUrl: item.posterPath
-            ? `https://image.tmdb.org/t/p/w342${item.posterPath}`
-            : null,
+          posterUrl: getPosterUrl(item.posterPath),
           rating: item.voteAverage,
           mediaType: item.mediaType,
           tmdbId: item.id,
@@ -139,9 +138,7 @@ async function fetchDiscoverySections(
                 "0",
               10
             ) || undefined,
-          posterUrl: item.posterPath
-            ? `https://image.tmdb.org/t/p/w342${item.posterPath}`
-            : null,
+          posterUrl: getPosterUrl(item.posterPath),
           rating: item.voteAverage,
           mediaType: "movie" as const,
           tmdbId: item.id,
@@ -164,9 +161,7 @@ async function fetchDiscoverySections(
                 "0",
               10
             ) || undefined,
-          posterUrl: item.posterPath
-            ? `https://image.tmdb.org/t/p/w342${item.posterPath}`
-            : null,
+          posterUrl: getPosterUrl(item.posterPath),
           rating: item.voteAverage,
           mediaType: "tv" as const,
           tmdbId: item.id,
@@ -192,9 +187,7 @@ async function fetchDiscoverySections(
                 "0",
               10
             ) || undefined,
-          posterUrl: item.posterPath
-            ? `https://image.tmdb.org/t/p/w342${item.posterPath}`
-            : null,
+          posterUrl: getPosterUrl(item.posterPath),
           rating: item.voteAverage,
           mediaType: "movie" as const,
           tmdbId: item.id,

@@ -114,3 +114,60 @@ export function getTextFromMessage(message: ChatMessage | UIMessage): string {
     .map((part) => (part as { type: 'text'; text: string}).text)
     .join('');
 }
+
+// =============================================================================
+// TMDB Image URL Utilities
+// =============================================================================
+
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+
+export const TMDB_IMAGE_SIZES = {
+  poster: 'w342',
+  posterLarge: 'w500',
+  backdrop: 'w1280',
+  profile: 'w185',
+  still: 'w300',
+} as const;
+
+/**
+ * Constructs a full TMDB image URL from a path.
+ * Handles relative paths (starting with /) and already-complete URLs.
+ */
+export function getTmdbImageUrl(
+  path: string | null | undefined,
+  size: keyof typeof TMDB_IMAGE_SIZES = 'poster'
+): string | null {
+  if (!path) return null;
+
+  // If already a full URL, return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  // If relative path (from TMDB API), construct full URL
+  if (path.startsWith('/')) {
+    return `${TMDB_IMAGE_BASE}/${TMDB_IMAGE_SIZES[size]}${path}`;
+  }
+
+  return null;
+}
+
+/** Convenience function for poster images (w342) */
+export function getPosterUrl(path: string | null | undefined): string | null {
+  return getTmdbImageUrl(path, 'poster');
+}
+
+/** Convenience function for large poster images (w500) */
+export function getPosterLargeUrl(path: string | null | undefined): string | null {
+  return getTmdbImageUrl(path, 'posterLarge');
+}
+
+/** Convenience function for backdrop images (w1280) */
+export function getBackdropUrl(path: string | null | undefined): string | null {
+  return getTmdbImageUrl(path, 'backdrop');
+}
+
+/** Convenience function for profile/cast images (w185) */
+export function getProfileUrl(path: string | null | undefined): string | null {
+  return getTmdbImageUrl(path, 'profile');
+}

@@ -3,6 +3,7 @@ import { auth } from "@/app/(auth)/auth";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { MediaStatus } from "@/lib/plugins/jellyseerr/types";
+import { getBackdropUrl, getPosterUrl, getProfileUrl } from "@/lib/utils";
 
 interface JellyseerrMediaResult {
   id: number;
@@ -74,12 +75,8 @@ function formatDetailsResponse(
     id: d.id,
     title: d.title ?? d.name ?? "Unknown",
     year: parseYear(d.releaseDate, d.firstAirDate),
-    posterUrl: d.posterPath
-      ? `https://image.tmdb.org/t/p/w342${d.posterPath}`
-      : null,
-    backdropUrl: d.backdropPath
-      ? `https://image.tmdb.org/t/p/w1280${d.backdropPath}`
-      : null,
+    posterUrl: getPosterUrl(d.posterPath),
+    backdropUrl: getBackdropUrl(d.backdropPath),
     overview: d.overview,
     rating: d.voteAverage,
     runtime: d.runtime,
@@ -88,9 +85,7 @@ function formatDetailsResponse(
       d.credits?.cast?.slice(0, 6).map((c) => ({
         name: c.name,
         character: c.character,
-        profileUrl: c.profilePath
-          ? `https://image.tmdb.org/t/p/w185${c.profilePath}`
-          : null,
+        profileUrl: getProfileUrl(c.profilePath),
       })) ?? [],
     mediaType,
     tmdbId: d.id,
@@ -107,9 +102,7 @@ function formatSimilarItem(
     id: item.id,
     title: item.title ?? item.name ?? "Unknown",
     year: parseYear(item.releaseDate, item.firstAirDate),
-    posterUrl: item.posterPath
-      ? `https://image.tmdb.org/t/p/w342${item.posterPath}`
-      : null,
+    posterUrl: getPosterUrl(item.posterPath),
     backdropUrl: null,
     overview: item.overview,
     rating: item.voteAverage,

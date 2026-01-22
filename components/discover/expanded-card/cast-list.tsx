@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getProfileUrl } from "@/lib/utils";
 
 interface CastMember {
   name: string;
@@ -21,31 +22,34 @@ export function CastList({ cast }: CastListProps) {
     <div className="mt-6">
       <h3 className="text-sm font-semibold mb-2">Cast</h3>
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-        {cast.map((person, i) => (
-          <div
-            className="shrink-0 text-center w-16"
-            key={`${person.name}-${i}`}
-          >
-            {person.profileUrl ? (
-              <Image
-                alt={person.name}
-                className="rounded-full mx-auto"
-                height={48}
-                src={person.profileUrl}
-                unoptimized
-                width={48}
-              />
-            ) : (
-              <div className="h-12 w-12 rounded-full bg-muted mx-auto flex items-center justify-center text-muted-foreground text-xs">
-                ?
-              </div>
-            )}
-            <p className="mt-1 text-xs font-medium truncate">{person.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">
-              {person.character}
-            </p>
-          </div>
-        ))}
+        {cast.map((person, i) => {
+          const profileImage = getProfileUrl(person.profileUrl);
+          return (
+            <div
+              className="shrink-0 text-center w-16"
+              key={`${person.name}-${i}`}
+            >
+              {profileImage ? (
+                <Image
+                  alt={person.name}
+                  className="rounded-full mx-auto object-cover"
+                  height={48}
+                  src={profileImage}
+                  unoptimized
+                  width={48}
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-muted mx-auto flex items-center justify-center text-muted-foreground text-xs">
+                  ?
+                </div>
+              )}
+              <p className="mt-1 text-xs font-medium truncate">{person.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {person.character}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
