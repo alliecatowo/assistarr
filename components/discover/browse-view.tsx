@@ -27,7 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { DiscoverCard } from "./discover-card";
-import { DiscoverProvider, type DiscoverItem } from "./discover-context";
+import { type DiscoverItem, DiscoverProvider } from "./discover-context";
 import { ExpandedCard } from "./expanded-card";
 
 interface BrowseItem extends DiscoverItem {
@@ -475,80 +475,82 @@ export function BrowseView({ slug, initialTitle }: BrowseViewProps) {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4">
-          {/* Expanded card overlay */}
-          {expandedItem && (
-            <ExpandedCard
-              item={expandedItem}
-              onClose={() => setExpandedItem(null)}
-              onStatusChange={handleStatusChange}
-            />
-          )}
+        <main className="flex-1 overflow-y-auto px-4 py-6 pb-32">
+          <div className="mx-auto max-w-7xl w-full">
+            {/* Expanded card overlay */}
+            {expandedItem && (
+              <ExpandedCard
+                item={expandedItem}
+                onClose={() => setExpandedItem(null)}
+                onStatusChange={handleStatusChange}
+              />
+            )}
 
-          {/* Loading skeleton */}
-          {isLoading && (
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {Array.from({ length: 18 }).map((_, i) => (
-                <div className="space-y-2" key={i}>
-                  <Skeleton className="aspect-[2/3] w-full rounded-lg" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Results grid */}
-          {!isLoading && (
-            <>
-              <div
-                className={cn(
-                  "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
-                  expandedItem && "opacity-50 pointer-events-none"
-                )}
-              >
-                {items.map((item, index) => (
-                  <BrowseCard
-                    isRequesting={requestingIds.has(item.tmdbId ?? 0)}
-                    item={item}
-                    key={`${item.id}-${index}`}
-                    onExpand={() => setExpandedItem(item)}
-                    onRequest={handleRequest}
-                  />
+            {/* Loading skeleton */}
+            {isLoading && (
+              <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {Array.from({ length: 18 }).map((_, i) => (
+                  <div className="space-y-2" key={i}>
+                    <Skeleton className="aspect-[2/3] w-full rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
                 ))}
               </div>
+            )}
 
-              {/* Empty state */}
-              {items.length === 0 && (
-                <div className="py-16 text-center text-muted-foreground">
-                  <p>No content found matching your filters.</p>
-                  {hasActiveFilters && (
-                    <Button
-                      className="mt-4"
-                      onClick={clearFilters}
-                      variant="outline"
-                    >
-                      Clear filters
-                    </Button>
+            {/* Results grid */}
+            {!isLoading && (
+              <>
+                <div
+                  className={cn(
+                    "grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+                    expandedItem && "opacity-50 pointer-events-none"
                   )}
+                >
+                  {items.map((item, index) => (
+                    <BrowseCard
+                      isRequesting={requestingIds.has(item.tmdbId ?? 0)}
+                      item={item}
+                      key={`${item.id}-${index}`}
+                      onExpand={() => setExpandedItem(item)}
+                      onRequest={handleRequest}
+                    />
+                  ))}
                 </div>
-              )}
 
-              {/* Load more trigger */}
-              <div className="py-8" ref={loadMoreRef}>
-                {isLoadingMore && (
-                  <div className="flex justify-center">
-                    <LoaderIcon className="size-6 animate-spin text-muted-foreground" />
+                {/* Empty state */}
+                {items.length === 0 && (
+                  <div className="py-16 text-center text-muted-foreground">
+                    <p>No content found matching your filters.</p>
+                    {hasActiveFilters && (
+                      <Button
+                        className="mt-4"
+                        onClick={clearFilters}
+                        variant="outline"
+                      >
+                        Clear filters
+                      </Button>
+                    )}
                   </div>
                 )}
-                {page >= totalPages && items.length > 0 && (
-                  <p className="text-center text-sm text-muted-foreground">
-                    You&apos;ve reached the end
-                  </p>
-                )}
-              </div>
-            </>
-          )}
+
+                {/* Load more trigger */}
+                <div className="py-8" ref={loadMoreRef}>
+                  {isLoadingMore && (
+                    <div className="flex justify-center">
+                      <LoaderIcon className="size-6 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {page >= totalPages && items.length > 0 && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      You&apos;ve reached the end
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </main>
       </div>
     </DiscoverProvider>
