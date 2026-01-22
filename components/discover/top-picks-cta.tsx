@@ -1,3 +1,4 @@
+/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
@@ -88,13 +89,15 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
   };
 
   return (
-    <button
+    <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card shadow-lg text-left",
+        "group relative overflow-hidden rounded-xl border bg-card shadow-lg text-left cursor-pointer",
         "transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-primary/50"
       )}
       onClick={handleCardClick}
-      type="button"
+      onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
+      role="button"
+      tabIndex={0}
     >
       {/* Poster Image */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
@@ -210,7 +213,7 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
           </Button>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
