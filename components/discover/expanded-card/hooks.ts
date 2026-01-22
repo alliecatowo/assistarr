@@ -26,6 +26,23 @@ interface PitchData {
   hasProfile: boolean;
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function mapToDiscoverItem(s: MediaDetails): DiscoverItem {
+  return {
+    id: s.id,
+    title: s.title,
+    year: s.year,
+    posterUrl: s.posterUrl,
+    rating: s.rating,
+    mediaType: s.mediaType,
+    tmdbId: s.tmdbId,
+    status: s.status,
+  };
+}
+
 export function useMediaDetails(
   tmdbId: number | undefined,
   mediaType: "movie" | "tv"
@@ -40,38 +57,38 @@ export function useMediaDetails(
       return;
     }
 
+    const abortController = new AbortController();
+
     const fetchDetails = async () => {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `/api/discover/similar?tmdbId=${tmdbId}&mediaType=${mediaType}`
+          `/api/discover/similar?tmdbId=${tmdbId}&mediaType=${mediaType}`,
+          { signal: abortController.signal }
         );
-        if (response.ok) {
-          const data = await response.json();
-          setDetails(data.details);
-          setSimilar(
-            data.similar.map(
-              (s: MediaDetails): DiscoverItem => ({
-                id: s.id,
-                title: s.title,
-                year: s.year,
-                posterUrl: s.posterUrl,
-                rating: s.rating,
-                mediaType: s.mediaType,
-                tmdbId: s.tmdbId,
-                status: s.status,
-              })
-            )
-          );
+        if (!response.ok || abortController.signal.aborted) {
+          return;
         }
-      } catch {
+        const data = await response.json();
+        setDetails(data.details);
+        setSimilar(data.similar.map(mapToDiscoverItem));
+      } catch (error) {
+        if (isAbortError(error)) {
+          return;
+        }
         // Failed to fetch details - will show basic info
       } finally {
-        setIsLoading(false);
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchDetails();
+
+    return () => {
+      abortController.abort();
+    };
   }, [tmdbId, mediaType]);
 
   return { details, similar, isLoading };
@@ -89,24 +106,37 @@ export function useMediaPitch(
       return;
     }
 
+    const abortController = new AbortController();
+
     const fetchPitch = async () => {
       setIsPitchLoading(true);
       try {
         const response = await fetch(
-          `/api/discover/pitch?tmdbId=${tmdbId}&mediaType=${mediaType}`
+          `/api/discover/pitch?tmdbId=${tmdbId}&mediaType=${mediaType}`,
+          { signal: abortController.signal }
         );
-        if (response.ok) {
-          const data = await response.json();
-          setPitch(data);
+        if (!response.ok || abortController.signal.aborted) {
+          return;
         }
-      } catch {
+        const data = await response.json();
+        setPitch(data);
+      } catch (error) {
+        if (isAbortError(error)) {
+          return;
+        }
         // Failed to fetch pitch - will just show overview
       } finally {
-        setIsPitchLoading(false);
+        if (!abortController.signal.aborted) {
+          setIsPitchLoading(false);
+        }
       }
     };
 
     fetchPitch();
+
+    return () => {
+      abortController.abort();
+    };
   }, [tmdbId, mediaType]);
 
   return { pitch, isPitchLoading };
