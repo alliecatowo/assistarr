@@ -285,6 +285,9 @@ function ServiceCard({
 
     setTestResult({ status: "testing" });
 
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
     try {
       const response = await fetch("/api/settings", {
         method: "PUT",
@@ -294,9 +297,11 @@ function ServiceCard({
           baseUrl: baseUrl.trim(),
           apiKey: apiKey.trim(),
         }),
+        signal: abortController.signal,
       });
 
       const data = await response.json();
+      clearTimeout(timeoutId);
 
       if (data.success) {
         setTestResult({
@@ -314,6 +319,7 @@ function ServiceCard({
         toast.error(data.error);
       }
     } catch (_error) {
+      clearTimeout(timeoutId);
       setTestResult({
         status: "error",
         message: "Failed to test connection",
@@ -487,13 +493,20 @@ export default function SettingsPage() {
   const [discoveredSonarr, setDiscoveredSonarr] = useState<DiscoveredService>();
 
   const fetchConfigs = useCallback(async () => {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
     try {
-      const response = await fetch("/api/settings");
+      const response = await fetch("/api/settings", {
+        signal: abortController.signal,
+      });
+      clearTimeout(timeoutId);
       if (response.ok) {
         const data = await response.json();
         setConfigs(data);
       }
     } catch (_error) {
+      clearTimeout(timeoutId);
       // Ignore error during initial load
     } finally {
       setIsLoading(false);
@@ -505,40 +518,64 @@ export default function SettingsPage() {
   }, [fetchConfigs]);
 
   const handleSave = async (config: ServiceConfig) => {
-    const response = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config),
-    });
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
 
-    if (!response.ok) {
-      throw new Error("Failed to save config");
-    }
+    try {
+      const response = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+        signal: abortController.signal,
+      });
 
-    const savedConfig = await response.json();
-    setConfigs((prev) => {
-      const index = prev.findIndex((c) => c.serviceName === config.serviceName);
-      if (index >= 0) {
-        const updated = [...prev];
-        updated[index] = savedConfig;
-        return updated;
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error("Failed to save config");
       }
-      return [...prev, savedConfig];
-    });
+
+      const savedConfig = await response.json();
+      setConfigs((prev) => {
+        const index = prev.findIndex(
+          (c) => c.serviceName === config.serviceName
+        );
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = savedConfig;
+          return updated;
+        }
+        return [...prev, savedConfig];
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
   };
 
   const handleDelete = async (serviceName: string) => {
-    const response = await fetch("/api/settings", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ serviceName }),
-    });
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
 
-    if (!response.ok) {
-      throw new Error("Failed to delete config");
+    try {
+      const response = await fetch("/api/settings", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceName }),
+        signal: abortController.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error("Failed to delete config");
+      }
+
+      setConfigs((prev) => prev.filter((c) => c.serviceName !== serviceName));
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
     }
-
-    setConfigs((prev) => prev.filter((c) => c.serviceName !== serviceName));
   };
 
   const getConfigForService = (serviceName: string) => {
@@ -556,6 +593,9 @@ export default function SettingsPage() {
     }
 
     setIsDiscovering(true);
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
     try {
       const response = await fetch("/api/settings/discover", {
         method: "POST",
@@ -564,7 +604,10 @@ export default function SettingsPage() {
           jellyseerrBaseUrl: jellyseerrConfig.baseUrl,
           jellyseerrApiKey: jellyseerrConfig.apiKey,
         }),
+        signal: abortController.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const error = await response.json();
@@ -593,6 +636,7 @@ export default function SettingsPage() {
         toast.info("No Radarr or Sonarr servers found in Jellyseerr settings");
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       const message =
         error instanceof Error ? error.message : "Discovery failed";
       toast.error(message);

@@ -86,7 +86,11 @@ function ProviderCard({
 }: {
   provider: ProviderInfo;
   config: AIProviderConfig | undefined;
-  onSave: (config: { providerName: string; apiKey: string; isEnabled: boolean }) => Promise<void>;
+  onSave: (config: {
+    providerName: string;
+    apiKey: string;
+    isEnabled: boolean;
+  }) => Promise<void>;
   onDelete: (providerName: string) => Promise<void>;
 }) {
   const [apiKey, setApiKey] = useState("");
@@ -110,6 +114,9 @@ function ProviderCard({
 
     setTestResult({ status: "testing" });
 
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
     try {
       const response = await fetch("/api/settings/ai-keys", {
         method: "PUT",
@@ -118,9 +125,11 @@ function ProviderCard({
           providerName: provider.providerName,
           apiKey: apiKey.trim(),
         }),
+        signal: abortController.signal,
       });
 
       const data = await response.json();
+      clearTimeout(timeoutId);
 
       if (data.success) {
         setTestResult({
@@ -137,6 +146,7 @@ function ProviderCard({
         toast.error(data.error);
       }
     } catch (_error) {
+      clearTimeout(timeoutId);
       setTestResult({
         status: "error",
         message: "Failed to test connection",
@@ -168,7 +178,9 @@ function ProviderCard({
   };
 
   const handleDelete = async () => {
-    if (!config?.id) return;
+    if (!config?.id) {
+      return;
+    }
 
     setIsDeleting(true);
     try {
@@ -184,7 +196,8 @@ function ProviderCard({
     }
   };
 
-  const hasChanges = apiKey.trim().length > 0 || isEnabled !== (config?.isEnabled ?? true);
+  const hasChanges =
+    apiKey.trim().length > 0 || isEnabled !== (config?.isEnabled ?? true);
 
   return (
     <Card>
@@ -199,7 +212,10 @@ function ProviderCard({
           </div>
           {config && (
             <div className="flex items-center gap-2">
-              <Label className="text-sm" htmlFor={`${provider.providerName}-enabled`}>
+              <Label
+                className="text-sm"
+                htmlFor={`${provider.providerName}-enabled`}
+              >
                 Enabled
               </Label>
               <Switch
@@ -217,7 +233,9 @@ function ProviderCard({
           <Input
             id={`${provider.providerName}-key`}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder={config ? `Current: ${config.apiKey}` : provider.placeholder}
+            placeholder={
+              config ? `Current: ${config.apiKey}` : provider.placeholder
+            }
             type="password"
             value={apiKey}
           />
@@ -244,7 +262,11 @@ function ProviderCard({
           {testResult.status === "success" && (
             <div className="flex items-center gap-1 text-xs text-green-600">
               <CheckCircleIcon className="size-4" />
-              {testResult.latency ? <span>{testResult.latency}ms</span> : <span>Valid</span>}
+              {testResult.latency ? (
+                <span>{testResult.latency}ms</span>
+              ) : (
+                <span>Valid</span>
+              )}
             </div>
           )}
           {testResult.status === "error" && (
@@ -284,13 +306,20 @@ export default function AIKeysSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchConfigs = useCallback(async () => {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
     try {
-      const response = await fetch("/api/settings/ai-keys");
+      const response = await fetch("/api/settings/ai-keys", {
+        signal: abortController.signal,
+      });
+      clearTimeout(timeoutId);
       if (response.ok) {
         const data = await response.json();
         setConfigs(data);
       }
     } catch (_error) {
+      clearTimeout(timeoutId);
       // Ignore error during initial load
     } finally {
       setIsLoading(false);
@@ -301,40 +330,71 @@ export default function AIKeysSettingsPage() {
     fetchConfigs();
   }, [fetchConfigs]);
 
-  const handleSave = async (config: { providerName: string; apiKey: string; isEnabled: boolean }) => {
-    const response = await fetch("/api/settings/ai-keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config),
-    });
+  const handleSave = async (config: {
+    providerName: string;
+    apiKey: string;
+    isEnabled: boolean;
+  }) => {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to save");
-    }
+    try {
+      const response = await fetch("/api/settings/ai-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+        signal: abortController.signal,
+      });
 
-    const savedConfig = await response.json();
-    setConfigs((prev) => {
-      const index = prev.findIndex((c) => c.providerName === config.providerName);
-      if (index >= 0) {
-        const updated = [...prev];
-        updated[index] = savedConfig;
-        return updated;
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to save");
       }
-      return [...prev, savedConfig];
-    });
+
+      const savedConfig = await response.json();
+      setConfigs((prev) => {
+        const index = prev.findIndex(
+          (c) => c.providerName === config.providerName
+        );
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = savedConfig;
+          return updated;
+        }
+        return [...prev, savedConfig];
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
   };
 
   const handleDelete = async (providerName: string) => {
-    const response = await fetch(`/api/settings/ai-keys?providerName=${providerName}`, {
-      method: "DELETE",
-    });
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
 
-    if (!response.ok) {
-      throw new Error("Failed to delete");
+    try {
+      const response = await fetch(
+        `/api/settings/ai-keys?providerName=${providerName}`,
+        {
+          method: "DELETE",
+          signal: abortController.signal,
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error("Failed to delete");
+      }
+
+      setConfigs((prev) => prev.filter((c) => c.providerName !== providerName));
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
     }
-
-    setConfigs((prev) => prev.filter((c) => c.providerName !== providerName));
   };
 
   const getConfigForProvider = (providerName: string) => {
@@ -366,7 +426,8 @@ export default function AIKeysSettingsPage() {
                 Bring Your Own API Keys
               </CardTitle>
               <CardDescription>
-                Use your own AI provider API keys for higher rate limits and direct billing.
+                Use your own AI provider API keys for higher rate limits and
+                direct billing.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -395,14 +456,16 @@ export default function AIKeysSettingsPage() {
             <div className="rounded-lg border border-green-600/20 bg-green-600/5 p-4">
               <p className="text-sm text-green-600 flex items-center gap-2">
                 <CheckCircleIcon className="size-4" />
-                You&apos;re using your own API keys. Higher rate limits are active!
+                You&apos;re using your own API keys. Higher rate limits are
+                active!
               </p>
             </div>
           )}
 
           <p className="text-muted-foreground text-sm">
-            Configure your own AI provider API keys. Only one provider needs to be configured.
-            OpenRouter is recommended as it provides access to all major AI models.
+            Configure your own AI provider API keys. Only one provider needs to
+            be configured. OpenRouter is recommended as it provides access to
+            all major AI models.
           </p>
 
           <div className="grid gap-4">

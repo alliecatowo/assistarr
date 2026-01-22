@@ -41,8 +41,15 @@ export default function MonitorPage() {
     setIsLoading(true);
     setError(null);
 
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
     try {
-      const response = await fetch("/api/status");
+      const response = await fetch("/api/status", {
+        signal: abortController.signal,
+      });
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         throw new Error("Failed to fetch status");
       }
@@ -50,6 +57,7 @@ export default function MonitorPage() {
       setStatus(data);
       setLastUpdated(new Date());
     } catch (err) {
+      clearTimeout(timeoutId);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);

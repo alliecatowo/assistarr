@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
 import "./globals.css";
@@ -79,7 +80,9 @@ export default function RootLayout({
           enableSystem
         >
           <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>
