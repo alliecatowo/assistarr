@@ -105,7 +105,7 @@ function getDecade(year: number): string {
 }
 
 // Category configurations
-type CategoryType = "trending" | "movies" | "tv" | "genre";
+type CategoryType = "trending" | "movies" | "tv" | "genre" | "upcoming-movies";
 
 interface CategoryConfig {
   type: CategoryType;
@@ -124,6 +124,10 @@ function parseCategorySlug(slug: string): CategoryConfig | null {
   // Support both "tv" and "popular-tv" (from main discover page)
   if (slug === "tv" || slug === "popular-tv") {
     return { type: "tv", mediaType: "tv" };
+  }
+  // Upcoming movies
+  if (slug === "upcoming-movies") {
+    return { type: "upcoming-movies", mediaType: "movie" };
   }
   // Genre format: genre:{id} or genre:{id}:{mediaType}
   if (slug.startsWith("genre:")) {
@@ -151,6 +155,8 @@ function getEndpointForCategory(
       return { endpoint: "/discover/movies", params };
     case "tv":
       return { endpoint: "/discover/tv", params };
+    case "upcoming-movies":
+      return { endpoint: "/discover/movies/upcoming", params };
     case "genre":
       if (config.genreId === undefined) {
         return { endpoint: "/discover/trending", params };
@@ -175,6 +181,8 @@ function getCategoryTitle(config: CategoryConfig): string {
       return "Popular Movies";
     case "tv":
       return "Popular TV Shows";
+    case "upcoming-movies":
+      return "Coming Soon";
     case "genre": {
       if (config.genreId === undefined) {
         return "Discover";
