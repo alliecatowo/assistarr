@@ -54,7 +54,7 @@ export const searchContent = ({
     }),
     execute: async ({ query, type, page }) => {
       try {
-        const endpoint = `/api/v1/search?query=${encodeURIComponent(query)}&page=${page}`;
+        const endpoint = `/search?query=${encodeURIComponent(query)}&page=${page}`;
 
         const response = await client.get<SearchResponse>(endpoint);
 

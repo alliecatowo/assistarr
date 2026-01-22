@@ -17,7 +17,7 @@ export const deleteRequest = ({
     }),
     execute: async ({ requestId }: { requestId: number }) => {
       try {
-        await client.delete(`/api/v1/request/${requestId}`);
+        await client.delete(`/request/${requestId}`);
 
         return {
           success: true,

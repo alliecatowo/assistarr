@@ -1,10 +1,11 @@
 import { ApiClient } from "../core/client";
 
 export class JellyseerrClient extends ApiClient {
-  // Add Jellyseerr-specific methods if needed, or just use generic get/post/put/delete
+  // Jellyseerr uses /api/v1 prefix for all endpoints
+  protected readonly apiPrefix = "/api/v1";
 
   getStatus() {
-    return this.get<{ version: string }>("/api/v1/status");
+    return this.get<{ version: string }>("/status");
   }
 }
 

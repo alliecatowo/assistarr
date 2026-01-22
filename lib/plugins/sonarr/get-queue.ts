@@ -19,7 +19,7 @@ export const getQueue = ({ session: _session, config }: ToolFactoryProps) => {
     }),
     execute: async ({ pageSize }) => {
       try {
-        const queue = await client.get<SonarrQueueResponse>("/api/v3/queue", {
+        const queue = await client.get<SonarrQueueResponse>("/queue", {
           page: 1,
           pageSize: Math.min(pageSize, 100),
           includeSeries: true,

@@ -1,8 +1,11 @@
 /**
- * Display heuristics for computing final display state.
+ * Display state computation for tool results.
  *
- * This module applies context and preferences to compute the final
- * display state for tool results.
+ * This module computes the final display state based on explicit preferences.
+ * No smart guessing - display behavior is predictable based on:
+ * 1. User overrides (clicking expand/collapse)
+ * 2. Debug mode overrides
+ * 3. Explicit defaultLevel from registry
  */
 
 import { getDisplayPreferences } from "./registry";
@@ -16,57 +19,12 @@ import {
 } from "./types";
 
 /**
- * Detect if the output contains actionable issues (errors, stalled items, warnings).
- */
-function detectActionableIssues(output: unknown): boolean {
-  if (!output || typeof output !== "object") {
-    return false;
-  }
-
-  const obj = output as Record<string, unknown>;
-
-  // Check queue items for errors/stalled
-  if (Array.isArray(obj.items)) {
-    // biome-ignore lint/suspicious/noExplicitAny: Generic item check
-    return obj.items.some((item: any) => {
-      const status = item.status?.toLowerCase() || "";
-      return (
-        status.includes("error") ||
-        status.includes("stall") ||
-        status.includes("warning") ||
-        status.includes("failed") ||
-        !!item.errorMessage
-      );
-    });
-  }
-
-  // Check torrents for errors/stalled
-  if (Array.isArray(obj.torrents)) {
-    // biome-ignore lint/suspicious/noExplicitAny: Generic torrent check
-    return obj.torrents.some((item: any) => {
-      const state =
-        item.rawState?.toLowerCase() || item.state?.toLowerCase() || "";
-      return (
-        state.includes("error") ||
-        state.includes("stall") ||
-        state.includes("warning")
-      );
-    });
-  }
-
-  return false;
-}
-
-/**
  * Compute the display state for a tool result.
  *
- * Applies heuristics in the following order:
- * 1. User override (if set, use it directly)
- * 2. Debug mode override (if in debug mode)
- * 3. Investigation mode (if user is investigating/checking)
- * 4. Actionable issues (prioritize showing issues)
- * 5. Item count thresholds
- * 6. Default level from preferences
+ * Simple priority order:
+ * 1. User override (they clicked expand/collapse)
+ * 2. Debug mode override
+ * 3. Default level from preferences (no guessing)
  *
  * @param resultType - The detected type of the result
  * @param output - The tool output data
@@ -81,43 +39,24 @@ export function computeDisplayState(
   const preferences = getDisplayPreferences(resultType);
   const itemCount = extractItemCount(output);
 
-  // Detect actionable issues if not explicitly set
-  const hasActionableIssues =
-    context.hasActionableIssues ?? detectActionableIssues(output);
-
-  // Start with defaults
   let level: DisplayLevel = preferences.defaultLevel;
   let isUserOverride = false;
 
-  // 1. Apply user override if set
+  // 1. User override (they clicked expand/collapse)
   if (context.userExpandedOverride !== undefined) {
     level = context.userExpandedOverride ? "expanded" : "collapsed";
     isUserOverride = true;
   }
-  // 2. Apply debug mode override
+  // 2. Debug mode override
   else if (context.mode === "debug" && preferences.debugModeOverride) {
     level = preferences.debugModeOverride;
   }
-  // 3. Investigation mode - always expand
-  else if (context.isInvestigation) {
-    level = "expanded";
-  }
-  // 4. Actionable issues - prefer expanded for queue/torrent with issues
-  else if (
-    hasActionableIssues &&
-    (resultType === "queue" || resultType === "generic")
-  ) {
-    // Show expanded if there are issues and reasonable item count
-    level = itemCount <= 20 ? "expanded" : "collapsed";
-  }
-  // 5. Apply item count thresholds
-  else {
-    level = computeLevelFromCount(itemCount, preferences.countThresholds);
-  }
+  // 3. Use default level from preferences (no count-based logic)
 
-  // Determine preview settings
+  // Show preview when collapsed and have items within threshold
   const showPreview =
     level === "collapsed" &&
+    itemCount > 0 &&
     itemCount <= preferences.countThresholds.collapsedWithPreview;
 
   return {
@@ -132,35 +71,13 @@ export function computeDisplayState(
 }
 
 /**
- * Compute display level based on item count and thresholds.
- */
-function computeLevelFromCount(
-  count: number,
-  thresholds: { inline: number; collapsedWithPreview: number }
-): DisplayLevel {
-  // Very few items: show inline
-  if (count <= thresholds.inline) {
-    return "inline";
-  }
-
-  // Default to collapsed for any count above inline threshold
-  return "collapsed";
-}
-
-/**
  * Check if a result should use the artifact wrapper.
  *
- * Returns false for results that should render without any wrapper,
- * typically very small results in inline mode.
+ * Returns true for collapsible results (most things).
+ * Returns false for non-collapsible results (success cards).
  */
 export function shouldUseArtifactWrapper(state: ComputedDisplayState): boolean {
-  // Inline results don't use the wrapper
-  if (state.level === "inline") {
-    return false;
-  }
-
-  // All other levels use the wrapper
-  return true;
+  return state.isCollapsible;
 }
 
 /**

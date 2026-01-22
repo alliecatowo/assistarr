@@ -23,12 +23,9 @@ export const searchMovies = ({
     }),
     execute: async ({ query }) => {
       try {
-        const results = await client.get<RadarrMovie[]>(
-          "/api/v3/movie/lookup",
-          {
-            term: query,
-          }
-        );
+        const results = await client.get<RadarrMovie[]>("/movie/lookup", {
+          term: query,
+        });
 
         if (results.length === 0) {
           return {

@@ -173,7 +173,7 @@ export class SonarrPlugin extends BaseServicePlugin {
   protected async performHealthCheck(config: ServiceConfig): Promise<boolean> {
     const client = new SonarrClient(config);
     try {
-      await client.get("/api/v3/system/status");
+      await client.get("/system/status");
       return true;
     } catch {
       return false;

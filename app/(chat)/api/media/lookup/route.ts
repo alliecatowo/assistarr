@@ -81,7 +81,7 @@ async function lookupRadarr(
 
   const client = new RadarrClient(config);
   const results = await client.get<RadarrMovie[]>(
-    `/api/v3/movie/lookup/tmdb?tmdbId=${id}`
+    `/movie/lookup/tmdb?tmdbId=${id}`
   );
 
   if (results.length === 0) {
@@ -113,7 +113,7 @@ async function lookupSonarr(
 
   const client = new SonarrClient(config);
   const results = await client.get<SonarrSeries[]>(
-    `/api/v3/series/lookup?term=tvdb:${id}`
+    `/series/lookup?term=tvdb:${id}`
   );
 
   if (results.length === 0) {

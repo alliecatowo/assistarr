@@ -41,9 +41,9 @@ export const getDiscovery = ({
     execute: async ({ type }) => {
       try {
         const endpoints: Record<string, string> = {
-          trending: "/api/v1/discover/trending",
-          popular: "/api/v1/discover/movies",
-          upcoming: "/api/v1/discover/movies/upcoming",
+          trending: "/discover/trending",
+          popular: "/discover/movies",
+          upcoming: "/discover/movies/upcoming",
         };
         const endpoint = endpoints[type] || endpoints.trending;
 

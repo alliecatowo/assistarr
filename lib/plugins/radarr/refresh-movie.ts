@@ -21,7 +21,7 @@ export const refreshMovie = ({
     }),
     execute: async ({ movieId }) => {
       try {
-        await client.post("/api/v3/command", {
+        await client.post("/command", {
           name: "RefreshMovie",
           movieIds: [movieId],
         });

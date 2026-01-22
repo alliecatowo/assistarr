@@ -21,7 +21,7 @@ export const deleteEpisodeFile = ({
     }),
     execute: async ({ fileId }) => {
       try {
-        await client.delete(`/api/v3/episodefile/${fileId}`);
+        await client.delete(`/episodefile/${fileId}`);
 
         return {
           success: true,

@@ -21,7 +21,7 @@ export const deleteMovieFile = ({
     }),
     execute: async ({ fileId }) => {
       try {
-        await client.delete(`/api/v3/moviefile/${fileId}`);
+        await client.delete(`/moviefile/${fileId}`);
 
         return {
           success: true,

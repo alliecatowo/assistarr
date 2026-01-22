@@ -83,7 +83,7 @@ export const addMovie = ({ session: _session, config }: ToolFactoryProps) => {
     }) => {
       try {
         const lookupResults = await client.get<RadarrMovie[]>(
-          "/api/v3/movie/lookup/tmdb",
+          "/movie/lookup/tmdb",
           { tmdbId }
         );
 
@@ -123,10 +123,7 @@ export const addMovie = ({ session: _session, config }: ToolFactoryProps) => {
           },
         };
 
-        const addedMovie = await client.post<RadarrMovie>(
-          "/api/v3/movie",
-          addPayload
-        );
+        const addedMovie = await client.post<RadarrMovie>("/movie", addPayload);
 
         return {
           success: true,
@@ -157,7 +154,7 @@ async function checkExisting(
   tmdbId: number,
   movieData: RadarrMovie
 ) {
-  const existingMovies = await client.get<RadarrMovie[]>("/api/v3/movie", {
+  const existingMovies = await client.get<RadarrMovie[]>("/movie", {
     tmdbId,
   });
   if (existingMovies.length > 0) {
@@ -178,9 +175,7 @@ async function getProfileId(client: RadarrClient, qualityProfileId?: number) {
   if (qualityProfileId) {
     return qualityProfileId;
   }
-  const profiles = await client.get<RadarrQualityProfile[]>(
-    "/api/v3/qualityprofile"
-  );
+  const profiles = await client.get<RadarrQualityProfile[]>("/qualityprofile");
   if (profiles.length === 0) {
     return null;
   }
@@ -188,8 +183,7 @@ async function getProfileId(client: RadarrClient, qualityProfileId?: number) {
 }
 
 async function getRootFolderPath(client: RadarrClient) {
-  const rootFolders =
-    await client.get<RadarrRootFolder[]>("/api/v3/rootfolder");
+  const rootFolders = await client.get<RadarrRootFolder[]>("/rootfolder");
   if (rootFolders.length === 0) {
     return null;
   }

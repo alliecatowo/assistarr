@@ -22,8 +22,7 @@ export const DISPLAY_PREFERENCES: Record<
 > = {
   /**
    * Media results (search, library, discovery sections)
-   * - Many results: collapsed with mini poster strip
-   * - Few results: inline compact display
+   * - Always collapsed with mini poster strip
    */
   "media-results": {
     defaultLevel: "collapsed",
@@ -33,8 +32,8 @@ export const DISPLAY_PREFERENCES: Record<
       maxItems: 3,
     },
     countThresholds: {
-      inline: 3, // Show inline for ≤3 items
-      collapsedWithPreview: 10, // Show poster preview for ≤10, count only for more
+      inline: 0, // Never inline - always use wrapper
+      collapsedWithPreview: 20, // Show poster preview for ≤20
     },
     debugModeOverride: "collapsed",
   },
@@ -42,17 +41,17 @@ export const DISPLAY_PREFERENCES: Record<
   /**
    * Download queue (Radarr/Sonarr/qBittorrent)
    * - Shows status summary (downloading, stalled, etc.)
-   * - Higher inline threshold since queue items are more compact
+   * - Always collapsed with status preview
    */
   queue: {
-    defaultLevel: "inline",
+    defaultLevel: "collapsed",
     collapsible: true,
     preview: {
       type: "status",
     },
     countThresholds: {
-      inline: 5, // Show inline for ≤5 items
-      collapsedWithPreview: 15, // Show status preview for ≤15
+      inline: 0, // Never inline - always use wrapper
+      collapsedWithPreview: 20, // Show status preview for ≤20
     },
     debugModeOverride: "collapsed",
   },
@@ -60,7 +59,7 @@ export const DISPLAY_PREFERENCES: Record<
   /**
    * Calendar view (upcoming releases)
    * - Shows summary of upcoming releases
-   * - Lower inline threshold due to vertical space
+   * - Always collapsed with summary preview
    */
   calendar: {
     defaultLevel: "collapsed",
@@ -69,8 +68,8 @@ export const DISPLAY_PREFERENCES: Record<
       type: "summary",
     },
     countThresholds: {
-      inline: 2, // Show inline for ≤2 items
-      collapsedWithPreview: 10, // Show summary for ≤10
+      inline: 0, // Never inline - always use wrapper
+      collapsedWithPreview: 15, // Show summary for ≤15
     },
     debugModeOverride: "collapsed",
   },
@@ -111,6 +110,23 @@ export const DISPLAY_PREFERENCES: Record<
   },
 
   /**
+   * Recommendations from the recommendMedia tool
+   * - Always collapsed with poster preview
+   */
+  recommendation: {
+    defaultLevel: "collapsed",
+    collapsible: true,
+    preview: {
+      type: "items",
+      maxItems: 4,
+    },
+    countThresholds: {
+      inline: 0, // Never inline - always use wrapper
+      collapsedWithPreview: 15,
+    },
+  },
+
+  /**
    * Generic/JSON results
    * - Default collapsible behavior
    * - Shows count only in preview
@@ -122,7 +138,7 @@ export const DISPLAY_PREFERENCES: Record<
       type: "count",
     },
     countThresholds: {
-      inline: 1, // Show inline only for single-item results
+      inline: 0, // Never inline - always use wrapper
       collapsedWithPreview: 0, // Always just count for generic
     },
     debugModeOverride: "expanded", // Debug mode expands generic results

@@ -14,6 +14,7 @@ import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import { recommendMedia } from "@/lib/ai/tools/recommend-media";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
@@ -135,6 +136,7 @@ export async function POST(request: Request) {
       selectedChatModel,
       selectedVisibilityType,
       debugMode,
+      mode,
     } = requestBody;
 
     const session = await validateSessionAndRateLimit();
@@ -190,6 +192,7 @@ export async function POST(request: Request) {
           createDocument: createDocument({ session, dataStream }),
           updateDocument: updateDocument({ session, dataStream }),
           requestSuggestions: requestSuggestions({ session, dataStream }),
+          recommendMedia: recommendMedia(),
         };
 
         // biome-ignore lint/suspicious/noExplicitAny: Plugin tools map
@@ -200,13 +203,30 @@ export async function POST(request: Request) {
         for (const plugin of plugins) {
           const config = configsMap.get(plugin.name);
           if (config?.isEnabled) {
-            // Check if config is valid? plugin.validateConfig?
-            // For now assumes valid if enabled
-            for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
-              serviceTools[toolName] = toolDef.factory({
-                session,
-                config,
-              });
+            // In discover mode, only allow Jellyseerr's discovery tools
+            if (mode === "discover" && plugin.name !== "jellyseerr") {
+              continue;
+            }
+
+            // In discover mode, filter Jellyseerr tools to only discovery tools
+            if (mode === "discover" && plugin.name === "jellyseerr") {
+              for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
+                // Only include discovery-related tools in discover mode
+                if (toolName === "searchContent" || toolName === "getDiscovery") {
+                  serviceTools[toolName] = toolDef.factory({
+                    session,
+                    config,
+                  });
+                }
+              }
+            } else {
+              // Regular mode: load all tools from the plugin
+              for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
+                serviceTools[toolName] = toolDef.factory({
+                  session,
+                  config,
+                });
+              }
             }
           }
         }
@@ -218,7 +238,12 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints, debugMode }),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            debugMode,
+            mode,
+          }),
           messages: modelMessages,
           stopWhen: stepCountIs(8),
           experimental_activeTools: Object.keys(effectiveTools) as Array<

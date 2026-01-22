@@ -4,6 +4,7 @@ import {
   BarChart3Icon,
   PlusIcon,
   SettingsIcon,
+  SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
@@ -131,6 +132,14 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarFooter>
           {user && (
             <div className="flex flex-col gap-2">
+              <Link
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                href="/discover"
+                onClick={() => setOpenMobile(false)}
+              >
+                <SparklesIcon size={16} />
+                <span>Discover</span>
+              </Link>
               <Link
                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                 href="/monitor"

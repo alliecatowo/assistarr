@@ -32,7 +32,7 @@ export const deleteMovie = ({
           addImportListExclusion,
         };
 
-        await client.delete(`/api/v3/movie/${movieId}`, queryParams);
+        await client.delete(`/movie/${movieId}`, queryParams);
 
         return {
           success: true,

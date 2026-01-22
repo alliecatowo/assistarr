@@ -31,10 +31,6 @@ export interface DisplayContext {
   isLatestMessage?: boolean;
   /** User has explicitly expanded/collapsed this result */
   userExpandedOverride?: boolean;
-  /** Whether the result contains actionable issues (errors, stalled items) */
-  hasActionableIssues?: boolean;
-  /** Whether the user asked to "investigate", "check", or "diagnose" */
-  isInvestigation?: boolean;
 }
 
 /**
@@ -44,8 +40,6 @@ export const DEFAULT_DISPLAY_CONTEXT: DisplayContext = {
   mode: "normal",
   isLatestMessage: true,
   userExpandedOverride: undefined,
-  hasActionableIssues: undefined,
-  isInvestigation: undefined,
 };
 
 // ============================================================================
@@ -86,11 +80,11 @@ export interface DisplayPreferences {
   collapsible: boolean;
   /** Preview configuration when collapsed */
   preview: PreviewConfig;
-  /** Thresholds for automatic level selection based on item count */
+  /** Thresholds for display behavior */
   countThresholds: {
-    /** Show inline if count <= this value */
+    /** Reserved for future use (display level is now explicit via defaultLevel) */
     inline: number;
-    /** Show collapsed with preview if count <= this value, collapsed with count only otherwise */
+    /** Show collapsed with poster/item preview if count <= this value */
     collapsedWithPreview: number;
   };
   /** Override display level in debug mode */
@@ -135,6 +129,7 @@ export type DisplayResultType =
   | "calendar"
   | "discovery"
   | "success"
+  | "recommendation"
   | "generic";
 
 // ============================================================================

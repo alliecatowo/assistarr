@@ -361,3 +361,13 @@
 .streaming-dot {
   animation: streaming-dot 1.4s ease-in-out infinite;
 }
+
+/* Hide scrollbar utility */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

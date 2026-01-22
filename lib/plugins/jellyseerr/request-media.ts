@@ -101,9 +101,7 @@ export const requestMedia = ({
     execute: async ({ tmdbId, mediaType, seasons, is4k }) => {
       try {
         const detailsEndpoint =
-          mediaType === "movie"
-            ? `/api/v1/movie/${tmdbId}`
-            : `/api/v1/tv/${tmdbId}`;
+          mediaType === "movie" ? `/movie/${tmdbId}` : `/tv/${tmdbId}`;
 
         const details = await client.get<MovieDetails | TvDetails>(
           detailsEndpoint
@@ -124,7 +122,7 @@ export const requestMedia = ({
         const requestBody = buildRequestBody(tmdbId, mediaType, seasons, is4k);
 
         const request = await client.post<MediaRequest>(
-          "/api/v1/request",
+          "/request",
           requestBody
         );
 

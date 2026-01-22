@@ -1,6 +1,24 @@
 import type { ServiceConfig } from "@/lib/db/schema";
 
+/**
+ * Base API client with centralized API prefix configuration.
+ *
+ * Each service client extends this and sets its apiPrefix, e.g.:
+ * - Radarr/Sonarr: "/api/v3"
+ * - Jellyseerr: "/api/v1"
+ * - Jellyfin: "" (no prefix)
+ *
+ * This allows endpoints to be defined as simple paths like "/movie"
+ * and the client automatically prepends the correct API prefix.
+ */
 export class ApiClient {
+  /**
+   * API route prefix to prepend to all paths.
+   * Override in subclass to set service-specific prefix.
+   * Examples: "/api/v3" for Radarr/Sonarr, "/api/v1" for Jellyseerr
+   */
+  protected readonly apiPrefix: string = "";
+
   constructor(protected config: ServiceConfig) {}
 
   protected getHeaders(): Promise<HeadersInit> {
@@ -12,6 +30,11 @@ export class ApiClient {
     });
   }
 
+  /**
+   * Build the full URL for a request.
+   * If path already starts with the apiPrefix, use it as-is.
+   * Otherwise, prepend the apiPrefix.
+   */
   private getUrl(
     path: string,
     params?: Record<string, string | number | boolean | undefined>
@@ -21,7 +44,15 @@ export class ApiClient {
       .replace(/\/$/, "")
       .replace(/\/api\/v[0-9]+$/, "")
       .replace(/\/api$/, "");
-    const url = new URL(`${baseUrl}${path}`);
+
+    // Determine if we need to add the API prefix
+    // Don't double-add if path already includes it
+    let fullPath = path;
+    if (this.apiPrefix && !path.startsWith(this.apiPrefix)) {
+      fullPath = `${this.apiPrefix}${path}`;
+    }
+
+    const url = new URL(`${baseUrl}${fullPath}`);
 
     if (params) {
       for (const [key, value] of Object.entries(params)) {
@@ -42,10 +73,11 @@ export class ApiClient {
     const headers = await this.getHeaders();
 
     console.log(`[ApiClient] GET ${url}`);
+    const headersRecord = headers as Record<string, string>;
     console.log("[ApiClient] Headers:", {
       ...headers,
-      "X-Api-Key": headers["X-Api-Key"] ? "***" : undefined,
-      "X-Emby-Token": headers["X-Emby-Token"] ? "***" : undefined,
+      "X-Api-Key": headersRecord["X-Api-Key"] ? "***" : undefined,
+      "X-Emby-Token": headersRecord["X-Emby-Token"] ? "***" : undefined,
     });
 
     const response = await fetch(url, {

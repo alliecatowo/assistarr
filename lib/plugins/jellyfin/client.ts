@@ -1,6 +1,9 @@
 import { ApiClient } from "../core/client";
 
 export class JellyfinClient extends ApiClient {
+  // Jellyfin uses no API prefix - endpoints are at root level
+  protected readonly apiPrefix = "";
+
   // biome-ignore lint/suspicious/noExplicitAny: Generic system info
   async getSystemInfo(): Promise<any> {
     // biome-ignore lint/suspicious/noExplicitAny: Generic system info

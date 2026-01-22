@@ -465,6 +465,63 @@ export function isSuccessConfirmationShape(
 }
 
 // ============================================================================
+// RECOMMENDATION SHAPES
+// ============================================================================
+
+/**
+ * A single recommendation item from the recommendMedia tool
+ */
+export interface RecommendationItem {
+  title: string;
+  year?: number;
+  tmdbId: number;
+  mediaType: "movie" | "tv";
+  rating?: number;
+  reason: string;
+  genres?: string[];
+  posterUrl?: string;
+}
+
+/**
+ * Output shape for the recommendMedia tool
+ */
+export interface RecommendationShape {
+  recommendations: RecommendationItem[];
+  introduction?: string;
+}
+
+/**
+ * Type guard: Check if output is a recommendation shape
+ */
+export function isRecommendationShape(
+  output: unknown
+): output is RecommendationShape {
+  if (!output || typeof output !== "object") {
+    return false;
+  }
+  const obj = output as Record<string, unknown>;
+
+  // Must have recommendations array
+  if (!Array.isArray(obj.recommendations)) {
+    return false;
+  }
+
+  // Empty recommendations is valid
+  if (obj.recommendations.length === 0) {
+    return true;
+  }
+
+  // Check first item has required fields
+  const first = obj.recommendations[0] as Record<string, unknown>;
+  return (
+    typeof first.title === "string" &&
+    typeof first.tmdbId === "number" &&
+    typeof first.reason === "string" &&
+    (first.mediaType === "movie" || first.mediaType === "tv")
+  );
+}
+
+// ============================================================================
 // RESULT TYPE DETECTION
 // ============================================================================
 
@@ -478,6 +535,7 @@ export type ResultType =
   | "calendar"
   | "discovery"
   | "success"
+  | "recommendation"
   | null;
 
 export function detectResultType(output: unknown): ResultType {
@@ -485,6 +543,12 @@ export function detectResultType(output: unknown): ResultType {
   if (isSuccessConfirmationShape(output)) {
     return "success";
   }
+
+  // Check recommendation (specific shape with reason field)
+  if (isRecommendationShape(output)) {
+    return "recommendation";
+  }
+
   // Check calendar first (more specific shape)
   if (isCalendarShape(output)) {
     return "calendar";

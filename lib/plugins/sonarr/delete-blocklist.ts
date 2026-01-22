@@ -34,7 +34,7 @@ export const deleteBlocklist = ({
         }
 
         if (blocklistIds && blocklistIds.length > 0) {
-          await client.delete("/api/v3/blocklist/bulk", undefined, {
+          await client.delete("/blocklist/bulk", undefined, {
             ids: blocklistIds,
           });
 
@@ -45,7 +45,7 @@ export const deleteBlocklist = ({
         }
 
         if (blocklistId) {
-          await client.delete(`/api/v3/blocklist/${blocklistId}`);
+          await client.delete(`/blocklist/${blocklistId}`);
           return {
             success: true,
             message: `Successfully removed item ${blocklistId} from the blocklist.`,

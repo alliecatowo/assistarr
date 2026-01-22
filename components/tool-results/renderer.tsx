@@ -7,9 +7,11 @@ import type { DisplayContext, DisplayResultType } from "./display";
 import { ErrorResult, GenericResult } from "./generic-result";
 import { MediaResultsView } from "./media-results-view";
 import { QueueView } from "./queue-view";
+import { RecommendationView } from "./recommendation-view";
 import { SuccessCard } from "./success-card";
 import {
   detectResultType,
+  type RecommendationShape,
   type SuccessConfirmationShape,
   type ToolState,
 } from "./types";
@@ -43,6 +45,14 @@ function renderResultView(
         <SuccessCard
           output={output as SuccessConfirmationShape}
           toolName={toolName}
+        />
+      );
+
+    case "recommendation":
+      return (
+        <RecommendationView
+          output={output as RecommendationShape}
+          state={state}
         />
       );
 

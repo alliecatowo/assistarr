@@ -24,17 +24,20 @@ function stripBoldFromMediaLinks(text: string): string {
 
 /**
  * Ensure spaces exist around inline media links
- * AI sometimes generates "requested[[Title|123]]for" without spaces
- * This normalizes to "requested [[Title|123]] for"
+ * Handles media link specific patterns like [[Title|123]](rating)
  */
 function normalizeMediaLinkSpacing(text: string): string {
-  // Add space before [[ if preceded by a word character (letter, digit, or some punctuation)
-  // Don't add space after newlines, list markers, or at start
+  // Add space before [[ if preceded by a word character
   let result = text.replace(/(\w)(\[\[)/g, "$1 $2");
 
   // Add space after ]] if followed by a word character
-  // Don't add space before punctuation like . , ! ? : ; or at end
   result = result.replace(/(\]\])(\w)/g, "$1 $2");
+
+  // Add space after ]] if followed by opening parenthesis (for ratings)
+  result = result.replace(/(\]\])(\()/g, "$1 $2");
+
+  // Add space after comma if followed by [[
+  result = result.replace(/(,)(\[\[)/g, "$1 $2");
 
   return result;
 }
@@ -99,10 +102,12 @@ function splitLineByMediaLinks(text: string): Part[] {
 /**
  * Check if text is simple (no markdown formatting that needs processing)
  * Simple text can be rendered directly without Streamdown
+ * Note: Parentheses and basic punctuation don't require markdown processing
  */
 function isSimpleText(text: string): boolean {
-  // Check for common markdown patterns that need processing
-  const markdownPatterns = /[*_`~#[\]()>|\\]/;
+  // Check for markdown patterns that actually need processing
+  // Exclude () since they're just normal punctuation for ratings like "(8.8/10)"
+  const markdownPatterns = /[*_`~#[\]>|\\]/;
   return !markdownPatterns.test(text);
 }
 
@@ -198,20 +203,21 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
                 key={`${baseKey}-p-${pIndex}`}
               >
                 {lines
-                  .filter((l) => l.trim())
-                  .map((line, lIndex) => {
+                  .map((line) => {
                     // Remove list marker (- or *) with optional space
-                    const content = line.replace(/^[\s]*[-*]\s?/, "");
-                    return (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
-                      <li key={`${baseKey}-p-${pIndex}-l-${lIndex}`}>
-                        {renderParagraphWithLinks(
-                          content,
-                          `${baseKey}-p-${pIndex}-l-${lIndex}`
-                        )}
-                      </li>
-                    );
-                  })}
+                    const content = line.replace(/^[\s]*[-*]\s?/, "").trim();
+                    return content;
+                  })
+                  .filter((content) => content.length > 0)
+                  .map((content, lIndex) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Stable list
+                    <li key={`${baseKey}-p-${pIndex}-l-${lIndex}`}>
+                      {renderParagraphWithLinks(
+                        content,
+                        `${baseKey}-p-${pIndex}-l-${lIndex}`
+                      )}
+                    </li>
+                  ))}
               </ul>
             );
           }
@@ -284,25 +290,41 @@ function renderWithMediaLinks(text: string, baseKey: string): ReactNode {
 }
 
 export function Response({ className, children, ...props }: ResponseProps) {
-  // Check if children is a string with inline media links
-  if (typeof children === "string" && hasInlineMediaLinks(children)) {
-    // Normalize spacing around media links and strip bold markers
-    const processedText = normalizeMediaLinkSpacing(
-      stripBoldFromMediaLinks(children)
-    );
+  // Process string content for media links
+  if (typeof children === "string") {
+    // Check if text contains inline media links
+    if (hasInlineMediaLinks(children)) {
+      // Normalize media link specific patterns (spacing around [[...]]) and strip bold markers
+      const processedText = normalizeMediaLinkSpacing(
+        stripBoldFromMediaLinks(children)
+      );
+      return (
+        <div
+          className={cn(
+            "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_code]:whitespace-pre-wrap [&_code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto",
+            className
+          )}
+        >
+          {renderWithMediaLinks(processedText, "response")}
+        </div>
+      );
+    }
+
+    // No media links - render through Streamdown directly
     return (
-      <div
+      <Streamdown
         className={cn(
           "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_code]:whitespace-pre-wrap [&_code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto",
           className
         )}
+        {...props}
       >
-        {renderWithMediaLinks(processedText, "response")}
-      </div>
+        {children}
+      </Streamdown>
     );
   }
 
-  // Default: render through Streamdown
+  // Non-string children - render through Streamdown as-is
   return (
     <Streamdown
       className={cn(

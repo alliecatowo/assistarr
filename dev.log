@@ -1,0 +1,15 @@
+
+> assistarr@3.1.0 dev /home/Allie/develop/assistarr
+> next dev --turbo
+
+ ⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+   ▲ Next.js 16.0.10 (Turbopack, Cache Components)
+   - Local:         http://localhost:3001
+   - Network:       http://10.0.0.209:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ⨯ Unable to acquire lock at /home/Allie/develop/assistarr/.next/dev/lock, is another instance of next dev running?
+   Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h
+ ELIFECYCLE  Command failed with exit code 1.

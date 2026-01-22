@@ -18,7 +18,7 @@ export const markFailed = ({ session: _session, config }: ToolFactoryProps) => {
     }),
     execute: async ({ historyId }) => {
       try {
-        await client.post(`/api/v3/history/failed/${historyId}`, {});
+        await client.post(`/history/failed/${historyId}`, {});
 
         return {
           success: true,
