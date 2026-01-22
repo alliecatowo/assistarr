@@ -70,11 +70,19 @@ export function DiscoverCard({
       )}
     >
       {/* Poster - clickable for expand */}
-      <button
+      {/* biome-ignore lint/a11y/useSemanticElements: Cannot use button element due to nested Button components inside */}
+      <div
         aria-label={`View details for ${item.title}`}
         className="relative aspect-[2/3] w-full overflow-hidden bg-muted p-0 text-left"
         onClick={handleCardClick}
-        type="button"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleCardClick();
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         {posterUrl ? (
           <Image
@@ -124,7 +132,7 @@ export function DiscoverCard({
             </Button>
           )}
         </div>
-      </button>
+      </div>
       {/* Info section */}
       <div className="w-full p-2.5 space-y-1.5 text-left">
         <h4 className="text-xs font-medium line-clamp-2 min-h-[2rem]">
