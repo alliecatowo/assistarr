@@ -430,13 +430,13 @@ function PersonalizedSectionRow({ section }: PersonalizedSectionRowProps) {
   const iconColor = getSectionColor(section.type);
 
   return (
-    <section className="mb-8">
-      <div className="mb-1 flex items-center gap-2">
-        <Icon className={`size-5 ${iconColor}`} />
-        <h3 className="text-lg font-semibold">{section.title}</h3>
+    <section className="mb-6">
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className={`size-4 ${iconColor}`} />
+        <h3 className="text-base font-semibold">{section.title}</h3>
       </div>
       {section.subtitle && (
-        <p className="mb-3 text-sm text-muted-foreground">{section.subtitle}</p>
+        <p className="mb-2 text-xs text-muted-foreground">{section.subtitle}</p>
       )}
       <DiscoverRow
         items={section.items.map((item) => ({
@@ -547,23 +547,23 @@ export function PersonalizedSections() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {/* Taste Profile Button (opens sheet) */}
       <TasteProfileTrigger isLoading={false} profile={profile} />
 
       {/* Header with Refresh */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="size-5 text-primary" />
-          <h2 className="text-xl font-semibold">Personalized For You</h2>
+          <SparklesIcon className="size-4 text-primary" />
+          <h2 className="text-lg font-semibold">Personalized For You</h2>
         </div>
         <Button
-          className="h-8"
+          className="h-7 px-2 text-xs"
           onClick={fetchPersonalized}
           size="sm"
           variant="ghost"
         >
-          <RefreshCwIcon className="mr-1 size-4" />
+          <RefreshCwIcon className="mr-1 size-3" />
           Refresh
         </Button>
       </div>

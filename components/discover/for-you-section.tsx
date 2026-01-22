@@ -51,17 +51,17 @@ export function ForYouSection() {
 
   if (isLoading) {
     return (
-      <section className="mb-8">
-        <div className="mb-3 flex items-center gap-2">
-          <SparklesIcon className="size-5 text-primary" />
-          <Skeleton className="h-6 w-32" />
+      <section className="mb-6">
+        <div className="mb-2 flex items-center gap-2">
+          <SparklesIcon className="size-4 text-primary" />
+          <Skeleton className="h-5 w-28" />
         </div>
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div className="shrink-0 space-y-2" key={i}>
-              <Skeleton className="h-56 w-40 rounded-lg" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-52 w-36 rounded-lg" />
+              <Skeleton className="h-3.5 w-28" />
+              <Skeleton className="h-3 w-20" />
             </div>
           ))}
         </div>
@@ -71,20 +71,20 @@ export function ForYouSection() {
 
   if (error) {
     return (
-      <section className="mb-8">
-        <div className="mb-3 flex items-center gap-2">
-          <SparklesIcon className="size-5 text-primary" />
-          <h3 className="text-lg font-semibold">For You</h3>
+      <section className="mb-6">
+        <div className="mb-2 flex items-center gap-2">
+          <SparklesIcon className="size-4 text-primary" />
+          <h3 className="text-base font-semibold">For You</h3>
         </div>
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-center">
-          <p className="text-sm text-muted-foreground">{error}</p>
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-center">
+          <p className="text-xs text-muted-foreground">{error}</p>
           <Button
-            className="mt-2"
+            className="mt-2 h-7 text-xs"
             onClick={fetchRecommendations}
             size="sm"
             variant="outline"
           >
-            <RefreshCwIcon className="mr-1 size-4" />
+            <RefreshCwIcon className="mr-1 size-3" />
             Retry
           </Button>
         </div>
@@ -94,13 +94,13 @@ export function ForYouSection() {
 
   if (recommendations.length === 0) {
     return (
-      <section className="mb-8">
-        <div className="mb-3 flex items-center gap-2">
-          <SparklesIcon className="size-5 text-primary" />
-          <h3 className="text-lg font-semibold">For You</h3>
+      <section className="mb-6">
+        <div className="mb-2 flex items-center gap-2">
+          <SparklesIcon className="size-4 text-primary" />
+          <h3 className="text-base font-semibold">For You</h3>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-6 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="rounded-lg border bg-muted/30 p-4 text-center">
+          <p className="text-xs text-muted-foreground">
             Add movies and shows to your library to get personalized
             recommendations
           </p>
@@ -115,24 +115,24 @@ export function ForYouSection() {
     .join(", ");
 
   return (
-    <section className="mb-8">
-      <div className="mb-3 flex items-center justify-between">
+    <section className="mb-6">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="size-5 text-primary" />
-          <h3 className="text-lg font-semibold">For You</h3>
+          <SparklesIcon className="size-4 text-primary" />
+          <h3 className="text-base font-semibold">For You</h3>
           {profile && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Based on your love of {genreText}
             </span>
           )}
         </div>
         <Button
-          className="h-8"
+          className="h-7 px-2 text-xs"
           onClick={fetchRecommendations}
           size="sm"
           variant="ghost"
         >
-          <RefreshCwIcon className="mr-1 size-4" />
+          <RefreshCwIcon className="mr-1 size-3" />
           Refresh
         </Button>
       </div>
