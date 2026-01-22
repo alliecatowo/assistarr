@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Development
+.git
+.github
+.cursor
+.claude
+*.log
+*.local
+.env
+.env.*
+!.env.example
+
+# Testing
+coverage
+.playwright
+playwright-report
+test-results
+*.test.ts
+*.spec.ts
+__tests__
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation (not needed in image)
+docs
+*.md
+!README.md
+
+# Misc
+.DS_Store
+Thumbs.db
+*.tgz
+*.tar.gz
+biome_errors.txt
+dev.log
+tsconfig.tsbuildinfo

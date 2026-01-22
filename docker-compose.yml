@@ -1,0 +1,108 @@
+# Assistarr Docker Compose Configuration
+# Development and self-hosting setup
+#
+# Usage:
+#   docker compose up -d          # Start all services
+#   docker compose logs -f        # View logs
+#   docker compose down           # Stop all services
+
+services:
+  # ==========================================
+  # Assistarr Application
+  # ==========================================
+  assistarr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: assistarr
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Required
+      - POSTGRES_URL=postgres://assistarr:assistarr@postgres:5432/assistarr
+      - AUTH_SECRET=${AUTH_SECRET}
+
+      # AI Provider (at least one required)
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY:-}
+      - AI_PROVIDER=${AI_PROVIDER:-}
+
+      # Optional
+      - REDIS_URL=redis://redis:6379
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - assistarr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: assistarr-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=assistarr
+      - POSTGRES_PASSWORD=assistarr
+      - POSTGRES_DB=assistarr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - assistarr-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assistarr -d assistarr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================
+  # Redis (Optional - for resumable streams)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: assistarr-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - assistarr-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  assistarr-network:
+    driver: bridge
+    # To connect with your media stack (Radarr, Sonarr, etc.),
+    # uncomment and configure external network:
+    # external:
+    #   name: media-network
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
