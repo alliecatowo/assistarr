@@ -6,6 +6,7 @@ import {
   LoaderIcon,
   PlayIcon,
   PlusIcon,
+  RefreshCwIcon,
   SparklesIcon,
   StarIcon,
 } from "lucide-react";
@@ -219,30 +220,36 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
 export function TopPicksCta() {
   const [picks, setPicks] = useState<TopPickItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requestingId, setRequestingId] = useState<number | null>(null);
   const { updateItemStatus } = useDiscover();
 
-  useEffect(() => {
-    async function fetchTopPicks() {
+  const fetchTopPicks = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
       setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/discover/top-picks");
-        if (!response.ok) {
-          throw new Error("Failed to fetch top picks");
-        }
-
-        const data: TopPicksResponse = await response.json();
-        setPicks(data.picks);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Unknown error");
-      } finally {
-        setIsLoading(false);
-      }
     }
+    setError(null);
 
+    try {
+      const response = await fetch("/api/discover/top-picks");
+      if (!response.ok) {
+        throw new Error("Failed to fetch top picks");
+      }
+
+      const data: TopPicksResponse = await response.json();
+      setPicks(data.picks);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTopPicks();
   }, []);
 
@@ -300,12 +307,23 @@ export function TopPicksCta() {
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <SparklesIcon className="size-5 text-primary" />
-        <div>
+        <div className="flex-1">
           <h2 className="text-xl font-bold">Top Picks For You</h2>
           <p className="text-xs text-muted-foreground">
             Deeply analyzed matches based on your taste
           </p>
         </div>
+        <Button
+          disabled={isRefreshing}
+          onClick={() => fetchTopPicks(true)}
+          size="sm"
+          variant="ghost"
+        >
+          <RefreshCwIcon
+            className={cn("size-4", isRefreshing && "animate-spin")}
+          />
+          <span className="ml-1.5 hidden sm:inline">Refresh</span>
+        </Button>
       </div>
 
       {/* Cards Grid */}
