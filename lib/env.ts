@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("env");
 
 /**
  * Server-side environment variable validation using Zod
@@ -49,6 +52,12 @@ const baseEnvSchema = z.object({
 
   // Vercel Blob storage (optional)
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
+
+  // Sentry error tracking (optional)
+  SENTRY_DSN: z.string().url().optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
 
   // Node environment
   NODE_ENV: z
@@ -134,7 +143,7 @@ function validateEnv(): ServerEnv {
   const result = serverEnvSchema.safeParse(process.env);
 
   if (!result.success) {
-    console.error(formatEnvErrors(result.error));
+    log.error(formatEnvErrors(result.error));
     throw new Error("Invalid environment variables");
   }
 

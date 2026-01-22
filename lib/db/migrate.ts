@@ -8,6 +8,11 @@ config({
 });
 
 const runMigrate = async () => {
+  // Skip migrations in CI or when explicitly disabled
+  if (process.env.SKIP_DB_MIGRATE === "true") {
+    process.exit(0);
+  }
+
   if (!process.env.POSTGRES_URL) {
     process.exit(0);
   }
