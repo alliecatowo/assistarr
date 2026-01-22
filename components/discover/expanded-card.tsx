@@ -16,8 +16,8 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DiscoverCard } from "./discover-card";
 import type { DiscoverItem } from "./discover-context";
-import { DiscoverRow } from "./discover-row";
 
 interface MediaDetails {
   id: number;
@@ -400,7 +400,19 @@ export function ExpandedCard({
                 <h3 className="text-sm font-semibold mb-2">
                   Similar to {details?.title || item.title}
                 </h3>
-                <DiscoverRow items={similar} />
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                  {similar.map((s) => (
+                    <DiscoverCard
+                      isRequesting={false}
+                      item={s}
+                      key={s.id}
+                      onRequest={(tmdbId, mediaType) =>
+                        console.log("Request:", tmdbId, mediaType)
+                      }
+                      showReason={false}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
