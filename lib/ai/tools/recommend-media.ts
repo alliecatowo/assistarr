@@ -48,7 +48,7 @@ export const recommendMedia = () =>
         .optional()
         .describe("Brief introduction to the recommendations (1-2 sentences)"),
     }),
-    execute: async ({ recommendations, introduction }) => {
+    execute: ({ recommendations, introduction }) => {
       // The tool simply returns the structured data for the UI to render
       return {
         recommendations,

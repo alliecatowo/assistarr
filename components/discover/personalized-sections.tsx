@@ -155,6 +155,74 @@ function PersonalizedSectionSkeleton() {
 }
 
 // =============================================================================
+// Taste Profile Card Helpers
+// =============================================================================
+
+interface ProgressBarProps {
+  value: number;
+  color: string;
+}
+
+function ProgressBar({ value, color }: ProgressBarProps) {
+  return (
+    <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
+    </div>
+  );
+}
+
+function getGenreBarColor(idx: number): string {
+  const colors = [
+    "bg-pink-500",
+    "bg-purple-500",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-amber-500",
+  ];
+  return colors[idx] ?? colors.at(-1);
+}
+
+function getDecadeBarColor(idx: number): string {
+  const colors = [
+    "bg-amber-500",
+    "bg-orange-500",
+    "bg-yellow-500",
+    "bg-red-500",
+  ];
+  return colors[idx] ?? colors.at(-1);
+}
+
+function formatWatchTime(hours: number): string {
+  return hours >= 1000
+    ? `${(hours / 1000).toFixed(1)}k hrs`
+    : `${Math.round(hours)} hrs`;
+}
+
+function formatLibrarySize(gb: number): string {
+  return gb >= 1000 ? `${(gb / 1000).toFixed(1)} TB` : `${Math.round(gb)} GB`;
+}
+
+function StatRow({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1 font-medium">
+        {icon}
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// =============================================================================
 // Taste Profile Card
 // =============================================================================
 
@@ -187,24 +255,14 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
                 {profile.totalMovies.toLocaleString()} ({moviePercentage}%)
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-blue-500"
-                style={{ width: `${moviePercentage}%` }}
-              />
-            </div>
+            <ProgressBar color="bg-blue-500" value={moviePercentage} />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">TV Shows</span>
               <span className="font-medium">
                 {profile.totalShows.toLocaleString()} ({showPercentage}%)
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-purple-500"
-                style={{ width: `${showPercentage}%` }}
-              />
-            </div>
+            <ProgressBar color="bg-purple-500" value={showPercentage} />
           </div>
         </div>
 
@@ -216,28 +274,14 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
           <div className="space-y-1.5">
             {profile.topGenres.slice(0, 5).map((g, idx) => (
               <div className="space-y-0.5" key={g.genre}>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{g.genre}</span>
-                  <span className="text-muted-foreground">
-                    {g.count} ({g.percentage ? Math.round(g.percentage) : 0}%)
-                  </span>
-                </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full ${
-                      idx === 0
-                        ? "bg-pink-500"
-                        : idx === 1
-                          ? "bg-purple-500"
-                          : idx === 2
-                            ? "bg-blue-500"
-                            : idx === 3
-                              ? "bg-green-500"
-                              : "bg-amber-500"
-                    }`}
-                    style={{ width: `${g.percentage ?? 0}%` }}
-                  />
-                </div>
+                <StatRow
+                  label={g.genre}
+                  value={`${g.count} (${g.percentage ? Math.round(g.percentage) : 0}%)`}
+                />
+                <ProgressBar
+                  color={getGenreBarColor(idx)}
+                  value={g.percentage ?? 0}
+                />
               </div>
             ))}
           </div>
@@ -251,26 +295,14 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
           <div className="space-y-1.5">
             {profile.favoriteDecades.slice(0, 4).map((d, idx) => (
               <div className="space-y-0.5" key={d.decade}>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{d.decade}</span>
-                  <span className="text-muted-foreground">
-                    {d.count} ({d.percentage ? Math.round(d.percentage) : 0}%)
-                  </span>
-                </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full ${
-                      idx === 0
-                        ? "bg-amber-500"
-                        : idx === 1
-                          ? "bg-orange-500"
-                          : idx === 2
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                    }`}
-                    style={{ width: `${d.percentage ?? 0}%` }}
-                  />
-                </div>
+                <StatRow
+                  label={d.decade}
+                  value={`${d.count} (${d.percentage ? Math.round(d.percentage) : 0}%)`}
+                />
+                <ProgressBar
+                  color={getDecadeBarColor(idx)}
+                  value={d.percentage ?? 0}
+                />
               </div>
             ))}
           </div>
@@ -284,50 +316,38 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
           <div className="space-y-2">
             {profile.averageRating !== undefined &&
               profile.averageRating > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Avg Rating</span>
-                  <span className="flex items-center gap-1 font-medium">
+                <StatRow
+                  icon={
                     <StarIcon className="size-3 fill-yellow-500 text-yellow-500" />
-                    {profile.averageRating.toFixed(1)}
-                  </span>
-                </div>
+                  }
+                  label="Avg Rating"
+                  value={profile.averageRating.toFixed(1)}
+                />
               )}
             {profile.totalRuntimeHours !== undefined &&
               profile.totalRuntimeHours > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Watch Time</span>
-                  <span className="font-medium">
-                    {profile.totalRuntimeHours >= 1000
-                      ? `${(profile.totalRuntimeHours / 1000).toFixed(1)}k hrs`
-                      : `${Math.round(profile.totalRuntimeHours)} hrs`}
-                  </span>
-                </div>
+                <StatRow
+                  label="Watch Time"
+                  value={formatWatchTime(profile.totalRuntimeHours)}
+                />
               )}
             {profile.totalSizeGB !== undefined && profile.totalSizeGB > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Library Size</span>
-                <span className="font-medium">
-                  {profile.totalSizeGB >= 1000
-                    ? `${(profile.totalSizeGB / 1000).toFixed(1)} TB`
-                    : `${Math.round(profile.totalSizeGB)} GB`}
-                </span>
-              </div>
+              <StatRow
+                label="Library Size"
+                value={formatLibrarySize(profile.totalSizeGB)}
+              />
             )}
             {profile.genreDiversityScore !== undefined &&
               profile.genreDiversityScore > 0 && (
                 <div className="space-y-0.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Diversity</span>
-                    <span className="font-medium">
-                      {profile.genreDiversityScore}/100
-                    </span>
-                  </div>
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500"
-                      style={{ width: `${profile.genreDiversityScore}%` }}
-                    />
-                  </div>
+                  <StatRow
+                    label="Diversity"
+                    value={`${profile.genreDiversityScore}/100`}
+                  />
+                  <ProgressBar
+                    color="bg-gradient-to-r from-green-500 to-emerald-500"
+                    value={profile.genreDiversityScore}
+                  />
                 </div>
               )}
           </div>
