@@ -456,6 +456,158 @@ pnpm exec playwright show-report
 
 ---
 
+## Coverage Requirements
+
+Assistarr maintains code coverage thresholds to ensure test quality. The current thresholds are:
+
+| Metric | Threshold |
+|--------|-----------|
+| Statements | 60% |
+| Branches | 60% |
+| Functions | 60% |
+| Lines | 60% |
+
+### Running Tests with Coverage
+
+```bash
+# Run unit tests with coverage report
+pnpm test:coverage
+
+# View coverage in terminal (text report)
+pnpm vitest --coverage
+
+# Generate HTML coverage report
+pnpm vitest --coverage --coverage.reporter=html
+
+# Open coverage report (after generation)
+open coverage/index.html  # macOS
+xdg-open coverage/index.html  # Linux
+```
+
+### Coverage Reports
+
+Coverage reports are generated in multiple formats:
+- **text**: Terminal output showing coverage summary
+- **lcov**: For CI/CD integration and external tools
+- **html**: Interactive browser-based report
+
+### Excluded Files
+
+The following files are excluded from coverage calculations:
+- `node_modules/**` - Third-party dependencies
+- `**/*.test.ts`, `**/*.test.tsx` - Test files
+- `**/*.config.*` - Configuration files
+- `.next/**` - Next.js build output
+- `tests/**` - E2E test files
+- `artifacts/**` - Code artifact server
+- `**/*.d.ts` - Type declarations
+- `**/types.ts`, `**/schema.ts` - Type/schema definitions
+- `lib/db/migrations/**` - Database migrations
+
+### Improving Coverage
+
+When adding new features:
+1. Write unit tests alongside implementation
+2. Test edge cases and error handling
+3. Mock external dependencies (APIs, database)
+4. Run coverage report to identify gaps
+
+---
+
+## Unit Testing
+
+### Test Structure
+
+Unit tests are co-located with source files or in `__tests__` directories:
+
+```
+lib/
+├── plugins/
+│   ├── core/
+│   │   ├── manager.ts
+│   │   ├── manager.test.ts          # Co-located unit test
+│   │   └── __tests__/
+│   │       └── integration.test.ts  # Integration tests
+│   └── radarr/
+│       ├── client.ts
+│       └── client.test.ts
+components/
+└── ui/
+    ├── button.tsx
+    └── __tests__/
+        └── button.test.tsx          # Component tests
+```
+
+### Running Unit Tests
+
+```bash
+# Run all unit tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test -- --watch
+
+# Run specific test file
+pnpm test lib/plugins/core/manager.test.ts
+
+# Run tests with UI
+pnpm test:ui
+```
+
+### Writing Component Tests
+
+Component tests use `@testing-library/react`:
+
+```tsx
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { Button } from "../button";
+
+describe("Button", () => {
+  it("should render with text", () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByRole("button")).toHaveTextContent("Click me");
+  });
+
+  it("should call onClick handler", () => {
+    const handleClick = vi.fn();
+    render(<Button onClick={handleClick}>Click</Button>);
+    fireEvent.click(screen.getByRole("button"));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+### Writing Plugin Integration Tests
+
+Plugin integration tests verify the full flow:
+
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { PluginManager } from "../manager";
+
+describe("Plugin Integration", () => {
+  it("should register and execute tools", async () => {
+    const manager = createFreshManager();
+    const mockPlugin = createMockPlugin("service", {
+      testTool: createMockToolDefinition("testTool"),
+    });
+
+    manager.register(mockPlugin);
+
+    const configs = new Map();
+    configs.set("service", createMockConfig("service"));
+
+    const tools = manager.getToolsForSession(mockSession, configs);
+    const result = await tools.testTool.execute({}, mockContext);
+
+    expect(result).toBeDefined();
+  });
+});
+```
+
+---
+
 ## Contributing
 
 When adding new tests:
@@ -464,7 +616,12 @@ When adding new tests:
 2. Add mock data to `test-data.ts` if needed
 3. Update this documentation with new test cases
 4. Run full test suite before submitting PR
+5. Ensure coverage thresholds are met
 
 ```bash
-pnpm test
+# Run all tests with coverage
+pnpm test:coverage
+
+# Run E2E tests
+pnpm test:e2e
 ```
