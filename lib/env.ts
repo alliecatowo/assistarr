@@ -59,6 +59,18 @@ const baseEnvSchema = z.object({
   SENTRY_ORG: z.string().optional(),
   SENTRY_PROJECT: z.string().optional(),
 
+  // OpenTelemetry configuration (optional)
+  OTEL_EXPORTER_OTLP_ENDPOINT: z
+    .string()
+    .url()
+    .optional()
+    .describe("OTLP exporter endpoint URL for self-hosted deployments"),
+  OTEL_SERVICE_NAME: z
+    .string()
+    .optional()
+    .default("assistarr")
+    .describe("Service name for OpenTelemetry traces"),
+
   // Node environment
   NODE_ENV: z
     .enum(["development", "production", "test"])
