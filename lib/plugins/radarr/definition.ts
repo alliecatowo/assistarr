@@ -40,6 +40,14 @@ export class RadarrPlugin extends BaseServicePlugin {
       displayName: "Search Movies (Radarr)",
       category: "search",
       description: "Search for movies to add to Radarr",
+      metadata: {
+        usage:
+          "Use this to find movies to add to the library. Always show results to the user before adding.",
+        examples: [
+          "searchRadarrMovies('Dune')",
+          "searchRadarrMovies('The Matrix')",
+        ],
+      },
     }),
     addRadarrMovie: this.defineTool(addMovie, {
       displayName: "Add Movie",
@@ -73,6 +81,14 @@ export class RadarrPlugin extends BaseServicePlugin {
       displayName: "Get Library (Radarr)",
       category: "library",
       description: "View movies in the library",
+      metadata: {
+        usage:
+          "Use this to browse the existing library. Supports filtering by genre, year, etc.",
+        examples: [
+          "getRadarrLibrary(genre: 'Comedy')",
+          "getRadarrLibrary(year: 2023)",
+        ],
+      },
     }),
     getRadarrQualityProfiles: this.defineTool(getQualityProfiles, {
       displayName: "List Quality Profiles (Radarr)",
