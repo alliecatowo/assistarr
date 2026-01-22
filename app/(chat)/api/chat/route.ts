@@ -195,44 +195,12 @@ export async function POST(request: Request) {
           recommendMedia: recommendMedia(),
         };
 
-        // biome-ignore lint/suspicious/noExplicitAny: Plugin tools map
-        const serviceTools: Record<string, any> = {};
-
         // Dynamically load service tools based on config
-        const plugins = pluginManager.getPlugins();
-        for (const plugin of plugins) {
-          const config = configsMap.get(plugin.name);
-          if (config?.isEnabled) {
-            // In discover mode, only allow Jellyseerr's discovery tools
-            if (mode === "discover" && plugin.name !== "jellyseerr") {
-              continue;
-            }
-
-            // In discover mode, filter Jellyseerr tools to only discovery tools
-            if (mode === "discover" && plugin.name === "jellyseerr") {
-              for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
-                // Only include discovery-related tools in discover mode
-                if (
-                  toolName === "searchContent" ||
-                  toolName === "getDiscovery"
-                ) {
-                  serviceTools[toolName] = toolDef.factory({
-                    session,
-                    config,
-                  });
-                }
-              }
-            } else {
-              // Regular mode: load all tools from the plugin
-              for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
-                serviceTools[toolName] = toolDef.factory({
-                  session,
-                  config,
-                });
-              }
-            }
-          }
-        }
+        const serviceTools = pluginManager.getToolsForSession(
+          session,
+          configsMap,
+          mode
+        );
 
         const effectiveTools = {
           ...baseTools,

@@ -1,4 +1,3 @@
-import type { Tool } from "ai";
 import type { Session } from "next-auth";
 import type { ServiceConfig } from "@/lib/db/schema";
 import type { ServicePlugin } from "./types";
@@ -36,33 +35,48 @@ export class PluginManager {
     return Array.from(this.services.values());
   }
 
+  private shouldIncludeTool(
+    mode: string | undefined,
+    pluginName: string,
+    toolName: string
+  ): boolean {
+    if (mode === "discover") {
+      if (pluginName !== "jellyseerr") {
+        return false;
+      }
+      return toolName === "searchContent" || toolName === "getDiscovery";
+    }
+    return true;
+  }
+
   /**
-   * Instantiates all enabled tools for the given session and configuration.
+   * Instantiates all enabled tools for the given session and configuration,
+   * filtering based on the chat mode (e.g. "discover").
    */
-  public getEnabledTools(
+  public getToolsForSession(
     session: Session,
-    configs: Map<string, ServiceConfig>
+    configs: Map<string, ServiceConfig>,
+    mode?: string
   ) {
-    const tools: Record<string, Tool> = {};
-    const toolNames: string[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: Tools can be any type
+    const tools: Record<string, any> = {};
 
-    // Use registry's helper to get enabled services (which logic might need to be moved here later,
-    // but for now we'll use the one that filters based on config)
-    // Actually, let's keep it simple: Iterate all registered services, check config.
-
-    for (const service of this.services.values()) {
-      const config = configs.get(service.name);
+    for (const plugin of this.services.values()) {
+      const config = configs.get(plugin.name);
       if (!config?.isEnabled) {
         continue;
       }
 
-      for (const [toolName, toolDef] of Object.entries(service.tools)) {
-        // Instantiate the tool
-        tools[toolName] = toolDef.factory({ session, config });
-        toolNames.push(toolName);
+      for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
+        if (this.shouldIncludeTool(mode, plugin.name, toolName)) {
+          tools[toolName] = toolDef.factory({
+            session,
+            config,
+          });
+        }
       }
     }
 
-    return { tools, toolNames };
+    return tools;
   }
 }
