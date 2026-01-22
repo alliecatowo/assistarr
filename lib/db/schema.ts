@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  index,
   json,
   pgEnum,
   pgTable,
@@ -32,68 +33,50 @@ export const user = pgTable("User", {
 
 export type User = InferSelectModel<typeof user>;
 
-export const chat = pgTable("Chat", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  createdAt: timestamp("createdAt").notNull(),
-  title: text("title").notNull(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => user.id),
-  visibility: varchar("visibility", { enum: ["public", "private"] })
-    .notNull()
-    .default("private"),
-});
+export const chat = pgTable(
+  "Chat",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    createdAt: timestamp("createdAt").notNull(),
+    title: text("title").notNull(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    visibility: varchar("visibility", { enum: ["public", "private"] })
+      .notNull()
+      .default("private"),
+  },
+  (table) => ({
+    userCreatedAtIdx: index("chat_user_created_at_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+  })
+);
 
 export type Chat = InferSelectModel<typeof chat>;
 
-// DEPRECATED: The following schema is deprecated and will be removed in the future.
-// Read the migration guide at https://chat-sdk.dev/docs/migration-guides/message-parts
-export const messageDeprecated = pgTable("Message", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  chatId: uuid("chatId")
-    .notNull()
-    .references(() => chat.id),
-  role: varchar("role").notNull(),
-  content: json("content").notNull(),
-  createdAt: timestamp("createdAt").notNull(),
-});
-
-export type MessageDeprecated = InferSelectModel<typeof messageDeprecated>;
-
-export const message = pgTable("Message_v2", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  chatId: uuid("chatId")
-    .notNull()
-    .references(() => chat.id),
-  role: varchar("role").notNull(),
-  parts: json("parts").notNull(),
-  attachments: json("attachments").notNull(),
-  createdAt: timestamp("createdAt").notNull(),
-});
-
-export type DBMessage = InferSelectModel<typeof message>;
-
-// DEPRECATED: The following schema is deprecated and will be removed in the future.
-// Read the migration guide at https://chat-sdk.dev/docs/migration-guides/message-parts
-export const voteDeprecated = pgTable(
-  "Vote",
+export const message = pgTable(
+  "Message_v2",
   {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
     chatId: uuid("chatId")
       .notNull()
       .references(() => chat.id),
-    messageId: uuid("messageId")
-      .notNull()
-      .references(() => messageDeprecated.id),
-    isUpvoted: boolean("isUpvoted").notNull(),
+    role: varchar("role").notNull(),
+    parts: json("parts").notNull(),
+    attachments: json("attachments").notNull(),
+    createdAt: timestamp("createdAt").notNull(),
   },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.chatId, table.messageId] }),
-    };
-  }
+  (table) => ({
+    chatCreatedAtIdx: index("message_chat_created_at_idx").on(
+      table.chatId,
+      table.createdAt
+    ),
+  })
 );
 
-export type VoteDeprecated = InferSelectModel<typeof voteDeprecated>;
+export type DBMessage = InferSelectModel<typeof message>;
 
 export const vote = pgTable(
   "Vote_v2",
@@ -182,17 +165,50 @@ export const stream = pgTable(
 
 export type Stream = InferSelectModel<typeof stream>;
 
-export const serviceConfig = pgTable("ServiceConfig", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => user.id),
-  serviceName: varchar("serviceName", { length: 50 }).notNull(), // 'radarr', 'sonarr', 'jellyfin', 'jellyseerr'
-  baseUrl: text("baseUrl").notNull(),
-  apiKey: text("apiKey").notNull(),
-  isEnabled: boolean("isEnabled").notNull().default(true),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-});
+export const serviceConfig = pgTable(
+  "ServiceConfig",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    serviceName: varchar("serviceName", { length: 50 }).notNull(), // 'radarr', 'sonarr', 'jellyfin', 'jellyseerr'
+    baseUrl: text("baseUrl").notNull(),
+    apiKey: text("apiKey").notNull(),
+    isEnabled: boolean("isEnabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    userServiceNameIdx: index("service_config_user_service_name_idx").on(
+      table.userId,
+      table.serviceName
+    ),
+  })
+);
 
 export type ServiceConfig = InferSelectModel<typeof serviceConfig>;
+
+// User AI provider configurations (Bring Your Own Keys)
+export const userAIConfig = pgTable(
+  "UserAIConfig",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    providerName: varchar("providerName", { length: 50 }).notNull(), // 'openrouter', 'openai', 'anthropic', 'google', 'gateway'
+    apiKey: text("apiKey").notNull(), // Encrypted at rest
+    isEnabled: boolean("isEnabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    userProviderIdx: index("user_ai_config_user_provider_idx").on(
+      table.userId,
+      table.providerName
+    ),
+  })
+);
+
+export type UserAIConfig = InferSelectModel<typeof userAIConfig>;

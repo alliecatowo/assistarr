@@ -71,6 +71,20 @@
       "when": 1768888180508,
       "tag": "0009_last_spyke",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1769063328977,
+      "tag": "0010_premium_spot",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1769064059464,
+      "tag": "0011_wealthy_leopardon",
+      "breakpoints": true
     }
   ]
 }

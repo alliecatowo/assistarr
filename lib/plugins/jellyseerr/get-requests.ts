@@ -58,11 +58,23 @@ export const getRequests = ({
 
         const response = await client.get<RequestsResponse>(endpoint);
 
-        const requestsWithDetails = await Promise.all(
+        // Use Promise.allSettled for better error tolerance - individual request
+        // detail fetches can fail without breaking the entire list
+        const settledResults = await Promise.allSettled(
           response.results.map((request) =>
             mapRequestToDisplay(client, request)
           )
         );
+
+        const requestsWithDetails = settledResults
+          .filter(
+            (
+              result
+            ): result is PromiseFulfilledResult<
+              Awaited<ReturnType<typeof mapRequestToDisplay>>
+            > => result.status === "fulfilled"
+          )
+          .map((result) => result.value);
 
         const filterDescription = filter === "all" ? "all" : filter;
 

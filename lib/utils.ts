@@ -171,3 +171,49 @@ export function getBackdropUrl(path: string | null | undefined): string | null {
 export function getProfileUrl(path: string | null | undefined): string | null {
   return getTmdbImageUrl(path, 'profile');
 }
+
+// =============================================================================
+// Promise Utilities
+// =============================================================================
+
+/**
+ * Extracts fulfilled and rejected results from Promise.allSettled output.
+ * Use this when you need partial success - some promises can fail without
+ * failing the entire operation.
+ *
+ * @example
+ * const results = await Promise.allSettled([fetchA(), fetchB(), fetchC()]);
+ * const { fulfilled, rejected } = getSettledResults(results);
+ * console.log(`Got ${fulfilled.length} results, ${rejected.length} failed`);
+ */
+export function getSettledResults<T>(
+  results: PromiseSettledResult<T>[]
+): {
+  fulfilled: T[];
+  rejected: { reason: unknown; index: number }[];
+} {
+  const fulfilled: T[] = [];
+  const rejected: { reason: unknown; index: number }[] = [];
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      fulfilled.push(result.value);
+    } else {
+      rejected.push({ reason: result.reason, index });
+    }
+  });
+
+  return { fulfilled, rejected };
+}
+
+/**
+ * Extracts only fulfilled values from Promise.allSettled output.
+ * Convenience function when you only care about successful results.
+ */
+export function getFulfilledValues<T>(
+  results: PromiseSettledResult<T>[]
+): T[] {
+  return results
+    .filter((r): r is PromiseFulfilledResult<T> => r.status === 'fulfilled')
+    .map((r) => r.value);
+}

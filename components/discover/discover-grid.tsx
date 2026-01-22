@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getPosterUrl } from "@/lib/utils";
 import { DiscoverCard } from "./discover-card";
 import { type DiscoverItem, useDiscover } from "./discover-context";
 import { DiscoverRow } from "./discover-row";
@@ -11,6 +10,32 @@ interface DiscoverGridProps {
   items: DiscoverItem[];
   showReasons?: boolean;
   horizontal?: boolean;
+}
+
+/**
+ * Fetches a poster URL for a single item from the media lookup API.
+ * Returns an object with tmdbId and posterUrl if successful, null otherwise.
+ */
+async function fetchPosterForItem(
+  item: DiscoverItem
+): Promise<{ tmdbId: number; posterUrl: string } | null> {
+  if (!item.tmdbId) {
+    return null;
+  }
+  try {
+    const response = await fetch(
+      `/api/media/lookup?type=${item.mediaType}&id=${item.tmdbId}&source=jellyseerr`
+    );
+    if (response.ok) {
+      const data = await response.json();
+      if (data.posterUrl) {
+        return { tmdbId: item.tmdbId, posterUrl: data.posterUrl };
+      }
+    }
+  } catch {
+    // Ignore fetch errors
+  }
+  return null;
 }
 
 export function DiscoverGrid({
@@ -36,28 +61,19 @@ export function DiscoverGrid({
     // Start with items as-is, then enrich
     setEnrichedItems(items);
 
-    // Fetch missing posters in parallel
+    // Fetch missing posters in parallel - use allSettled for better error tolerance
     const fetchPosters = async () => {
-      const posterMap = new Map<number, string>();
-
-      await Promise.all(
-        itemsNeedingPoster.map(async (item) => {
-          if (!item.tmdbId) return;
-          try {
-            const response = await fetch(
-              `/api/media/lookup?type=${item.mediaType}&id=${item.tmdbId}&source=jellyseerr`
-            );
-            if (response.ok) {
-              const data = await response.json();
-              if (data.posterUrl) {
-                posterMap.set(item.tmdbId, data.posterUrl);
-              }
-            }
-          } catch {
-            // Ignore fetch errors
-          }
-        })
+      const results = await Promise.allSettled(
+        itemsNeedingPoster.map(fetchPosterForItem)
       );
+
+      // Extract fulfilled results and build a poster map
+      const posterMap = new Map<number, string>();
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) {
+          posterMap.set(result.value.tmdbId, result.value.posterUrl);
+        }
+      }
 
       if (posterMap.size > 0) {
         setEnrichedItems((prev) =>

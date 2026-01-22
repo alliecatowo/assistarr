@@ -1,189 +1,68 @@
 # Assistarr System Prompt Documentation
 
-This document explains the design and structure of the system prompt used by Assistarr, the home media server assistant.
+This document explains the design and structure of the **Dynamic Prompt Engine** used by Assistarr.
 
-## File Location
+## Overview
 
-The system prompt is defined in `/lib/ai/prompts.ts` and consists of several components that are combined based on the selected chat model.
+Assistarr uses a dynamic prompt generation system instead of static text files. The system prompt is constructed at runtime using LiquidJS templates, injecting available plugins, tools, and user context automatically.
 
-## Prompt Architecture
+## Architecture
 
-```
-systemPrompt = regularPrompt + requestPrompt + artifactsPrompt (if applicable)
-```
+The prompt generation consists of three main parts:
 
-### Components
+1.  **Engine** (`lib/ai/prompt-engine.ts`): Orchestrates data gathering and template rendering.
+2.  **Templates** (`lib/ai/templates/*.liquid`): LiquidJS files defining the structure and static instructions.
+3.  **Plugins** (`lib/plugins/`): Self-contained modules that provide tools and capabilities.
 
-| Component | Purpose | Always Included |
-|-----------|---------|-----------------|
-| `regularPrompt` | Core assistant personality and capabilities | Yes |
-| `requestPrompt` | User's geographic context | Yes |
-| `artifactsPrompt` | Document/code creation UI guidance | No (excluded for reasoning models) |
+## How It Works
 
-## Section Breakdown
+When a chat session starts, `generateSystemPrompt()` is called:
 
-### 1. Identity & Introduction
+1.  **Select Template:** Based on the mode (chat, discover, debug), the engine selects the appropriate template from `lib/ai/templates/`.
+2.  **Gather Context:**
+    *   **Plugins:** The engine queries the `pluginManager` for all registered plugins and their tools.
+    *   **Request Hints:** User location and time context.
+    *   **Artifacts:** Instructions for UI generation (if applicable).
+3.  **Render:** The template is compiled with this data to produce the final system prompt sent to the LLM.
 
-```markdown
-You are Assistarr, a friendly and knowledgeable home media server assistant...
-```
+## Templates
 
-**Purpose:** Establishes the assistant's name, personality, and primary function. This helps the model understand its role and maintain consistent behavior.
+Templates live in `lib/ai/templates/`. Common templates include:
 
-**Design Philosophy:** Keep it brief but clear. The assistant should feel approachable while being competent.
+*   `system.liquid`: The standard chat assistant prompt.
+*   `discover.liquid`: specialized prompt for media discovery.
+*   `debug.liquid`: Minimal prompt for debugging purposes.
 
-### 2. Capabilities Section
+Templates use standard Liquid syntax to iterate over plugins and tools:
 
-```markdown
-## Your Capabilities
-
-You can interact with the following services...
-```
-
-**Purpose:** Lists the integrated services (Radarr, Sonarr, Jellyfin, Jellyseerr) so the model knows what tools are available and what each service does.
-
-**Design Philosophy:**
-- Use bullet points for scannability
-- Include brief descriptions of each service's purpose
-- This helps the model route requests to the correct tool
-
-### 3. How to Help Users
-
-```markdown
-## How to Help Users
-
-### Searching & Adding Media
-...
+```liquid
+{% for plugin in plugins %}
+## {{ plugin.displayName }}
+{% for tool in plugin.tools %}
+- **{{ tool.name }}**: {{ tool.description }}
+{% endfor %}
+{% endfor %}
 ```
 
-**Purpose:** Provides task-specific guidance organized by common user workflows:
-- Searching & Adding Media
-- Monitoring Downloads
-- Calendar & Upcoming Releases
-- Library Management
-- Media Requests
+## Developer Workflow
 
-**Design Philosophy:**
-- Group related tasks together
-- Give specific, actionable instructions
-- Anticipate common user needs
+### Adding a New Tool
 
-### 4. Response Guidelines
+You **do not** need to manually edit the system prompt when adding new capabilities.
 
-```markdown
-## Response Guidelines
+1.  **Create Tool:** Write your tool code in `lib/plugins/<plugin>/tools/`.
+2.  **Register:** Ensure your plugin and tool are registered with the `pluginManager`.
+3.  **Done:** The Dynamic Prompt Engine automatically detects the new tool and injects its description into the system prompt on the next request.
 
-1. **Be proactive** - Use tools immediately...
-```
+### Modifying Core Behavior
 
-**Purpose:** Defines how the assistant should behave and format its responses:
-- Proactivity (don't ask, just do)
-- Conciseness
-- Formatting (markdown tables for lists)
-- Error handling
-- Confirmation before actions
+To change the assistant's personality, rules, or core instructions (non-tool related):
 
-**Design Philosophy:**
-- Number important guidelines for emphasis
-- Include concrete examples (the markdown table)
-- Balance helpfulness with safety (confirm before modifying)
-
-### 5. Example Interactions
-
-```markdown
-## Example Interactions
-
-- "Add the new Dune movie" → Search Radarr, confirm the right one, add it
-```
-
-**Purpose:** Shows the model how to handle common requests with specific action flows.
-
-**Design Philosophy:**
-- Use real-world examples
-- Show the expected action chain, not just the input/output
-- Cover the main use cases
-
-### 6. Fallback Behavior
-
-```markdown
-When asked to write, create, or help with something unrelated to media management...
-```
-
-**Purpose:** Ensures the assistant can still help with general tasks while maintaining its primary focus.
-
-## Extending the Prompt
-
-### Adding a New Service
-
-1. Add the service to the **Capabilities** section:
-   ```markdown
-   - **ServiceName** - Brief description of what it does
-   ```
-
-2. Add a workflow section under **How to Help Users**:
-   ```markdown
-   ### Service Category
-   - Specific task guidance
-   - Another task
-   ```
-
-3. Add an example interaction:
-   ```markdown
-   - "User request" → Tool to use, expected action
-   ```
-
-### Adding New Capabilities to Existing Services
-
-1. Update the relevant workflow section with the new capability
-2. Add an example if the workflow is non-obvious
-3. Consider if response guidelines need updates
-
-### Example: Adding Plex Support
-
-```typescript
-// In the Capabilities section, add:
-- **Plex** - Alternative media server (browse library, manage users)
-
-// In How to Help Users, add:
-### Plex Management
-- Browse and search the Plex library
-- Check currently playing streams
-- Manage user access and sharing
-
-// In Example Interactions, add:
-- "Who's watching on Plex?" → Check Plex active streams
-- "Add my friend to Plex" → Create Plex user invite
-```
-
-## Best Practices
-
-### Do
-
-- Keep instructions specific and actionable
-- Use markdown formatting for structure
-- Include examples for complex workflows
-- Update examples when adding features
-- Test prompts with real user queries
-
-### Don't
-
-- Make the prompt too long (models have context limits)
-- Include implementation details (keep it behavioral)
-- Assume the model knows service-specific terminology without explanation
-- Forget to update examples when capabilities change
-
-## Testing Changes
-
-After modifying the prompt:
-
-1. Test common queries ("add a movie", "what's downloading")
-2. Test edge cases (unknown movie, service unavailable)
-3. Verify formatting (tables render correctly)
-4. Check that the assistant maintains its personality
-5. Ensure proactive behavior works as expected
+1.  Edit `lib/ai/templates/system.liquid`.
+2.  Changes take effect immediately (templates are cached in memory, so a server restart may be required in production, but hot-reloading usually handles it in dev).
 
 ## Related Files
 
-- `/lib/ai/prompts.ts` - Prompt definitions
-- `/lib/ai/tools/` - Tool implementations that the prompt references
-- `/components/artifact.tsx` - Artifact UI component (related to `artifactsPrompt`)
+*   `lib/ai/prompt-engine.ts`: Main logic for prompt generation.
+*   `lib/ai/templates/`: Directory containing LiquidJS prompt templates.
+*   `lib/plugins/`: Directory where tools and capabilities are defined.

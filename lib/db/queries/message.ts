@@ -2,6 +2,7 @@ import { and, asc, count, eq, gte, inArray } from "drizzle-orm";
 import { ChatSDKError } from "../../errors";
 import { db } from "../db";
 import { chat, type DBMessage, message, vote } from "../schema";
+import { withTransaction } from "../utils";
 
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
@@ -50,21 +51,23 @@ export async function voteMessage({
   type: "up" | "down";
 }) {
   try {
-    const [existingVote] = await db
-      .select()
-      .from(vote)
-      .where(and(eq(vote.messageId, messageId)));
+    return await withTransaction(async (tx) => {
+      const [existingVote] = await tx
+        .select()
+        .from(vote)
+        .where(and(eq(vote.messageId, messageId)));
 
-    if (existingVote) {
-      return await db
-        .update(vote)
-        .set({ isUpvoted: type === "up" })
-        .where(and(eq(vote.messageId, messageId), eq(vote.chatId, chatId)));
-    }
-    return await db.insert(vote).values({
-      chatId,
-      messageId,
-      isUpvoted: type === "up",
+      if (existingVote) {
+        return await tx
+          .update(vote)
+          .set({ isUpvoted: type === "up" })
+          .where(and(eq(vote.messageId, messageId), eq(vote.chatId, chatId)));
+      }
+      return await tx.insert(vote).values({
+        chatId,
+        messageId,
+        isUpvoted: type === "up",
+      });
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to vote message");
@@ -101,30 +104,32 @@ export async function deleteMessagesByChatIdAfterTimestamp({
   timestamp: Date;
 }) {
   try {
-    const messagesToDelete = await db
-      .select({ id: message.id })
-      .from(message)
-      .where(
-        and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
+    return await withTransaction(async (tx) => {
+      const messagesToDelete = await tx
+        .select({ id: message.id })
+        .from(message)
+        .where(
+          and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
+        );
+
+      const messageIds = messagesToDelete.map(
+        (currentMessage) => currentMessage.id
       );
 
-    const messageIds = messagesToDelete.map(
-      (currentMessage) => currentMessage.id
-    );
+      if (messageIds.length > 0) {
+        await tx
+          .delete(vote)
+          .where(
+            and(eq(vote.chatId, chatId), inArray(vote.messageId, messageIds))
+          );
 
-    if (messageIds.length > 0) {
-      await db
-        .delete(vote)
-        .where(
-          and(eq(vote.chatId, chatId), inArray(vote.messageId, messageIds))
-        );
-
-      return await db
-        .delete(message)
-        .where(
-          and(eq(message.chatId, chatId), inArray(message.id, messageIds))
-        );
-    }
+        return await tx
+          .delete(message)
+          .where(
+            and(eq(message.chatId, chatId), inArray(message.id, messageIds))
+          );
+      }
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",

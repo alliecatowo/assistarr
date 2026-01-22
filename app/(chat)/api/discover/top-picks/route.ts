@@ -590,8 +590,9 @@ export async function GET() {
     }
 
     // Step 3: Fetch full details for top 3 candidates
+    // Use Promise.allSettled for better error tolerance
     const topCandidates = candidates.slice(0, 3);
-    const detailedCandidates = await Promise.all(
+    const settledDetails = await Promise.allSettled(
       topCandidates.map(async (candidate) => {
         try {
           if (candidate.mediaType === "movie") {
@@ -618,6 +619,11 @@ export async function GET() {
           return candidate;
         }
       })
+    );
+
+    // Extract fulfilled results, falling back to original candidates for failures
+    const detailedCandidates = settledDetails.map((result, index) =>
+      result.status === "fulfilled" ? result.value : topCandidates[index]
     );
 
     // Step 4: Generate personalized pitches using AI

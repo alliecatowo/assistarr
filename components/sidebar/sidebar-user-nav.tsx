@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
-import { guestRegex } from "@/lib/constants";
+import { guestRegex } from "@/lib/shared-constants";
 
 export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();

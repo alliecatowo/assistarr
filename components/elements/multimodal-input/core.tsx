@@ -201,10 +201,19 @@ function PureMultimodalInput({
 
       try {
         const uploadPromises = files.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
-        );
+        // Use Promise.allSettled for better error tolerance - individual uploads
+        // can fail without breaking the entire batch
+        const settledResults = await Promise.allSettled(uploadPromises);
+        const successfullyUploadedAttachments = settledResults
+          .filter(
+            (
+              result
+            ): result is PromiseFulfilledResult<
+              Awaited<ReturnType<typeof uploadFile>>
+            > => result.status === "fulfilled" && result.value !== undefined
+          )
+          .map((result) => result.value)
+          .filter((attachment) => attachment !== undefined);
 
         setAttachments((currentAttachments) => [
           ...currentAttachments,
@@ -245,13 +254,24 @@ function PureMultimodalInput({
           .filter((file): file is File => file !== null)
           .map((file) => uploadFile(file));
 
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) =>
-            attachment !== undefined &&
-            attachment.url !== undefined &&
-            attachment.contentType !== undefined
-        );
+        // Use Promise.allSettled for better error tolerance - individual uploads
+        // can fail without breaking the entire batch
+        const settledResults = await Promise.allSettled(uploadPromises);
+        const successfullyUploadedAttachments = settledResults
+          .filter(
+            (
+              result
+            ): result is PromiseFulfilledResult<
+              Awaited<ReturnType<typeof uploadFile>>
+            > => result.status === "fulfilled" && result.value !== undefined
+          )
+          .map((result) => result.value)
+          .filter(
+            (attachment) =>
+              attachment !== undefined &&
+              attachment.url !== undefined &&
+              attachment.contentType !== undefined
+          );
 
         setAttachments((curr) => [
           ...curr,

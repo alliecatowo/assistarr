@@ -70,6 +70,7 @@ export function generateSystemPrompt(options: PromptOptions): string {
           name,
           description: toolDef.description,
           category: toolDef.category,
+          metadata: toolDef.metadata,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name)),

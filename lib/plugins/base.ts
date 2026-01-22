@@ -55,6 +55,10 @@ export abstract class BaseServicePlugin<
       description: string;
       category: ToolCategory;
       requiresApproval?: boolean;
+      metadata?: {
+        usage?: string;
+        examples?: string[];
+      };
     }
   ): ToolDefinition {
     return {

@@ -80,10 +80,17 @@ export async function POST(request: Request) {
     const normalizedBaseUrl = jellyseerrBaseUrl.replace(/\/$/, "");
 
     // Fetch Radarr and Sonarr configurations in parallel
-    const [radarrConfigs, sonarrConfigs] = await Promise.all([
+    // Use Promise.allSettled for better error tolerance - either service can fail independently
+    const [radarrResult, sonarrResult] = await Promise.allSettled([
       fetchJellyseerrService(normalizedBaseUrl, jellyseerrApiKey, "radarr"),
       fetchJellyseerrService(normalizedBaseUrl, jellyseerrApiKey, "sonarr"),
     ]);
+
+    // Extract results with null fallback for rejected promises
+    const radarrConfigs =
+      radarrResult.status === "fulfilled" ? radarrResult.value : null;
+    const sonarrConfigs =
+      sonarrResult.status === "fulfilled" ? sonarrResult.value : null;
 
     const response: DiscoverResponse = {};
 

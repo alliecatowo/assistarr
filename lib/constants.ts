@@ -1,13 +1,15 @@
-import { generateDummyPassword } from "./db/utils";
+import "server-only";
+import { isDevelopment, isProduction, isTest } from "./env";
 
-export const isProductionEnvironment = process.env.NODE_ENV === "production";
-export const isDevelopmentEnvironment = process.env.NODE_ENV === "development";
-export const isTestEnvironment = Boolean(
-  process.env.PLAYWRIGHT_TEST_BASE_URL ||
-    process.env.PLAYWRIGHT ||
-    process.env.CI_PLAYWRIGHT
-);
+export const isProductionEnvironment = isProduction;
+export const isDevelopmentEnvironment = isDevelopment;
+export const isTestEnvironment = isTest;
 
-export const guestRegex = /^guest-\d+$/;
+// Pre-computed bcrypt hash for timing attack prevention
+// This is used when a user doesn't exist to make response time consistent
+// (prevents attackers from determining if an email exists based on timing)
+export const TIMING_SAFE_HASH =
+  "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
-export const DUMMY_PASSWORD = generateDummyPassword();
+// Re-export shared constants for server-side convenience
+export { guestRegex } from "./shared-constants";

@@ -29,9 +29,11 @@ describe("JellyfinClient", () => {
     }
     const client = new TestJellyfinClient(mockConfig);
 
+    const mockResponse = { items: [] };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ items: [] }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await client.exposeGet("/Items");

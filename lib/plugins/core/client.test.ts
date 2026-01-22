@@ -30,9 +30,11 @@ describe("ApiClient", () => {
 
   it("should construct correct URL", async () => {
     const client = new TestClient(mockConfig);
+    const mockResponse = { success: true };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await client.exposeGet("/test/endpoint");
@@ -49,9 +51,11 @@ describe("ApiClient", () => {
 
   it("should append query parameters", async () => {
     const client = new TestClient(mockConfig);
+    const mockResponse = { success: true };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await client.exposeGet("/test", { foo: "bar", num: 123 });
@@ -65,9 +69,11 @@ describe("ApiClient", () => {
   it("should handle trailing slash in baseUrl", async () => {
     const configWithSlash = { ...mockConfig, baseUrl: "http://test-api.com/" };
     const client = new TestClient(configWithSlash);
+    const mockResponse = { success: true };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await client.exposeGet("/test");

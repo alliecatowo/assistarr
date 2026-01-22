@@ -46,12 +46,30 @@ export interface ToolFactoryProps {
 // biome-ignore lint/suspicious/noExplicitAny: Tool generic requires any
 export type ToolFactory = (props: ToolFactoryProps) => Tool<any, any>;
 
+export interface ToolMetadata {
+  /**
+   * High-level usage instructions for the AI.
+   * Explains when and how to use this tool effectively.
+   */
+  usage?: string;
+
+  /**
+   * Example calls or prompts that this tool handles well.
+   * Useful for few-shot prompting.
+   */
+  examples?: string[];
+}
+
 export interface ToolDefinition {
   factory: ToolFactory;
   displayName: string;
   description: string;
   category: ToolCategory;
   requiresApproval?: boolean;
+  metadata?: {
+    usage?: string;
+    examples?: string[];
+  };
 }
 
 export type ToolCategory =

@@ -275,7 +275,19 @@ async function fetchMovieCredits(
       }
     });
 
-    const details = await Promise.all(detailsPromises);
+    // Use Promise.allSettled for better error tolerance - individual movie
+    // detail fetches can fail without breaking the entire batch
+    const settledDetails = await Promise.allSettled(detailsPromises);
+
+    // Extract fulfilled results (nulls are already handled in the promise)
+    const details = settledDetails
+      .filter(
+        (
+          result
+        ): result is PromiseFulfilledResult<JellyseerrMovieDetails | null> =>
+          result.status === "fulfilled"
+      )
+      .map((result) => result.value);
 
     for (const movieDetails of details) {
       if (!movieDetails) {

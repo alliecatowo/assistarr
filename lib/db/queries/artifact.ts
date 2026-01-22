@@ -3,6 +3,7 @@ import type { ArtifactKind } from "@/components/artifact/artifact";
 import { ChatSDKError } from "../../errors";
 import { db } from "../db";
 import { document, type Suggestion, suggestion } from "../schema";
+import { withTransaction } from "../utils";
 
 export async function saveDocument({
   id,
@@ -76,19 +77,21 @@ export async function deleteDocumentsByIdAfterTimestamp({
   timestamp: Date;
 }) {
   try {
-    await db
-      .delete(suggestion)
-      .where(
-        and(
-          eq(suggestion.documentId, id),
-          gt(suggestion.documentCreatedAt, timestamp)
-        )
-      );
+    return await withTransaction(async (tx) => {
+      await tx
+        .delete(suggestion)
+        .where(
+          and(
+            eq(suggestion.documentId, id),
+            gt(suggestion.documentCreatedAt, timestamp)
+          )
+        );
 
-    return await db
-      .delete(document)
-      .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
-      .returning();
+      return await tx
+        .delete(document)
+        .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
+        .returning();
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",

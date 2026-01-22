@@ -23,9 +23,11 @@ describe("RadarrClient", () => {
 
   it("should fetch system status", async () => {
     const client = new RadarrClient(mockConfig);
+    const mockResponse = { version: "1.0.0" };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ version: "1.0.0" }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const status = await client.getSystemStatus();

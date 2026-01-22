@@ -369,15 +369,47 @@ export async function GET() {
   const userId = session.user.id;
   PluginManager.getInstance();
 
-  const [radarr, sonarr, jellyseerr, jellyfin, qbittorrent] = await Promise.all(
-    [
+  // Use Promise.allSettled for better error tolerance - each service check
+  // already handles its own errors, but this adds another layer of resilience
+  const [radarrRes, sonarrRes, jellyseerrRes, jellyfinRes, qbittorrentRes] =
+    await Promise.allSettled([
       checkRadarrStatus(userId),
       checkSonarrStatus(userId),
       checkJellyseerrStatus(userId),
       checkJellyfinStatus(userId),
       checkQBittorrentStatus(userId),
-    ]
-  );
+    ]);
+
+  // Extract results with fallback defaults for rejected promises
+  const defaultServiceResult = {
+    status: {
+      configured: false,
+      enabled: false,
+      online: false,
+      error: "Service check failed",
+    } as ServiceStatus,
+  };
+
+  const radarr =
+    radarrRes.status === "fulfilled"
+      ? radarrRes.value
+      : { ...defaultServiceResult, queue: [] as QueueItem[] };
+  const sonarr =
+    sonarrRes.status === "fulfilled"
+      ? sonarrRes.value
+      : { ...defaultServiceResult, queue: [] as QueueItem[] };
+  const jellyseerr =
+    jellyseerrRes.status === "fulfilled"
+      ? jellyseerrRes.value
+      : { ...defaultServiceResult, count: 0 };
+  const jellyfin =
+    jellyfinRes.status === "fulfilled"
+      ? jellyfinRes.value
+      : { ...defaultServiceResult, count: 0 };
+  const qbittorrent =
+    qbittorrentRes.status === "fulfilled"
+      ? qbittorrentRes.value
+      : { ...defaultServiceResult, torrents: [] as TorrentItem[] };
 
   const status: MonitorStatus = {
     services: {

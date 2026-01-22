@@ -28,15 +28,17 @@ describe("JellyseerrClient", () => {
       }
     }
     const client = new TestClient(mockConfig);
+    const mockResponse = { status: "ok" };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ status: "ok" }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     await client.exposeGet("/status");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://jellyseerr:5055/status",
+      "http://jellyseerr:5055/api/v1/status",
       expect.objectContaining({
         headers: expect.objectContaining({
           "X-Api-Key": "seerr-key",

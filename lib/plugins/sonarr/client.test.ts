@@ -23,9 +23,11 @@ describe("SonarrClient", () => {
 
   it("should fetch system status", async () => {
     const client = new SonarrClient(mockConfig);
+    const mockResponse = { version: "3.0.0" };
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ version: "3.0.0" }),
+      json: async () => mockResponse,
+      text: async () => JSON.stringify(mockResponse),
     });
 
     const status = await client.getSystemStatus();

@@ -1,42 +1,26 @@
 import { geolocation } from "@vercel/functions";
-import {
-  convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-  generateId,
-  stepCountIs,
-  streamText,
-} from "ai";
+import { createUIMessageStreamResponse, generateId } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { auth, type UserType } from "@/app/(auth)/auth";
-import { entitlementsByUserType } from "@/lib/ai/entitlements";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
-import { recommendMedia } from "@/lib/ai/tools/recommend-media";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
-import { updateDocument } from "@/lib/ai/tools/update-document";
-import { isProductionEnvironment } from "@/lib/constants";
+import { auth } from "@/app/(auth)/auth";
 import {
   createStreamId,
   deleteChatById,
   getChatById,
-  getMessageCountByUserId,
-  getMessagesByChatId,
   getServiceConfigs,
-  saveChat,
-  saveMessages,
-  updateChatTitleById,
-  updateMessage,
 } from "@/lib/db/queries/index";
-import type { DBMessage, ServiceConfig } from "@/lib/db/schema";
+import { env } from "@/lib/env";
 import { ChatSDKError } from "@/lib/errors";
-import { pluginManager } from "@/lib/plugins/registry";
 import type { ChatMessage } from "@/lib/types";
-import { convertToUIMessages, generateUUID } from "@/lib/utils";
-import { generateTitleFromUserMessage } from "../../actions";
+import { buildUIMessages, loadChatAndMessages } from "./chat-loader";
+import { saveUserMessage } from "./message-persistence";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
+import {
+  buildRequestHints,
+  configsToMap,
+  createChatStream,
+} from "./stream-handler";
+import { validateSessionAndRateLimit } from "./validation";
 
 export const maxDuration = 60;
 
@@ -49,74 +33,6 @@ function getStreamContext() {
 }
 
 export { getStreamContext };
-
-/**
- * Convert service configs array to a Map for efficient lookup
- */
-function configsToMap(configs: ServiceConfig[]): Map<string, ServiceConfig> {
-  const map = new Map<string, ServiceConfig>();
-  for (const config of configs) {
-    map.set(config.serviceName, config);
-  }
-  return map;
-}
-
-/**
- * Validates session and checks rate limits
- */
-async function validateSessionAndRateLimit() {
-  const session = await auth();
-
-  if (!session?.user) {
-    throw new ChatSDKError("unauthorized:chat");
-  }
-
-  const userType: UserType = session.user.type;
-  const messageCount = await getMessageCountByUserId({
-    id: session.user.id,
-    differenceInHours: 24,
-  });
-
-  if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-    throw new ChatSDKError("rate_limit:chat");
-  }
-
-  return session;
-}
-
-/**
- * Loads or initializes chat and messages
- */
-async function loadChatAndMessages(
-  id: string,
-  message: ChatMessage | undefined,
-  isToolApprovalFlow: boolean,
-  userId: string,
-  visibility: "public" | "private"
-) {
-  const chat = await getChatById({ id });
-  let messagesFromDb: DBMessage[] = [];
-  let titlePromise: Promise<string> | null = null;
-
-  if (chat) {
-    if (chat.userId !== userId) {
-      throw new ChatSDKError("forbidden:chat");
-    }
-    if (!isToolApprovalFlow) {
-      messagesFromDb = await getMessagesByChatId({ id });
-    }
-  } else if (message?.role === "user") {
-    await saveChat({
-      id,
-      userId,
-      title: "New chat",
-      visibility,
-    });
-    titlePromise = generateTitleFromUserMessage({ message });
-  }
-
-  return { messagesFromDb, titlePromise };
-}
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -139,7 +55,7 @@ export async function POST(request: Request) {
       mode,
     } = requestBody;
 
-    const session = await validateSessionAndRateLimit();
+    const { session, userAIConfig } = await validateSessionAndRateLimit();
     const isToolApprovalFlow = Boolean(messages);
 
     const { messagesFromDb, titlePromise } = await loadChatAndMessages(
@@ -150,162 +66,42 @@ export async function POST(request: Request) {
       selectedVisibilityType
     );
 
-    const uiMessages = isToolApprovalFlow
-      ? (messages as ChatMessage[])
-      : [...convertToUIMessages(messagesFromDb), message as ChatMessage];
+    const uiMessages = buildUIMessages(
+      isToolApprovalFlow,
+      messages as ChatMessage[],
+      messagesFromDb,
+      message as ChatMessage
+    );
 
-    const { longitude, latitude, city, country } = geolocation(request);
-    const requestHints: RequestHints = { longitude, latitude, city, country };
+    const geo = geolocation(request);
+    const requestHints = buildRequestHints(geo);
 
     if (message?.role === "user") {
-      await saveMessages({
-        messages: [
-          {
-            chatId: id,
-            id: message.id,
-            role: "user",
-            parts: message.parts,
-            attachments: [],
-            createdAt: new Date(),
-          },
-        ],
-      });
+      await saveUserMessage(id, message as ChatMessage);
     }
 
-    const isReasoningModel =
-      selectedChatModel.includes("reasoning") ||
-      selectedChatModel.includes("thinking");
-    const modelMessages = await convertToModelMessages(uiMessages);
-
-    // Fetch configs and initialize tools
+    // Fetch configs for service tools
     const serviceConfigs = await getServiceConfigs({ userId: session.user.id });
     const configsMap = configsToMap(serviceConfigs);
 
-    // Base tools defined/collected inside stream execution for dataStream access
-
-    const stream = createUIMessageStream({
-      originalMessages: isToolApprovalFlow ? uiMessages : undefined,
-      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Chat stream logic is complex
-      execute: async ({ writer: dataStream }) => {
-        // Re-initialize tools with dataStream
-        const baseTools = {
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
-          requestSuggestions: requestSuggestions({ session, dataStream }),
-          recommendMedia: recommendMedia(),
-        };
-
-        // Dynamically load service tools based on config
-        const serviceTools = pluginManager.getToolsForSession(
-          session,
-          configsMap,
-          mode
-        );
-
-        const effectiveTools = {
-          ...baseTools,
-          ...serviceTools,
-        };
-
-        const result = streamText({
-          model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({
-            selectedChatModel,
-            requestHints,
-            debugMode,
-            mode,
-          }),
-          messages: modelMessages,
-          stopWhen: stepCountIs(8),
-          experimental_activeTools: Object.keys(effectiveTools) as Array<
-            keyof typeof effectiveTools
-          >,
-          providerOptions: {
-            ...(isReasoningModel && selectedChatModel.includes("claude")
-              ? {
-                  anthropic: {
-                    thinking: { type: "enabled", budgetTokens: 10_000 },
-                  },
-                }
-              : {}),
-            ...(selectedChatModel.includes("gemini")
-              ? {
-                  google: selectedChatModel.includes("gemini-3")
-                    ? {
-                        thinkingConfig: {
-                          thinkingLevel: "high",
-                          includeThoughts: true,
-                        },
-                      }
-                    : {
-                        thinkingConfig: {
-                          thinkingBudget: 8192,
-                          includeThoughts: true,
-                        },
-                      },
-                }
-              : {}),
-          },
-          tools: effectiveTools,
-          experimental_telemetry: {
-            isEnabled: isProductionEnvironment,
-            functionId: "stream-text",
-          },
-        });
-
-        dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
-
-        if (titlePromise) {
-          const title = await titlePromise;
-          dataStream.write({ type: "data-chat-title", data: title });
-          updateChatTitleById({ chatId: id, title });
-        }
-      },
-      generateId: generateUUID,
-      onFinish: async ({ messages: finishedMessages }) => {
-        if (isToolApprovalFlow) {
-          for (const finishedMsg of finishedMessages) {
-            const existingMsg = uiMessages.find((m) => m.id === finishedMsg.id);
-            if (existingMsg) {
-              await updateMessage({
-                id: finishedMsg.id,
-                parts: finishedMsg.parts,
-              });
-            } else {
-              await saveMessages({
-                messages: [
-                  {
-                    id: finishedMsg.id,
-                    role: finishedMsg.role,
-                    parts: finishedMsg.parts,
-                    createdAt: new Date(),
-                    attachments: [],
-                    chatId: id,
-                  },
-                ],
-              });
-            }
-          }
-        } else if (finishedMessages.length > 0) {
-          await saveMessages({
-            messages: finishedMessages.map((currentMessage) => ({
-              id: currentMessage.id,
-              role: currentMessage.role,
-              parts: currentMessage.parts,
-              createdAt: new Date(),
-              attachments: [],
-              chatId: id,
-            })),
-          });
-        }
-      },
-      onError: () => "Oops, an error occurred!",
+    const stream = createChatStream({
+      chatId: id,
+      session,
+      selectedChatModel,
+      uiMessages,
+      configsMap,
+      requestHints,
+      debugMode,
+      mode,
+      isToolApprovalFlow,
+      titlePromise,
+      userAIConfig,
     });
 
     return createUIMessageStreamResponse({
       stream,
       async consumeSseStream({ stream: sseStream }) {
-        if (!process.env.REDIS_URL) {
+        if (!env.REDIS_URL) {
           return;
         }
         try {
