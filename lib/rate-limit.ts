@@ -1,5 +1,8 @@
 import { createClient, type RedisClientType } from "redis";
 import { env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("rate-limit");
 
 /**
  * Sliding window rate limiter with Redis and in-memory fallback
@@ -45,7 +48,7 @@ async function getRedisClient(): Promise<RedisClientType | null> {
     redisClient = createClient({ url: env.REDIS_URL });
 
     redisClient.on("error", (err) => {
-      console.error("Redis client error:", err);
+      log.error({ err }, "Redis client error");
       redisConnectionFailed = true;
       redisClient = null;
     });
@@ -53,7 +56,10 @@ async function getRedisClient(): Promise<RedisClientType | null> {
     await redisClient.connect();
     return redisClient;
   } catch (error) {
-    console.warn("Failed to connect to Redis, using in-memory rate limiting:", error);
+    log.warn(
+      { err: error },
+      "Failed to connect to Redis, using in-memory rate limiting"
+    );
     redisConnectionFailed = true;
     return null;
   }
@@ -129,7 +135,7 @@ async function checkRateLimitRedis(
       resetIn: Math.max(0, result[2]),
     };
   } catch (error) {
-    console.error("Redis rate limit check failed:", error);
+    log.error({ err: error }, "Redis rate limit check failed");
     // Fall back to in-memory on error
     return checkRateLimitInMemory(key, windowMs, maxRequests);
   }
@@ -207,8 +213,8 @@ export function cleanupInMemoryStore(windowMs: number): void {
  * Main rate limiter class
  */
 export class RateLimiter {
-  private windowMs: number;
-  private maxRequests: number;
+  private readonly windowMs: number;
+  private readonly maxRequests: number;
 
   constructor(options: RateLimiterOptions) {
     this.windowMs = options.windowMs;
@@ -224,12 +230,7 @@ export class RateLimiter {
     const client = await getRedisClient();
 
     if (client) {
-      return checkRateLimitRedis(
-        client,
-        key,
-        this.windowMs,
-        this.maxRequests
-      );
+      return checkRateLimitRedis(client, key, this.windowMs, this.maxRequests);
     }
 
     return checkRateLimitInMemory(key, this.windowMs, this.maxRequests);
@@ -251,9 +252,8 @@ export class RateLimiter {
         await client.zRemRangeByScore(redisKey, "-inf", windowStart);
         const count = await client.zCard(redisKey);
         const oldest = await client.zRange(redisKey, 0, 0, { REV: false });
-        const oldestScore = oldest.length > 0
-          ? await client.zScore(redisKey, oldest[0])
-          : null;
+        const oldestScore =
+          oldest.length > 0 ? await client.zScore(redisKey, oldest[0]) : null;
 
         const resetIn = oldestScore
           ? Math.max(0, oldestScore + this.windowMs - now)
@@ -265,16 +265,17 @@ export class RateLimiter {
           resetIn,
         };
       } catch (error) {
-        console.error("Redis peek failed:", error);
+        log.error({ err: error }, "Redis peek failed");
       }
     }
 
     // In-memory peek
     const timestamps = inMemoryStore.get(key) || [];
     const validTimestamps = timestamps.filter((ts) => ts > windowStart);
-    const resetIn = validTimestamps.length > 0
-      ? Math.max(0, validTimestamps[0] + this.windowMs - now)
-      : this.windowMs;
+    const resetIn =
+      validTimestamps.length > 0
+        ? Math.max(0, validTimestamps[0] + this.windowMs - now)
+        : this.windowMs;
 
     return {
       allowed: validTimestamps.length < this.maxRequests,

@@ -1,13 +1,21 @@
 import { and, asc, count, eq, gte, inArray } from "drizzle-orm";
 import { ChatSDKError } from "../../errors";
+import { createLogger } from "../../logger";
 import { db } from "../db";
 import { chat, type DBMessage, message, vote } from "../schema";
 import { withTransaction } from "../utils";
 
+const log = createLogger("db:message");
+
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
+    log.debug(
+      { count: messages.length, chatId: messages[0]?.chatId },
+      "Saving messages"
+    );
     return await db.insert(message).values(messages);
   } catch (_error) {
+    log.error({ error: _error }, "Failed to save messages");
     throw new ChatSDKError("bad_request:database", "Failed to save messages");
   }
 }
@@ -20,20 +28,27 @@ export async function updateMessage({
   parts: DBMessage["parts"];
 }) {
   try {
+    log.debug({ messageId: id }, "Updating message");
     return await db.update(message).set({ parts }).where(eq(message.id, id));
   } catch (_error) {
+    log.error({ error: _error, messageId: id }, "Failed to update message");
     throw new ChatSDKError("bad_request:database", "Failed to update message");
   }
 }
 
 export async function getMessagesByChatId({ id }: { id: string }) {
   try {
+    log.debug({ chatId: id }, "Fetching messages by chat id");
     return await db
       .select()
       .from(message)
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
   } catch (_error) {
+    log.error(
+      { error: _error, chatId: id },
+      "Failed to get messages by chat id"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get messages by chat id"
@@ -51,6 +66,7 @@ export async function voteMessage({
   type: "up" | "down";
 }) {
   try {
+    log.debug({ chatId, messageId, type }, "Voting on message");
     return await withTransaction(async (tx) => {
       const [existingVote] = await tx
         .select()
@@ -70,6 +86,7 @@ export async function voteMessage({
       });
     });
   } catch (_error) {
+    log.error({ error: _error, chatId, messageId }, "Failed to vote message");
     throw new ChatSDKError("bad_request:database", "Failed to vote message");
   }
 }
@@ -87,8 +104,10 @@ export async function getVotesByChatId({ id }: { id: string }) {
 
 export async function getMessageById({ id }: { id: string }) {
   try {
+    log.debug({ messageId: id }, "Fetching message by id");
     return await db.select().from(message).where(eq(message.id, id));
   } catch (_error) {
+    log.error({ error: _error, messageId: id }, "Failed to get message by id");
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message by id"
@@ -146,6 +165,10 @@ export async function getMessageCountByUserId({
   differenceInHours: number;
 }) {
   try {
+    log.debug(
+      { userId: id, differenceInHours },
+      "Fetching message count by user id"
+    );
     const twentyFourHoursAgo = new Date(
       Date.now() - differenceInHours * 60 * 60 * 1000
     );
@@ -165,6 +188,10 @@ export async function getMessageCountByUserId({
 
     return stats?.count ?? 0;
   } catch (_error) {
+    log.error(
+      { error: _error, userId: id },
+      "Failed to get message count by user id"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message count by user id"

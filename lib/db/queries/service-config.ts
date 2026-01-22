@@ -1,15 +1,21 @@
 import { and, eq } from "drizzle-orm";
-import { decrypt, encrypt } from "../../crypto";
+import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
 import { ChatSDKError } from "../../errors";
+import { createLogger } from "../../logger";
 import { db } from "../db";
 import { type ServiceConfig, serviceConfig } from "../schema";
 import { withTransaction } from "../utils";
 
+const log = createLogger("db:service-config");
+
 /**
- * Decrypts the apiKey field in a service config.
- * Returns a new object with the decrypted apiKey.
+ * Decrypts the apiKey field in a service config if encryption is configured.
+ * Falls back to returning the config as-is for legacy unencrypted data.
  */
 function decryptServiceConfig(config: ServiceConfig): ServiceConfig {
+  if (!isEncryptionConfigured()) {
+    return config;
+  }
   try {
     return {
       ...config,
@@ -22,12 +28,23 @@ function decryptServiceConfig(config: ServiceConfig): ServiceConfig {
   }
 }
 
+/**
+ * Encrypts an API key if encryption is configured.
+ */
+function encryptApiKey(apiKey: string): string {
+  if (!isEncryptionConfigured()) {
+    return apiKey;
+  }
+  return encrypt(apiKey);
+}
+
 export async function getServiceConfigs({
   userId,
 }: {
   userId: string;
 }): Promise<ServiceConfig[]> {
   try {
+    log.debug({ userId }, "Fetching service configs");
     const configs = await db
       .select()
       .from(serviceConfig)
@@ -36,6 +53,7 @@ export async function getServiceConfigs({
     // Decrypt apiKey for each config
     return configs.map(decryptServiceConfig);
   } catch (_error) {
+    log.error({ error: _error, userId }, "Failed to get service configs");
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get service configs"
@@ -51,6 +69,7 @@ export async function getServiceConfig({
   serviceName: string;
 }): Promise<ServiceConfig | null> {
   try {
+    log.debug({ userId, serviceName }, "Fetching service config");
     const [config] = await db
       .select()
       .from(serviceConfig)
@@ -62,12 +81,17 @@ export async function getServiceConfig({
       );
 
     if (!config) {
+      log.debug({ userId, serviceName }, "Service config not found");
       return null;
     }
 
     // Decrypt apiKey before returning
     return decryptServiceConfig(config);
   } catch (_error) {
+    log.error(
+      { error: _error, userId, serviceName },
+      "Failed to get service config"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get service config"
@@ -89,8 +113,12 @@ export async function upsertServiceConfig({
   isEnabled?: boolean;
 }): Promise<ServiceConfig> {
   try {
-    // Encrypt the apiKey before storing
-    const encryptedApiKey = encrypt(apiKey);
+    log.info(
+      { userId, serviceName, baseUrl, isEnabled },
+      "Upserting service config"
+    );
+    // Encrypt the apiKey before storing (if encryption is configured)
+    const encryptedApiKey = encryptApiKey(apiKey);
 
     return await withTransaction(async (tx) => {
       // Check if config exists by querying directly (not using getServiceConfig
@@ -141,6 +169,10 @@ export async function upsertServiceConfig({
       return { ...newConfig, apiKey };
     });
   } catch (_error) {
+    log.error(
+      { error: _error, userId, serviceName },
+      "Failed to upsert service config"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to upsert service config"
@@ -156,6 +188,7 @@ export async function deleteServiceConfig({
   serviceName: string;
 }): Promise<ServiceConfig | null> {
   try {
+    log.info({ userId, serviceName }, "Deleting service config");
     const [deletedConfig] = await db
       .delete(serviceConfig)
       .where(
@@ -173,6 +206,10 @@ export async function deleteServiceConfig({
     // Return with decrypted apiKey for consistency
     return decryptServiceConfig(deletedConfig);
   } catch (_error) {
+    log.error(
+      { error: _error, userId, serviceName },
+      "Failed to delete service config"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete service config"

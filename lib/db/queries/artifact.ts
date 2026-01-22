@@ -1,9 +1,12 @@
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import type { ArtifactKind } from "@/components/artifact/artifact";
 import { ChatSDKError } from "../../errors";
+import { createLogger } from "../../logger";
 import { db } from "../db";
 import { document, type Suggestion, suggestion } from "../schema";
 import { withTransaction } from "../utils";
+
+const log = createLogger("db:artifact");
 
 export async function saveDocument({
   id,
@@ -19,6 +22,7 @@ export async function saveDocument({
   userId: string;
 }) {
   try {
+    log.debug({ documentId: id, userId, title, kind }, "Saving document");
     return await db
       .insert(document)
       .values({
@@ -31,12 +35,14 @@ export async function saveDocument({
       })
       .returning();
   } catch (_error) {
+    log.error({ error: _error, documentId: id }, "Failed to save document");
     throw new ChatSDKError("bad_request:database", "Failed to save document");
   }
 }
 
 export async function getDocumentsById({ id }: { id: string }) {
   try {
+    log.debug({ documentId: id }, "Fetching documents by id");
     const documents = await db
       .select()
       .from(document)
@@ -45,6 +51,10 @@ export async function getDocumentsById({ id }: { id: string }) {
 
     return documents;
   } catch (_error) {
+    log.error(
+      { error: _error, documentId: id },
+      "Failed to get documents by id"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get documents by id"
@@ -54,6 +64,7 @@ export async function getDocumentsById({ id }: { id: string }) {
 
 export async function getDocumentById({ id }: { id: string }) {
   try {
+    log.debug({ documentId: id }, "Fetching document by id");
     const [selectedDocument] = await db
       .select()
       .from(document)
@@ -62,6 +73,10 @@ export async function getDocumentById({ id }: { id: string }) {
 
     return selectedDocument;
   } catch (_error) {
+    log.error(
+      { error: _error, documentId: id },
+      "Failed to get document by id"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get document by id"
@@ -106,8 +121,10 @@ export async function saveSuggestions({
   suggestions: Suggestion[];
 }) {
   try {
+    log.debug({ count: suggestions.length }, "Saving suggestions");
     return await db.insert(suggestion).values(suggestions);
   } catch (_error) {
+    log.error({ error: _error }, "Failed to save suggestions");
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to save suggestions"
@@ -121,11 +138,16 @@ export async function getSuggestionsByDocumentId({
   documentId: string;
 }) {
   try {
+    log.debug({ documentId }, "Fetching suggestions by document id");
     return await db
       .select()
       .from(suggestion)
       .where(eq(suggestion.documentId, documentId));
   } catch (_error) {
+    log.error(
+      { error: _error, documentId },
+      "Failed to get suggestions by document id"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get suggestions by document id"

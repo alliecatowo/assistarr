@@ -28,7 +28,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
  * Much higher limits since they're paying for their own usage.
  */
 export const byokEntitlements: Entitlements = {
-  maxMessagesPerDay: 10000, // Effectively unlimited for personal use
+  maxMessagesPerDay: 10_000, // Effectively unlimited for personal use
   maxMessagesPerMinute: 60, // 1 request per second
 };
 

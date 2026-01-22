@@ -1,9 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
 import { ChatSDKError } from "../../errors";
+import { createLogger } from "../../logger";
 import { db } from "../db";
 import { type UserAIConfig, userAIConfig } from "../schema";
 import { withTransaction } from "../utils";
+
+const log = createLogger("db:user-ai-config");
 
 /**
  * Decrypts the API key in a user AI config if encryption is configured.
@@ -40,12 +43,14 @@ export async function getUserAIConfigs({
   userId: string;
 }): Promise<UserAIConfig[]> {
   try {
+    log.debug({ userId }, "Fetching user AI configs");
     const configs = await db
       .select()
       .from(userAIConfig)
       .where(eq(userAIConfig.userId, userId));
     return configs.map(decryptConfig);
   } catch (_error) {
+    log.error({ error: _error, userId }, "Failed to get user AI configs");
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get user AI configs"
@@ -61,6 +66,7 @@ export async function getUserAIConfig({
   providerName: string;
 }): Promise<UserAIConfig | null> {
   try {
+    log.debug({ userId, providerName }, "Fetching user AI config");
     const [config] = await db
       .select()
       .from(userAIConfig)
@@ -72,6 +78,10 @@ export async function getUserAIConfig({
       );
     return config ? decryptConfig(config) : null;
   } catch (_error) {
+    log.error(
+      { error: _error, userId, providerName },
+      "Failed to get user AI config"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get user AI config"
@@ -89,6 +99,7 @@ export async function getActiveUserAIConfig({
   userId: string;
 }): Promise<UserAIConfig | null> {
   try {
+    log.debug({ userId }, "Fetching active user AI config");
     const configs = await getUserAIConfigs({ userId });
     const enabledConfigs = configs.filter((c) => c.isEnabled);
 
@@ -111,6 +122,7 @@ export async function getActiveUserAIConfig({
     // Return the first enabled config if no priority match
     return enabledConfigs[0] ?? null;
   } catch (_error) {
+    log.error({ error: _error, userId }, "Failed to get active user AI config");
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get active user AI config"
@@ -130,6 +142,7 @@ export async function upsertUserAIConfig({
   isEnabled?: boolean;
 }): Promise<UserAIConfig> {
   try {
+    log.info({ userId, providerName, isEnabled }, "Upserting user AI config");
     return await withTransaction(async (tx) => {
       const [existingConfig] = await tx
         .select()
@@ -173,6 +186,10 @@ export async function upsertUserAIConfig({
       return decryptConfig(newConfig);
     });
   } catch (_error) {
+    log.error(
+      { error: _error, userId, providerName },
+      "Failed to upsert user AI config"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to upsert user AI config"
@@ -188,6 +205,7 @@ export async function deleteUserAIConfig({
   providerName: string;
 }): Promise<UserAIConfig | null> {
   try {
+    log.info({ userId, providerName }, "Deleting user AI config");
     const [deletedConfig] = await db
       .delete(userAIConfig)
       .where(
@@ -199,6 +217,10 @@ export async function deleteUserAIConfig({
       .returning();
     return deletedConfig ? decryptConfig(deletedConfig) : null;
   } catch (_error) {
+    log.error(
+      { error: _error, userId, providerName },
+      "Failed to delete user AI config"
+    );
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete user AI config"

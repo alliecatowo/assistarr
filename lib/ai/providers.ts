@@ -1,6 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { gateway } from "@ai-sdk/gateway";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {

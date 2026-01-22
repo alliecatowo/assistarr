@@ -1,9 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createLogger } from "@/lib/logger";
 import type { ToolDefinition } from "@/lib/plugins/core/types";
 import { pluginManager } from "@/lib/plugins/registry";
 import { formatTemplateSync } from "@/lib/templates/liquid";
 import type { RequestHints } from "./prompts";
+
+const log = createLogger("prompt-engine");
+
+// Get the directory of the current module file
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Cache templates in memory to avoid reading disk on every request
 const templateCache = new Map<string, string>();
@@ -14,21 +21,15 @@ function getTemplate(name: string): string {
     return cached;
   }
 
-  // Resolve path to templates
-  const templatePath = path.join(
-    process.cwd(),
-    "lib",
-    "ai",
-    "templates",
-    `${name}.liquid`
-  );
+  // Resolve path to templates relative to this file
+  const templatePath = path.join(__dirname, "templates", `${name}.liquid`);
 
   try {
     const content = fs.readFileSync(templatePath, "utf-8");
     templateCache.set(name, content);
     return content;
   } catch (error) {
-    console.error(`Failed to load template: ${name}`, error);
+    log.error({ err: error, templateName: name }, "Failed to load template");
     throw new Error(`Template not found: ${name}`);
   }
 }

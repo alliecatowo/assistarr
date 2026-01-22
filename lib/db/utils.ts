@@ -44,7 +44,7 @@ export type DbInstance = typeof db | Transaction;
  * });
  * ```
  */
-export async function withTransaction<T>(
+export function withTransaction<T>(
   fn: (tx: Transaction) => Promise<T>
 ): Promise<T> {
   return db.transaction(fn);
