@@ -47,6 +47,13 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next
+          key: nextjs-build-${{ hashFiles('package.json', 'pnpm-lock.yaml', 'app/**', 'components/**', 'lib/**') }}
+          restore-keys: |
+            nextjs-build-
       - name: Build
         run: pnpm build
         env:
@@ -71,4 +78,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Run tests
-        run: pnpm test -- --run
+        run: pnpm test -- --run --coverage
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
