@@ -68,7 +68,7 @@ const GENRES: Genre[] = [
     label: "Romance",
     icon: HeartIcon,
     query: "romantic movies and shows",
-    tmdbId: 10749,
+    tmdbId: 10_749,
   },
   {
     id: "thriller",
@@ -202,8 +202,9 @@ export function GenreCarousel({ disabled }: GenreCarouselProps) {
           return (
             <Button
               className={cn(
-                "gap-1.5 transition-all flex-shrink-0 whitespace-nowrap relative",
-                isSelected && "bg-primary text-primary-foreground hover:bg-primary/90"
+                "h-7 gap-1 px-2.5 transition-all flex-shrink-0 whitespace-nowrap relative text-xs",
+                isSelected &&
+                  "bg-primary text-primary-foreground hover:bg-primary/90"
               )}
               disabled={disabled || isLoading}
               key={genre.id}
@@ -211,10 +212,10 @@ export function GenreCarousel({ disabled }: GenreCarouselProps) {
               size="sm"
               variant={isSelected ? "default" : "outline"}
             >
-              <Icon className="size-3.5" />
+              <Icon className="size-3" />
               {genre.label}
               {isTopGenre && index < 3 && (
-                <span className="absolute -top-1 -right-1 size-2 bg-primary rounded-full" />
+                <span className="absolute -top-0.5 -right-0.5 size-1.5 bg-primary rounded-full" />
               )}
             </Button>
           );

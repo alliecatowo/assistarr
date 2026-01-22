@@ -66,11 +66,11 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="Toggle sidebar"
                 className="h-8 w-8 transition-colors hover:bg-accent"
                 onClick={toggleSidebar}
                 size="icon"
                 variant="ghost"
-                aria-label="Toggle sidebar"
               >
                 <PanelLeftIcon className="size-5" />
               </Button>
@@ -87,12 +87,12 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
           {/* Browse Mode: Show prompt + quick actions + genre filters */}
           {mode === "browse" && !isLoading && (
             <>
-              <div className="mb-8 text-center">
-                <h2 className="mb-4 text-2xl font-medium text-muted-foreground">
+              <div className="mb-6 text-center">
+                <h2 className="mb-3 text-lg font-medium text-muted-foreground">
                   What are you in the mood for?
                 </h2>
-                <QuickActions onAction={submitQuery} disabled={isLoading} />
-                <div className="mt-6">
+                <QuickActions disabled={isLoading} onAction={submitQuery} />
+                <div className="mt-4">
                   <GenreCarousel />
                 </div>
               </div>
@@ -150,7 +150,7 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
             className={cn(
               "transition-opacity duration-300",
               isLoading && "opacity-30",
-              expandedItem && "opacity-50 pointer-events-none",
+              expandedItem && "opacity-50 pointer-events-none"
             )}
           >
             {mode === "ai-controlled" ? (

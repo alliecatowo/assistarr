@@ -39,23 +39,21 @@ interface QuickActionsProps {
 
 export function QuickActions({ onAction, disabled }: QuickActionsProps) {
   const handleClick = (query: string) => {
-    console.log("[QuickActions] Button clicked with query:", query);
-    console.log("[QuickActions] onAction function:", typeof onAction);
     onAction(query);
   };
 
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <div className="flex flex-wrap justify-center gap-1.5">
       {QUICK_ACTIONS.map(({ label, icon: Icon, query }) => (
         <Button
-          className="gap-2"
+          className="h-7 gap-1 px-2.5 text-xs"
           disabled={disabled}
           key={label}
           onClick={() => handleClick(query)}
           size="sm"
           variant="outline"
         >
-          <Icon className="size-4" />
+          <Icon className="size-3" />
           {label}
         </Button>
       ))}
