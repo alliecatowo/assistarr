@@ -26,7 +26,7 @@ export async function formatTemplate(
   template: string,
   variables: Record<string, unknown>
 ): Promise<string> {
-  return liquidEngine.parseAndRender(template, variables);
+  return await liquidEngine.parseAndRender(template, variables);
 }
 
 /**
@@ -41,21 +41,29 @@ export function formatTemplateSync(
 
 // Custom filters for the liquid engine
 liquidEngine.registerFilter("ensure_space_before", (value: string) => {
-  if (!value) return "";
+  if (!value) {
+    return "";
+  }
   return ` ${value}`;
 });
 liquidEngine.registerFilter("ensure_space_after", (value: string) => {
-  if (!value) return "";
+  if (!value) {
+    return "";
+  }
   return `${value} `;
 });
 liquidEngine.registerFilter("wrap_parens", (value: string | number | null) => {
-  if (value === null || value === undefined || value === "") return "";
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
   return `(${value})`;
 });
 liquidEngine.registerFilter(
   "wrap_brackets",
   (value: string | number | null) => {
-    if (value === null || value === undefined || value === "") return "";
+    if (value === null || value === undefined || value === "") {
+      return "";
+    }
     return `[${value}]`;
   }
 );

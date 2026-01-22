@@ -72,28 +72,11 @@ export class ApiClient {
     const url = this.getUrl(path, params);
     const headers = await this.getHeaders();
 
-    console.log(`[ApiClient] GET ${url}`);
-    const headersRecord = headers as Record<string, string>;
-    console.log("[ApiClient] Headers:", {
-      ...headers,
-      "X-Api-Key": headersRecord["X-Api-Key"] ? "***" : undefined,
-      "X-Emby-Token": headersRecord["X-Emby-Token"] ? "***" : undefined,
-    });
-
     const response = await fetch(url, {
       headers,
     });
 
-    console.log(
-      `[ApiClient] Response: ${response.status} ${response.statusText}`
-    );
-
     if (!response.ok) {
-      const text = await response.text();
-      console.error(
-        "[ApiClient] Error Body (first 500 chars):",
-        text.slice(0, 500)
-      );
       throw new Error(
         `GET ${path} failed: ${response.status} ${response.statusText}`
       );

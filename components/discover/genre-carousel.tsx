@@ -172,9 +172,15 @@ export function GenreCarousel({ disabled }: GenreCarouselProps) {
       );
 
       // Genres matching user's library come first
-      if (aMatch !== -1 && bMatch === -1) return -1;
-      if (aMatch === -1 && bMatch !== -1) return 1;
-      if (aMatch !== -1 && bMatch !== -1) return aMatch - bMatch;
+      if (aMatch !== -1 && bMatch === -1) {
+        return -1;
+      }
+      if (aMatch === -1 && bMatch !== -1) {
+        return 1;
+      }
+      if (aMatch !== -1 && bMatch !== -1) {
+        return aMatch - bMatch;
+      }
 
       // Otherwise keep original order
       return 0;
@@ -193,11 +199,9 @@ export function GenreCarousel({ disabled }: GenreCarouselProps) {
         {orderedGenres.map((genre, index) => {
           const Icon = genre.icon;
           const isSelected = selectedGenre === genre.id;
-          const isTopGenre =
-            userProfile?.topGenres &&
-            userProfile.topGenres.some((g) =>
-              genre.label.toLowerCase().includes(g.genre.toLowerCase())
-            );
+          const isTopGenre = userProfile?.topGenres?.some((g) =>
+            genre.label.toLowerCase().includes(g.genre.toLowerCase())
+          );
 
           return (
             <Button
