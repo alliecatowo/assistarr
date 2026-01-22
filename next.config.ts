@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
         hostname: "image.tmdb.org",
         pathname: "/t/p/**",
       },
+      {
+        protocol: "https",
+        hostname: "artworks.thetvdb.com",
+        pathname: "/banners/**",
+      },
     ],
   },
 };
