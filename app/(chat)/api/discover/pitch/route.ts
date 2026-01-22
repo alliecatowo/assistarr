@@ -1,8 +1,9 @@
 import { generateText } from "ai";
 import { NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { getServiceConfig } from "@/lib/db/queries/service-config";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { getServiceConfig } from "@/lib/db/queries/service-config";
+import type { ServiceConfig } from "@/lib/db/schema";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { RadarrClient } from "@/lib/plugins/radarr/client";
 import type { RadarrMovie } from "@/lib/plugins/radarr/types";
@@ -94,13 +95,58 @@ async function buildTasteProfile(
   let totalItems = 0;
   const movieTmdbIds: number[] = [];
 
-  // Fetch Radarr library
+  const radarResult = await processRadarrLibrary(
+    radarrConfig,
+    genreCounts,
+    decadeCounts,
+    recentTitles,
+    movieTmdbIds
+  );
+  totalItems += radarResult.totalItems;
+
+  const sonarrResult = await processSonarrLibrary(
+    sonarrConfig,
+    genreCounts,
+    decadeCounts,
+    recentTitles
+  );
+  totalItems += sonarrResult.totalItems;
+
+  if (totalItems === 0) {
+    return null;
+  }
+
+  await fetchMovieCredits(
+    movieTmdbIds,
+    jellyseerrClient,
+    directorCounts,
+    actorCounts
+  );
+
+  return buildTasteProfileResult(
+    genreCounts,
+    decadeCounts,
+    directorCounts,
+    actorCounts,
+    recentTitles,
+    totalItems
+  );
+}
+
+async function processRadarrLibrary(
+  radarrConfig: ServiceConfig | null,
+  genreCounts: Record<string, number>,
+  decadeCounts: Record<string, number>,
+  recentTitles: string[],
+  movieTmdbIds: number[]
+): Promise<{ totalItems: number }> {
+  let totalItems = 0;
+
   if (radarrConfig?.isEnabled) {
     try {
       const client = new RadarrClient(radarrConfig);
       const movies = await client.get<RadarrMovie[]>("/movie");
 
-      // Sort by dateAdded to get recent items
       const sortedMovies = [...movies].sort(
         (a, b) =>
           new Date(b.added ?? 0).getTime() - new Date(a.added ?? 0).getTime()
@@ -108,34 +154,56 @@ async function buildTasteProfile(
 
       for (const movie of movies) {
         totalItems++;
+        countMovieGenres(movie, genreCounts);
+        countMovieDecade(movie, decadeCounts);
 
-        // Count genres
-        for (const genre of movie.genres ?? []) {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        }
-
-        // Count decades
-        if (movie.year) {
-          const decade = getDecade(movie.year);
-          decadeCounts[decade] = (decadeCounts[decade] || 0) + 1;
-        }
-
-        // Collect TMDb IDs for detailed fetch
         if (movie.tmdbId) {
           movieTmdbIds.push(movie.tmdbId);
         }
       }
 
-      // Add recent titles
-      for (const movie of sortedMovies.slice(0, 10)) {
-        recentTitles.push(movie.title);
-      }
+      addRecentMovies(sortedMovies, recentTitles);
     } catch {
       // Radarr not available - continue
     }
   }
 
-  // Fetch Sonarr library
+  return { totalItems };
+}
+
+function countMovieGenres(
+  movie: RadarrMovie,
+  genreCounts: Record<string, number>
+): void {
+  for (const genre of movie.genres ?? []) {
+    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+  }
+}
+
+function countMovieDecade(
+  movie: RadarrMovie,
+  decadeCounts: Record<string, number>
+): void {
+  if (movie.year) {
+    const decade = getDecade(movie.year);
+    decadeCounts[decade] = (decadeCounts[decade] || 0) + 1;
+  }
+}
+
+function addRecentMovies(movies: RadarrMovie[], recentTitles: string[]): void {
+  for (const movie of movies.slice(0, 10)) {
+    recentTitles.push(movie.title);
+  }
+}
+
+async function processSonarrLibrary(
+  sonarrConfig: ServiceConfig | null,
+  genreCounts: Record<string, number>,
+  decadeCounts: Record<string, number>,
+  recentTitles: string[]
+): Promise<{ totalItems: number }> {
+  let totalItems = 0;
+
   if (sonarrConfig?.isEnabled) {
     try {
       const client = new SonarrClient(sonarrConfig);
@@ -148,33 +216,50 @@ async function buildTasteProfile(
 
       for (const show of series) {
         totalItems++;
-
-        // Count genres
-        for (const genre of show.genres ?? []) {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        }
-
-        // Count decades
-        if (show.year) {
-          const decade = getDecade(show.year);
-          decadeCounts[decade] = (decadeCounts[decade] || 0) + 1;
-        }
+        countSeriesGenres(show, genreCounts);
+        countSeriesDecade(show, decadeCounts);
       }
 
-      // Add recent titles
-      for (const show of sortedSeries.slice(0, 10)) {
-        recentTitles.push(show.title);
-      }
+      addRecentSeries(sortedSeries, recentTitles);
     } catch {
       // Sonarr not available - continue
     }
   }
 
-  if (totalItems === 0) {
-    return null;
-  }
+  return { totalItems };
+}
 
-  // Fetch detailed credits for a sample of movies to get director/actor data
+function countSeriesGenres(
+  series: SonarrSeries,
+  genreCounts: Record<string, number>
+): void {
+  for (const genre of series.genres ?? []) {
+    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+  }
+}
+
+function countSeriesDecade(
+  series: SonarrSeries,
+  decadeCounts: Record<string, number>
+): void {
+  if (series.year) {
+    const decade = getDecade(series.year);
+    decadeCounts[decade] = (decadeCounts[decade] || 0) + 1;
+  }
+}
+
+function addRecentSeries(series: SonarrSeries[], recentTitles: string[]): void {
+  for (const show of series.slice(0, 10)) {
+    recentTitles.push(show.title);
+  }
+}
+
+async function fetchMovieCredits(
+  movieTmdbIds: number[],
+  jellyseerrClient: JellyseerrClient,
+  directorCounts: Record<string, number>,
+  actorCounts: Record<string, number>
+): Promise<void> {
   const moviesToFetch = movieTmdbIds.slice(0, 20);
   const batchSize = 5;
 
@@ -193,26 +278,46 @@ async function buildTasteProfile(
     const details = await Promise.all(detailsPromises);
 
     for (const movieDetails of details) {
-      if (!movieDetails) continue;
-
-      // Count directors
-      const directors = movieDetails.credits?.crew?.filter(
-        (c) => c.job === "Director"
-      );
-      for (const director of directors ?? []) {
-        directorCounts[director.name] =
-          (directorCounts[director.name] || 0) + 1;
+      if (!movieDetails) {
+        continue;
       }
 
-      // Count lead actors (top 3 billed)
-      const topCast = movieDetails.credits?.cast?.slice(0, 3);
-      for (const actor of topCast ?? []) {
-        actorCounts[actor.name] = (actorCounts[actor.name] || 0) + 1;
-      }
+      countMovieDirectors(movieDetails, directorCounts);
+      countMovieActors(movieDetails, actorCounts);
     }
   }
+}
 
-  // Sort and prepare results
+function countMovieDirectors(
+  movieDetails: JellyseerrMovieDetails,
+  directorCounts: Record<string, number>
+): void {
+  const directors = movieDetails.credits?.crew?.filter(
+    (c) => c.job === "Director"
+  );
+  for (const director of directors ?? []) {
+    directorCounts[director.name] = (directorCounts[director.name] || 0) + 1;
+  }
+}
+
+function countMovieActors(
+  movieDetails: JellyseerrMovieDetails,
+  actorCounts: Record<string, number>
+): void {
+  const topCast = movieDetails.credits?.cast?.slice(0, 3);
+  for (const actor of topCast ?? []) {
+    actorCounts[actor.name] = (actorCounts[actor.name] || 0) + 1;
+  }
+}
+
+function buildTasteProfileResult(
+  genreCounts: Record<string, number>,
+  decadeCounts: Record<string, number>,
+  directorCounts: Record<string, number>,
+  actorCounts: Record<string, number>,
+  recentTitles: string[],
+  totalItems: number
+): TasteProfile {
   const topGenres = Object.entries(genreCounts)
     .map(([genre, count]) => ({ genre, count }))
     .sort((a, b) => b.count - a.count)
@@ -399,7 +504,8 @@ export async function GET(request: Request) {
       if (genres) {
         genericPitch += ` that blends ${genres}`;
       }
-      genericPitch += ". Add some titles to your library to get personalized recommendations!";
+      genericPitch +=
+        ". Add some titles to your library to get personalized recommendations!";
 
       return NextResponse.json({
         pitch: genericPitch,
@@ -424,8 +530,7 @@ export async function GET(request: Request) {
         totalItems: tasteProfile.totalItems,
       },
     });
-  } catch (error) {
-    console.error("Pitch generation error:", error);
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to generate personalized pitch" },
       { status: 500 }

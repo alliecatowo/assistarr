@@ -167,75 +167,13 @@ export async function GET(request: Request) {
   const client = new JellyseerrClient(jellyseerrConfig);
 
   try {
-    // Fetch both details and similar content in parallel
     const [detailsRes, similarRes] = await Promise.allSettled([
       client.get<JellyseerrMediaDetails>(`/${mediaType}/${tmdbId}`),
       client.get<JellyseerrSimilarResponse>(`/${mediaType}/${tmdbId}/similar`),
     ]);
 
-    let details = null;
-    if (detailsRes.status === "fulfilled") {
-      const d = detailsRes.value;
-      details = {
-        id: d.id,
-        title: d.title ?? d.name ?? "Unknown",
-        year:
-          Number.parseInt(
-            d.releaseDate?.slice(0, 4) ?? d.firstAirDate?.slice(0, 4) ?? "0",
-            10
-          ) || undefined,
-        posterUrl: d.posterPath
-          ? `https://image.tmdb.org/t/p/w342${d.posterPath}`
-          : null,
-        backdropUrl: d.backdropPath
-          ? `https://image.tmdb.org/t/p/w1280${d.backdropPath}`
-          : null,
-        overview: d.overview,
-        rating: d.voteAverage,
-        runtime: d.runtime,
-        genres: d.genres?.map((g) => g.name) ?? [],
-        cast:
-          d.credits?.cast?.slice(0, 6).map((c) => ({
-            name: c.name,
-            character: c.character,
-            profileUrl: c.profilePath
-              ? `https://image.tmdb.org/t/p/w185${c.profilePath}`
-              : null,
-          })) ?? [],
-        mediaType,
-        tmdbId: d.id,
-        status: mapStatus(d.mediaInfo),
-        imdbId: d.externalIds?.imdbId,
-      };
-    }
-
-    let similar: (typeof details)[] = [];
-    if (similarRes.status === "fulfilled") {
-      similar = similarRes.value.results.slice(0, 15).map((item) => ({
-        id: item.id,
-        title: item.title ?? item.name ?? "Unknown",
-        year:
-          Number.parseInt(
-            item.releaseDate?.slice(0, 4) ??
-              item.firstAirDate?.slice(0, 4) ??
-              "0",
-            10
-          ) || undefined,
-        posterUrl: item.posterPath
-          ? `https://image.tmdb.org/t/p/w342${item.posterPath}`
-          : null,
-        backdropUrl: null,
-        overview: item.overview,
-        rating: item.voteAverage,
-        runtime: undefined,
-        genres: [],
-        cast: [],
-        mediaType: item.mediaType ?? mediaType,
-        tmdbId: item.id,
-        status: mapStatus(item.mediaInfo),
-        imdbId: undefined,
-      }));
-    }
+    const details = buildDetailsResponse(detailsRes, mediaType);
+    const similar = buildSimilarResponse(similarRes, mediaType);
 
     return NextResponse.json({ details, similar });
   } catch (_error) {
@@ -244,4 +182,26 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function buildDetailsResponse(
+  detailsRes: PromiseSettledResult<JellyseerrMediaDetails>,
+  mediaType: "movie" | "tv"
+): ReturnType<typeof formatDetailsResponse> | null {
+  if (detailsRes.status === "fulfilled") {
+    return formatDetailsResponse(detailsRes.value, mediaType);
+  }
+  return null;
+}
+
+function buildSimilarResponse(
+  similarRes: PromiseSettledResult<JellyseerrSimilarResponse>,
+  defaultMediaType: "movie" | "tv"
+): ReturnType<typeof formatSimilarItem>[] {
+  if (similarRes.status === "fulfilled") {
+    return similarRes.value.results
+      .slice(0, 15)
+      .map((item) => formatSimilarItem(item, defaultMediaType));
+  }
+  return [];
 }

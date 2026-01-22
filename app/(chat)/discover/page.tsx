@@ -175,7 +175,10 @@ async function fetchDiscoverySections(
       });
     }
 
-    if (upcomingRes.status === "fulfilled" && upcomingRes.value.results?.length) {
+    if (
+      upcomingRes.status === "fulfilled" &&
+      upcomingRes.value.results?.length
+    ) {
       sections.push({
         id: "upcoming-movies",
         title: "Coming Soon",

@@ -212,7 +212,10 @@ export async function POST(request: Request) {
             if (mode === "discover" && plugin.name === "jellyseerr") {
               for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
                 // Only include discovery-related tools in discover mode
-                if (toolName === "searchContent" || toolName === "getDiscovery") {
+                if (
+                  toolName === "searchContent" ||
+                  toolName === "getDiscovery"
+                ) {
                   serviceTools[toolName] = toolDef.factory({
                     session,
                     config,

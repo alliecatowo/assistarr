@@ -68,12 +68,11 @@ export function DiscoverCard({
       )}
     >
       {/* Poster - clickable for expand */}
-      <div
-        className="relative aspect-[2/3] w-full overflow-hidden bg-muted"
+      <button
+        className="relative aspect-[2/3] w-full overflow-hidden bg-muted p-0"
         onClick={handleCardClick}
-        onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
-        role="button"
         tabIndex={0}
+        type="button"
       >
         {posterUrl ? (
           <Image
@@ -124,14 +123,15 @@ export function DiscoverCard({
             </Button>
           )}
         </div>
-      </div>
+      </button>
 
       {/* Info - also clickable */}
-      <div
-        className="p-2.5 space-y-1.5"
+      <button
+        className="w-full p-2.5 space-y-1.5 text-left"
         onClick={handleCardClick}
-        role="button"
+        onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
         tabIndex={-1}
+        type="button"
       >
         <h4 className="text-xs font-medium line-clamp-2 min-h-[2rem]">
           {item.title}
@@ -193,7 +193,7 @@ export function DiscoverCard({
             <span>{item.reason}</span>
           </p>
         )}
-      </div>
+      </button>
     </div>
   );
 }

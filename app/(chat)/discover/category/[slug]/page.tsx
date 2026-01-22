@@ -19,13 +19,16 @@ function CategoryLoading() {
       </header>
       <div className="flex-1 overflow-hidden p-4">
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {Array.from({ length: 18 }).map((_, i) => (
-            <div className="space-y-2" key={i}>
-              <Skeleton className="aspect-[2/3] w-full rounded-lg" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          ))}
+          {Array.from({ length: 18 }).map((_, i) => {
+            const id = `skeleton-${String(i).padStart(3, "0")}`;
+            return (
+              <div className="space-y-2" key={id}>
+                <Skeleton className="aspect-[2/3] w-full rounded-lg" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

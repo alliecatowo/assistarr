@@ -97,7 +97,7 @@ interface PitchGeneration {
 // TMDB Genre Mapping
 // =============================================================================
 
-const TMDB_GENRES: Record<number, string> = {
+const _TMDB_GENRES: Record<number, string> = {
   28: "Action",
   12: "Adventure",
   16: "Animation",
@@ -156,7 +156,9 @@ function mapStatus(mediaInfo?: {
 }
 
 function parseYear(dateStr?: string): number | undefined {
-  if (!dateStr) return undefined;
+  if (!dateStr) {
+    return undefined;
+  }
   const year = Number.parseInt(dateStr.slice(0, 4), 10);
   return year > 0 ? year : undefined;
 }
@@ -165,6 +167,7 @@ function parseYear(dateStr?: string): number | undefined {
 // Deep Library Analysis
 // =============================================================================
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex library analysis function
 async function analyzeTasteProfile(
   userId: string,
   jellyseerrClient: JellyseerrClient
@@ -176,8 +179,14 @@ async function analyzeTasteProfile(
 
   const genreCounts: Record<string, number> = {};
   const decadeCounts: Record<string, number> = {};
-  const directorCounts: Record<string, { id: number; name: string; count: number }> = {};
-  const actorCounts: Record<string, { id: number; name: string; count: number }> = {};
+  const directorCounts: Record<
+    string,
+    { id: number; name: string; count: number }
+  > = {};
+  const actorCounts: Record<
+    string,
+    { id: number; name: string; count: number }
+  > = {};
 
   let totalRating = 0;
   let ratingCount = 0;
@@ -224,7 +233,7 @@ async function analyzeTasteProfile(
         recentAdditions.push(movie.title);
       }
     } catch (_e) {
-      // Radarr not available
+      // Failed to fetch endpoint
     }
   }
 
@@ -282,7 +291,9 @@ async function analyzeTasteProfile(
       );
 
       // Count directors
-      const directors = details.credits?.crew?.filter((c) => c.job === "Director");
+      const directors = details.credits?.crew?.filter(
+        (c) => c.job === "Director"
+      );
       for (const director of directors ?? []) {
         const key = String(director.id);
         if (!directorCounts[key]) {
@@ -385,7 +396,7 @@ async function findTopCandidates(
         }
       }
     } catch (_e) {
-      console.error(`Failed to fetch ${endpoint}:`, _e);
+      // Failed to fetch endpoint
     }
   }
 
@@ -394,29 +405,51 @@ async function findTopCandidates(
     profile.topGenres.slice(0, 3).map((g) => {
       // Map genre names to TMDB IDs (approximate)
       const genreMap: Record<string, number> = {
-        action: 28, adventure: 12, animation: 16, comedy: 35,
-        crime: 80, documentary: 99, drama: 18, family: 10751,
-        fantasy: 14, history: 36, horror: 27, music: 10402,
-        mystery: 9648, romance: 10749, "science fiction": 878,
-        "sci-fi": 878, thriller: 53, war: 10752, western: 37,
+        action: 28,
+        adventure: 12,
+        animation: 16,
+        comedy: 35,
+        crime: 80,
+        documentary: 99,
+        drama: 18,
+        family: 10_751,
+        fantasy: 14,
+        history: 36,
+        horror: 27,
+        music: 10_402,
+        mystery: 9648,
+        romance: 10_749,
+        "science fiction": 878,
+        "sci-fi": 878,
+        thriller: 53,
+        war: 10_752,
+        western: 37,
       };
       return genreMap[g.genre.toLowerCase()] ?? 0;
     })
   );
 
-  const scored = candidates.map((c) => {
-    let score = c.voteAverage ?? 0;
+  const scored = candidates
+    .map((c) => {
+      let score = c.voteAverage ?? 0;
 
-    // Boost if matches user's favorite genres
-    const matchingGenres = (c.genreIds ?? []).filter((id) => userTopGenreIds.has(id));
-    score += matchingGenres.length * 1.5;
+      // Boost if matches user's favorite genres
+      const matchingGenres = (c.genreIds ?? []).filter((id) =>
+        userTopGenreIds.has(id)
+      );
+      score += matchingGenres.length * 1.5;
 
-    // Prefer user's preferred media type
-    if (profile.prefersMovies && c.mediaType === "movie") score += 1;
-    if (profile.prefersTv && c.mediaType === "tv") score += 1;
+      // Prefer user's preferred media type
+      if (profile.prefersMovies && c.mediaType === "movie") {
+        score += 1;
+      }
+      if (profile.prefersTv && c.mediaType === "tv") {
+        score += 1;
+      }
 
-    return { ...c, score };
-  }).sort((a, b) => b.score - a.score);
+      return { ...c, score };
+    })
+    .sort((a, b) => b.score - a.score);
 
   // Remove duplicates and return top picks
   const unique = Array.from(
@@ -496,8 +529,7 @@ Return ONLY the JSON array, no other text.`;
 
     const pitches = JSON.parse(jsonText) as PitchGeneration[];
     return pitches;
-  } catch (error) {
-    console.error("Failed to generate pitches:", error);
+  } catch (_error) {
     // Return generic pitches as fallback
     return candidates.map((c) => ({
       title: c.title ?? c.name ?? "Unknown",
@@ -572,17 +604,16 @@ export async function GET() {
               backdropPath: details.backdropPath,
               genres: details.genres?.map((g) => g.name),
             };
-          } else {
-            const details = await client.get<JellyseerrTvDetails>(
-              `/tv/${candidate.id}`
-            );
-            return {
-              ...candidate,
-              overview: details.overview,
-              backdropPath: details.backdropPath,
-              genres: details.genres?.map((g) => g.name),
-            };
           }
+          const details = await client.get<JellyseerrTvDetails>(
+            `/tv/${candidate.id}`
+          );
+          return {
+            ...candidate,
+            overview: details.overview,
+            backdropPath: details.backdropPath,
+            genres: details.genres?.map((g) => g.name),
+          };
         } catch {
           return candidate;
         }
@@ -596,7 +627,7 @@ export async function GET() {
     );
 
     // Step 5: Build response
-    const picks: TopPickItem[] = detailedCandidates.map((candidate, idx) => {
+    const picks: TopPickItem[] = detailedCandidates.map((candidate, _idx) => {
       const pitch = pitches.find(
         (p) =>
           p.title === (candidate.title ?? candidate.name) ||
@@ -611,10 +642,10 @@ export async function GET() {
         posterUrl: candidate.posterPath
           ? `https://image.tmdb.org/t/p/w342${candidate.posterPath}`
           : null,
-        backdropUrl:
-          (candidate as any).backdropPath
-            ? `https://image.tmdb.org/t/p/w1280${(candidate as any).backdropPath}`
-            : null,
+        backdropUrl: (candidate as JellyseerrMovieDetails & JellyseerrTvDetails)
+          .backdropPath
+          ? `https://image.tmdb.org/t/p/w1280${(candidate as JellyseerrMovieDetails & JellyseerrTvDetails).backdropPath}`
+          : null,
         rating: candidate.voteAverage,
         mediaType: candidate.mediaType,
         tmdbId: candidate.id,
@@ -622,7 +653,9 @@ export async function GET() {
         pitch:
           pitch?.pitch ||
           "A top pick based on your viewing history and preferences.",
-        genres: (candidate as any).genres,
+        genres: (
+          candidate as JellyseerrMovieDetails & JellyseerrTvDetails
+        ).genres?.map((g) => g.name),
       };
     });
 
@@ -630,8 +663,7 @@ export async function GET() {
       picks,
       message: `Generated ${picks.length} deeply personalized picks`,
     });
-  } catch (error) {
-    console.error("Top picks error:", error);
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to generate top picks" },
       { status: 500 }

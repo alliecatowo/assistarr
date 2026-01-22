@@ -146,19 +146,14 @@ export function DiscoverProvider({
 
   const registerSubmitHandler = useCallback(
     (handler: (query: string) => void) => {
-      console.log("[DiscoverContext] registerSubmitHandler called");
       submitHandlerRef.current = handler;
     },
     []
   );
 
   const submitQuery = useCallback((query: string) => {
-    console.log("[DiscoverContext] submitQuery called with:", query);
-    console.log("[DiscoverContext] submitHandlerRef.current:", submitHandlerRef.current ? "registered" : "NULL");
     if (submitHandlerRef.current) {
       submitHandlerRef.current(query);
-    } else {
-      console.error("[DiscoverContext] No submit handler registered!");
     }
   }, []);
 
