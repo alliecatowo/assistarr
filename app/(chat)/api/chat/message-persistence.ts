@@ -1,5 +1,6 @@
 import { saveMessages, updateMessage } from "@/lib/db/queries/index";
 import type { ChatMessage } from "@/lib/types";
+import type { UserMessage } from "./schema";
 
 export type PersistContext = {
   chatId: string;
@@ -18,7 +19,7 @@ export type FinishedMessage = {
  */
 export async function saveUserMessage(
   chatId: string,
-  message: ChatMessage
+  message: UserMessage
 ): Promise<void> {
   if (message?.role !== "user") {
     return;

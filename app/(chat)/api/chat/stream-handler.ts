@@ -164,7 +164,7 @@ export function createChatStream(config: StreamConfig) {
       if (titlePromise) {
         const title = await titlePromise;
         dataStream.write({ type: "data-chat-title", data: title });
-        updateChatTitleById({ chatId, title });
+        await updateChatTitleById({ chatId, title });
       }
     },
     generateId: generateUUID,

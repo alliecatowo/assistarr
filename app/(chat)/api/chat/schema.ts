@@ -39,3 +39,5 @@ export const postRequestBodySchema = z.object({
 });
 
 export type PostRequestBody = z.infer<typeof postRequestBodySchema>;
+export type UserMessage = z.infer<typeof userMessageSchema>;
+export type Message = z.infer<typeof messageSchema>;

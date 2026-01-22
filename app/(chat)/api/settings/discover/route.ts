@@ -1,5 +1,6 @@
 import { auth } from "@/app/(auth)/auth";
 import { ChatSDKError } from "@/lib/errors";
+import { HEALTH_CHECK_TIMEOUT_MS } from "@/lib/plugins/core/client";
 
 interface JellyseerrServiceConfig {
   id: number;
@@ -33,6 +34,12 @@ async function fetchJellyseerrService(
   apiKey: string,
   servicePath: string
 ): Promise<JellyseerrServiceConfig[] | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    HEALTH_CHECK_TIMEOUT_MS
+  );
+
   try {
     const response = await fetch(`${baseUrl}/api/v1/settings/${servicePath}`, {
       method: "GET",
@@ -40,6 +47,7 @@ async function fetchJellyseerrService(
         "X-Api-Key": apiKey,
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -50,6 +58,8 @@ async function fetchJellyseerrService(
     return Array.isArray(data) ? data : null;
   } catch (_error) {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

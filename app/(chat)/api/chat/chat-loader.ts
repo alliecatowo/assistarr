@@ -8,6 +8,7 @@ import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
+import type { Message, UserMessage } from "./schema";
 
 export type ChatLoadResult = {
   messagesFromDb: DBMessage[];
@@ -20,7 +21,7 @@ export type ChatLoadResult = {
  */
 export async function loadChatAndMessages(
   id: string,
-  message: ChatMessage | undefined,
+  message: UserMessage | undefined,
   isToolApprovalFlow: boolean,
   userId: string,
   visibility: "public" | "private"
@@ -51,15 +52,34 @@ export async function loadChatAndMessages(
 
 /**
  * Builds the UI messages array from DB messages or incoming messages
+ * @throws Error if messages format is invalid
  */
 export function buildUIMessages(
   isToolApprovalFlow: boolean,
-  messages: ChatMessage[] | undefined,
+  messages: Message[] | undefined,
   messagesFromDb: DBMessage[],
-  message: ChatMessage | undefined
+  message: UserMessage | undefined
 ): ChatMessage[] {
   if (isToolApprovalFlow) {
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error(
+        "Invalid messages format: expected array for tool approval flow"
+      );
+    }
+    // Messages from tool approval flow are already validated by zod schema
+    // and conform to the ChatMessage structure
     return messages as ChatMessage[];
   }
-  return [...convertToUIMessages(messagesFromDb), message as ChatMessage];
+  if (!message) {
+    throw new Error(
+      "Invalid message format: message is required for non-tool-approval flow"
+    );
+  }
+  // Convert user message to ChatMessage format
+  const userMessage: ChatMessage = {
+    id: message.id,
+    role: message.role,
+    parts: message.parts,
+  };
+  return [...convertToUIMessages(messagesFromDb), userMessage];
 }

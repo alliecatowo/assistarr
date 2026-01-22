@@ -1,4 +1,3 @@
-import { gateway } from "@ai-sdk/gateway";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -8,7 +7,41 @@ import {
   getUserAIConfigs,
   upsertUserAIConfig,
 } from "@/lib/db/queries/user-ai-config";
-import type { UserAIConfig } from "@/lib/db/schema";
+import { logger } from "@/lib/logger";
+import { HEALTH_CHECK_TIMEOUT_MS } from "@/lib/plugins/core/client";
+
+/**
+ * Fetch with timeout for API key validation.
+ * Uses HEALTH_CHECK_TIMEOUT_MS (10s) as these are quick validation calls.
+ */
+async function fetchWithTimeout(
+  url: string,
+  options?: RequestInit
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    HEALTH_CHECK_TIMEOUT_MS
+  );
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      logger.warn(
+        { url, timeout: HEALTH_CHECK_TIMEOUT_MS },
+        "AI provider test request timed out"
+      );
+      throw new Error(`Request timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // Supported AI providers
 export const AI_PROVIDERS = [
@@ -70,25 +103,38 @@ async function testAIProviderConnection(
 ): Promise<{ success: boolean; error?: string; latency?: number }> {
   const startTime = Date.now();
 
+  logger.debug({ providerName }, "Testing AI provider connection");
+
   try {
     switch (providerName) {
       case "openrouter": {
-        const openrouter = createOpenRouter({ apiKey });
-        // Just test if the provider can be created and make a simple models request
-        const response = await fetch("https://openrouter.ai/api/v1/models", {
-          headers: { Authorization: `Bearer ${apiKey}` },
-        });
+        const _openrouter = createOpenRouter({ apiKey });
+        // Just test if provider can be created and make a simple models request
+        const response = await fetchWithTimeout(
+          "https://openrouter.ai/api/v1/models",
+          {
+            headers: { Authorization: `Bearer ${apiKey}` },
+          }
+        );
         if (!response.ok) {
+          logger.warn(
+            { providerName, status: response.status },
+            "OpenRouter API key validation failed"
+          );
           return {
             success: false,
             error: "Invalid OpenRouter API key",
           };
         }
+        logger.info(
+          { providerName, latency: Date.now() - startTime },
+          "OpenRouter API key validated"
+        );
         break;
       }
       case "gateway": {
         // For gateway, we can't easily test without making a model call
-        // Just verify the key format
+        // Just verify key format
         if (!apiKey || apiKey.length < 10) {
           return {
             success: false,
@@ -98,15 +144,26 @@ async function testAIProviderConnection(
         break;
       }
       case "openai": {
-        const response = await fetch("https://api.openai.com/v1/models", {
-          headers: { Authorization: `Bearer ${apiKey}` },
-        });
+        const response = await fetchWithTimeout(
+          "https://api.openai.com/v1/models",
+          {
+            headers: { Authorization: `Bearer ${apiKey}` },
+          }
+        );
         if (!response.ok) {
+          logger.warn(
+            { providerName, status: response.status },
+            "OpenAI API key validation failed"
+          );
           return {
             success: false,
             error: "Invalid OpenAI API key",
           };
         }
+        logger.info(
+          { providerName, latency: Date.now() - startTime },
+          "OpenAI API key validated"
+        );
         break;
       }
       case "anthropic": {
@@ -115,21 +172,30 @@ async function testAIProviderConnection(
         if (!apiKey.startsWith("sk-ant-")) {
           return {
             success: false,
-            error: "Invalid Anthropic API key format (should start with sk-ant-)",
+            error:
+              "Invalid Anthropic API key format (should start with sk-ant-)",
           };
         }
         break;
       }
       case "google": {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
         );
         if (!response.ok) {
+          logger.warn(
+            { providerName, status: response.status },
+            "Google AI API key validation failed"
+          );
           return {
             success: false,
             error: "Invalid Google AI API key",
           };
         }
+        logger.info(
+          { providerName, latency: Date.now() - startTime },
+          "Google AI API key validated"
+        );
         break;
       }
       default:
@@ -138,6 +204,7 @@ async function testAIProviderConnection(
 
     return { success: true, latency: Date.now() - startTime };
   } catch (error) {
+    logger.error({ error, providerName }, "AI provider connection test failed");
     return {
       success: false,
       error: error instanceof Error ? error.message : "Connection failed",
@@ -160,7 +227,11 @@ export async function GET() {
       apiKey: maskApiKey(config.apiKey),
     }));
     return NextResponse.json(maskedConfigs);
-  } catch (error) {
+  } catch (_error) {
+    logger.error(
+      { error: _error, userId: session?.user?.id },
+      "Failed to get AI configurations"
+    );
     return NextResponse.json(
       { error: "Failed to get AI configurations" },
       { status: 500 }
@@ -179,12 +250,16 @@ export async function POST(request: Request) {
     const json = await request.json();
     const body = aiKeySchema.parse(json);
 
-    // Test the connection first
+    // Test connection first
     const testResult = await testAIProviderConnection(
       body.providerName,
       body.apiKey
     );
     if (!testResult.success) {
+      logger.warn(
+        { providerName: body.providerName, error: testResult.error },
+        "AI config test failed"
+      );
       return NextResponse.json(
         { error: testResult.error || "Invalid API key" },
         { status: 400 }
@@ -198,6 +273,11 @@ export async function POST(request: Request) {
       isEnabled: body.isEnabled ?? true,
     });
 
+    logger.info(
+      { userId: session.user.id, providerName: body.providerName },
+      "AI config saved"
+    );
+
     return NextResponse.json({
       ...config,
       apiKey: maskApiKey(config.apiKey),
@@ -206,6 +286,10 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
+    logger.error(
+      { error, userId: session?.user?.id },
+      "Failed to save AI configuration"
+    );
     return NextResponse.json(
       { error: "Failed to save AI configuration" },
       { status: 500 }
@@ -278,8 +362,14 @@ export async function DELETE(request: Request) {
       providerName,
     });
 
+    logger.info({ userId: session.user.id, providerName }, "AI config deleted");
+
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
+    logger.error(
+      { error: _error, userId: session?.user?.id },
+      "Failed to delete AI configuration"
+    );
     return NextResponse.json(
       { error: "Failed to delete AI configuration" },
       { status: 500 }
@@ -292,7 +382,7 @@ export async function DELETE(request: Request) {
  */
 function maskApiKey(apiKey: string): string {
   if (apiKey.length <= 12) {
-    return "••••••••";
+    return "•••••••••••";
   }
   return `${apiKey.slice(0, 4)}••••••••${apiKey.slice(-4)}`;
 }

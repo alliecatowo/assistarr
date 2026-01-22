@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
@@ -88,10 +89,14 @@ interface TopPickItem {
   genres?: string[];
 }
 
-interface PitchGeneration {
-  title: string;
-  pitch: string;
-}
+const pitchGenerationSchema = z.object({
+  title: z.string(),
+  pitch: z.string(),
+});
+
+const pitchGenerationArraySchema = z.array(pitchGenerationSchema);
+
+type PitchGeneration = z.infer<typeof pitchGenerationSchema>;
 
 // =============================================================================
 // TMDB Genre Mapping
@@ -527,7 +532,8 @@ Return ONLY the JSON array, no other text.`;
       jsonText = jsonText.replace(/```json?\n?/g, "").replace(/```\n?$/g, "");
     }
 
-    const pitches = JSON.parse(jsonText) as PitchGeneration[];
+    const parsed = JSON.parse(jsonText);
+    const pitches = pitchGenerationArraySchema.parse(parsed);
     return pitches;
   } catch (_error) {
     // Return generic pitches as fallback

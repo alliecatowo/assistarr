@@ -11,7 +11,7 @@ import {
 } from "@/lib/db/queries/index";
 import { env } from "@/lib/env";
 import { ChatSDKError } from "@/lib/errors";
-import type { ChatMessage } from "@/lib/types";
+import { logger } from "@/lib/logger";
 import { buildUIMessages, loadChatAndMessages } from "./chat-loader";
 import { saveUserMessage } from "./message-persistence";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
   } catch (_) {
+    logger.warn({ error: _ }, "Invalid request body");
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
@@ -55,12 +56,17 @@ export async function POST(request: Request) {
       mode,
     } = requestBody;
 
+    logger.info(
+      { chatId: id, model: selectedChatModel, mode },
+      "Chat request received"
+    );
+
     const { session, userAIConfig } = await validateSessionAndRateLimit();
     const isToolApprovalFlow = Boolean(messages);
 
     const { messagesFromDb, titlePromise } = await loadChatAndMessages(
       id,
-      message as ChatMessage,
+      message,
       isToolApprovalFlow,
       session.user.id,
       selectedVisibilityType
@@ -68,16 +74,16 @@ export async function POST(request: Request) {
 
     const uiMessages = buildUIMessages(
       isToolApprovalFlow,
-      messages as ChatMessage[],
+      messages,
       messagesFromDb,
-      message as ChatMessage
+      message
     );
 
     const geo = geolocation(request);
     const requestHints = buildRequestHints(geo);
 
     if (message?.role === "user") {
-      await saveUserMessage(id, message as ChatMessage);
+      await saveUserMessage(id, message);
     }
 
     // Fetch configs for service tools
@@ -98,6 +104,11 @@ export async function POST(request: Request) {
       userAIConfig,
     });
 
+    logger.debug(
+      { chatId: id, messageCount: uiMessages.length },
+      "Creating chat stream"
+    );
+
     return createUIMessageStreamResponse({
       stream,
       async consumeSseStream({ stream: sseStream }) {
@@ -115,12 +126,16 @@ export async function POST(request: Request) {
             );
           }
         } catch (_) {
-          /* ignore redis errors */
+          logger.warn(
+            { error: _, chatId: id },
+            "Failed to create resumable stream (redis error)"
+          );
         }
       },
     });
   } catch (error) {
     if (error instanceof ChatSDKError) {
+      logger.error({ error, chatId: requestBody?.id }, "Chat SDK error");
       return error.toResponse();
     }
 
@@ -128,9 +143,11 @@ export async function POST(request: Request) {
       error instanceof Error &&
       error.message?.includes("AI Gateway requires a valid credit card on file")
     ) {
+      logger.warn({ error: error.message }, "AI Gateway credit card required");
       return new ChatSDKError("bad_request:activate_gateway").toResponse();
     }
 
+    logger.error({ error, chatId: requestBody?.id }, "Unexpected chat error");
     return new ChatSDKError("offline:chat").toResponse();
   }
 }
@@ -140,18 +157,26 @@ export async function DELETE(request: Request) {
   const id = searchParams.get("id");
 
   if (!id) {
+    logger.warn("Delete chat request missing ID");
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
   const session = await auth();
   if (!session?.user) {
+    logger.warn({ chatId: id }, "Unauthorized delete chat attempt");
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
 
   const chat = await getChatById({ id });
   if (chat?.userId !== session.user.id) {
+    logger.warn(
+      { chatId: id, userId: session.user.id, chatUserId: chat?.userId },
+      "Forbidden delete chat attempt"
+    );
     return new ChatSDKError("forbidden:chat").toResponse();
   }
+
+  logger.info({ chatId: id, userId: session.user.id }, "Deleting chat");
 
   const deletedChat = await deleteChatById({ id });
   return Response.json(deletedChat, { status: 200 });
