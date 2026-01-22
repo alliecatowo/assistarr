@@ -4,6 +4,9 @@ import type { PgTransaction } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { db } from "./db";
 
+// Re-export trackQuery for use in query modules
+export { trackQuery } from "./db";
+
 /**
  * Generate a bcrypt hash for a password.
  * Used for user registration and guest user creation.

@@ -7,6 +7,12 @@ import { registerOTel } from "@vercel/otel";
  *
  * Supports both Vercel deployment (uses Vercel's built-in OTLP endpoint)
  * and self-hosted Docker deployment (uses custom OTLP endpoint)
+ *
+ * Features:
+ * - W3C Trace Context propagation for distributed tracing
+ * - Correlation ID support through traceparent header
+ * - Configurable sampling rates per environment
+ * - Custom attributes for deployment context
  */
 function getOtelConfig() {
   const serviceName =
@@ -17,23 +23,26 @@ function getOtelConfig() {
   const isProduction = process.env.NODE_ENV === "production";
   const isVercel = Boolean(process.env.VERCEL);
 
-  // Configure sampling rate based on environment
-  // Production: sample 10% of traces to reduce costs
-  // Development: sample all traces for debugging
-  const sampleRate = isProduction ? 0.1 : 1.0;
-
   const config: Parameters<typeof registerOTel>[0] = {
     serviceName,
-    // Use parent-based sampling to respect incoming trace decisions
-    // Falls back to ratio-based sampling for root spans
-    traceIdRatioBasedSampler: sampleRate,
+    // Use trace ratio sampling based on environment
+    // Production: sample 10% of traces to reduce costs via parentbased_traceidratio
+    // Development: sample all traces for debugging via parentbased_always_on
+    // The sampling rate can be configured via OTEL_TRACES_SAMPLER_ARG env var (e.g., 0.1 for 10%)
+    traceSampler: isProduction
+      ? "parentbased_traceidratio"
+      : "parentbased_always_on",
     // Enable W3C Trace Context propagation for distributed tracing
-    // This enables request ID propagation across service boundaries
+    // This enables correlation ID propagation across service boundaries
+    // The traceparent header carries trace-id which serves as correlation ID
     propagators: [new W3CTraceContextPropagator()],
     attributes: {
       // Add deployment context to all traces
       "deployment.environment": process.env.NODE_ENV || "development",
       "service.version": process.env.VERCEL_GIT_COMMIT_SHA || "local",
+      // Add service metadata for better observability
+      "service.namespace": "assistarr",
+      "telemetry.sdk.name": "opentelemetry",
     },
   };
 
@@ -62,7 +71,10 @@ export function register() {
       logger.info(
         {
           env: process.env.NODE_ENV,
-          otelServiceName: otelConfig.serviceName,
+          otelServiceName:
+            typeof otelConfig === "string"
+              ? otelConfig
+              : otelConfig?.serviceName,
           otelEndpoint:
             process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "vercel-default",
         },

@@ -42,8 +42,11 @@ export default sentryEnabled
       // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
       tunnelRoute: "/monitoring",
 
-      // Hides source maps from generated client bundles
-      hideSourceMaps: true,
+      // Source maps configuration (replaces deprecated hideSourceMaps)
+      sourcemaps: {
+        // Delete source maps after upload to keep them hidden from clients
+        deleteSourcemapsAfterUpload: true,
+      },
 
       // Automatically tree-shake Sentry logger statements to reduce bundle size
       disableLogger: true,
