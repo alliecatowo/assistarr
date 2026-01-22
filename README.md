@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js 15" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
@@ -35,7 +35,7 @@
 - **Deep Service Integration** - First-class support for the *arr stack and media servers
 - **Real-time Updates** - Streaming responses with tool execution feedback
 - **Per-User Configuration** - Each user can configure their own service connections
-- **Modern Stack** - Built on Next.js 16, React 19, and Tailwind CSS 4
+- **Modern Stack** - Built on Next.js 15, React 19, and Tailwind CSS 4
 
 ## Integrations
 
@@ -125,7 +125,7 @@ lib/
 ├── ai/
 │   ├── prompts.ts       # System prompts
 │   ├── providers.ts     # AI model configuration
-│   └── tools/services/  # Service integrations
+│   └── plugins/         # Service integrations
 └── db/                  # Database schema & queries
 ```
 
@@ -149,21 +149,21 @@ pnpm test         # Run Playwright tests
 
 ### Adding a New Service Integration
 
-1. Create a new folder in `lib/ai/tools/services/{service-name}/`
+1. Create a new folder in `lib/plugins/{service-name}/`
 2. Add the required files:
    - `client.ts` - API client with authentication
    - `types.ts` - TypeScript type definitions
    - `definition.ts` - Tool definitions for the AI
    - Individual tool files (`search.ts`, `add.ts`, etc.)
    - `index.ts` - Export aggregator
-3. Register the service in `lib/ai/tools/services/registry.ts`
+3. Register the service in `lib/plugins/registry.ts`
 4. Add display names in `components/message.tsx`
 
 ## Tech Stack
 
 | Category | Technology |
 |----------|------------|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
+| **Framework** | [Next.js 15](https://nextjs.org/) (App Router) |
 | **AI** | [Vercel AI SDK](https://sdk.vercel.ai/) |
 | **Database** | [PostgreSQL](https://www.postgresql.org/) + [Drizzle ORM](https://orm.drizzle.team/) |
 | **Auth** | [NextAuth.js](https://next-auth.js.org/) |

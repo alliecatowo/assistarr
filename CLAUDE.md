@@ -30,7 +30,7 @@ Assistarr is a Next.js 15 chat-based AI assistant for managing home media server
 │   │   ├── prompts.ts       # System prompts for the AI
 │   │   ├── providers.ts     # AI model configuration
 │   │   └── tools/           # AI tool definitions
-│   │       └── services/    # Service integrations (Radarr, Sonarr, etc.)
+│   ├── plugins/             # Service integrations (Radarr, Sonarr, etc.)
 │   └── db/                  # Database schema and queries
 └── artifacts/               # Code artifact server for running Python
 ```
@@ -40,7 +40,7 @@ Assistarr is a Next.js 15 chat-based AI assistant for managing home media server
 | File | Purpose |
 |------|---------|
 | `lib/ai/prompts.ts` | System prompts that define AI behavior |
-| `lib/ai/tools/services/registry.ts` | Service tool registry |
+| `lib/plugins/registry.ts` | Service tool registry |
 | `app/(chat)/api/chat/route.ts` | Main chat API endpoint |
 | `components/message.tsx` | Message rendering with tool UI |
 
@@ -50,14 +50,14 @@ Services are configured per-user in settings and stored in the `ServiceConfig` t
 
 ### Adding a New Service Tool
 
-1. Create folder: `lib/ai/tools/services/{service-name}/`
+1. Create folder: `lib/plugins/{service-name}/`
 2. Add files:
    - `client.ts` - API client with auth
    - `types.ts` - TypeScript types
    - `definition.ts` - Tool definitions export
    - `{tool-name}.ts` - Individual tool implementations
    - `index.ts` - Exports all tools
-3. Register in `lib/ai/tools/services/registry.ts`
+3. Register in `lib/plugins/registry.ts`
 4. Add display names in `components/message.tsx` `TOOL_DISPLAY_NAMES`
 
 ### Service Client Pattern
