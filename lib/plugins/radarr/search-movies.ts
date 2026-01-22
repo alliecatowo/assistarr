@@ -1,9 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { ToolError } from "../core/errors";
 import type { DisplayableMedia, ToolFactoryProps } from "../core/types";
 import { deriveMediaStatus } from "../core/utils";
 import { RadarrClient } from "./client";
-import type { RadarrMovie } from "./types";
+import { type RadarrMovie, RadarrMovieArraySchema } from "./schemas";
 
 export const searchMovies = ({
   session: _session,
@@ -23,9 +24,13 @@ export const searchMovies = ({
     }),
     execute: async ({ query }) => {
       try {
-        const results = await client.get<RadarrMovie[]>("/movie/lookup", {
-          term: query,
-        });
+        const results = await client.get<RadarrMovie[]>(
+          "/movie/lookup",
+          {
+            term: query,
+          },
+          { schema: RadarrMovieArraySchema }
+        );
 
         if (results.length === 0) {
           return {
@@ -71,10 +76,11 @@ export const searchMovies = ({
           message: `Found ${results.length} movies matching "${query}". Showing top ${movies.length} results.`,
         };
       } catch (error) {
-        return {
-          results: [],
-          message: `Error searching movies: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+        throw ToolError.fromUnknown(
+          error,
+          "searchMovies",
+          "Failed to search movies"
+        );
       }
     },
   });

@@ -1,6 +1,7 @@
 import type { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ServiceConfig } from "@/lib/db/schema";
+import { ToolError } from "../core/errors";
 import { searchMedia } from "./search-media";
 import type { ItemsResponse, MediaItem } from "./types";
 
@@ -101,7 +102,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "nonexistent", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -149,7 +150,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "inception", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -204,7 +205,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "breaking", limit: 10, mediaType: "shows" },
         {
           messages: [],
@@ -227,7 +228,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      (await tool.execute!(
+      (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "movies" },
         {
           messages: [],
@@ -250,7 +251,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      (await tool.execute!(
+      (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "shows" },
         {
           messages: [],
@@ -273,7 +274,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      (await tool.execute!(
+      (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -295,7 +296,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      (await tool.execute!(
+      (await tool.execute?.(
         { query: "test", limit: 5, mediaType: "all" },
         {
           messages: [],
@@ -325,7 +326,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -353,7 +354,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -386,7 +387,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -414,7 +415,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -445,7 +446,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -467,7 +468,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -481,7 +482,7 @@ describe("Jellyfin search-media tool", () => {
       expect(result.results).toEqual([]);
     });
 
-    it("should handle API errors gracefully", async () => {
+    it("should throw ToolError on API errors", async () => {
       setupUserIdMock();
 
       fetchMock.mockResolvedValueOnce({
@@ -491,38 +492,50 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
-        { query: "test", limit: 10, mediaType: "all" },
-        {
-          messages: [],
-          toolCallId: "test-call-14",
-          abortSignal: new AbortController().signal,
-        }
-      )) as any;
-
-      expect(result.results).toEqual([]);
-      expect(result.message).toContain("Error searching media");
+      await expect(
+        tool.execute?.(
+          { query: "test", limit: 10, mediaType: "all" },
+          {
+            messages: [],
+            toolCallId: "test-call-14",
+            abortSignal: new AbortController().signal,
+          }
+        )
+      ).rejects.toThrow(ToolError);
     });
 
-    it("should handle network errors gracefully", async () => {
-      fetchMock.mockRejectedValue(new Error("Network error"));
+    it("should throw ToolError on network errors", async () => {
+      fetchMock.mockRejectedValue(new Error("Connection failed"));
 
       const tool = createTool();
-      const result = (await tool.execute!(
-        { query: "test", limit: 10, mediaType: "all" },
-        {
-          messages: [],
-          toolCallId: "test-call-15",
-          abortSignal: new AbortController().signal,
-        }
-      )) as any;
+      await expect(
+        tool.execute?.(
+          { query: "test", limit: 10, mediaType: "all" },
+          {
+            messages: [],
+            toolCallId: "test-call-15",
+            abortSignal: new AbortController().signal,
+          }
+        )
+      ).rejects.toThrow(ToolError);
 
-      expect(result.results).toEqual([]);
-      expect(result.message).toContain("Error searching media");
-      expect(result.message).toContain("Network error");
+      try {
+        await tool.execute?.(
+          { query: "test", limit: 10, mediaType: "all" },
+          {
+            messages: [],
+            toolCallId: "test-call-15b",
+            abortSignal: new AbortController().signal,
+          }
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(ToolError);
+        expect((error as ToolError).message).toContain("Connection failed");
+        expect((error as ToolError).toolName).toBe("searchMedia");
+      }
     });
 
-    it("should throw error when no users are found", async () => {
+    it("should throw ToolError when no users are found", async () => {
       // /Users/Me fails
       fetchMock.mockResolvedValueOnce({
         ok: false,
@@ -536,18 +549,41 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
-        { query: "test", limit: 10, mediaType: "all" },
-        {
-          messages: [],
-          toolCallId: "test-call-16",
-          abortSignal: new AbortController().signal,
-        }
-      )) as any;
+      await expect(
+        tool.execute?.(
+          { query: "test", limit: 10, mediaType: "all" },
+          {
+            messages: [],
+            toolCallId: "test-call-16",
+            abortSignal: new AbortController().signal,
+          }
+        )
+      ).rejects.toThrow(ToolError);
 
-      expect(result.results).toEqual([]);
-      expect(result.message).toContain("Error searching media");
-      expect(result.message).toContain("No users found");
+      // Verify error contains useful context
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+      });
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify([]),
+      });
+
+      try {
+        await tool.execute?.(
+          { query: "test", limit: 10, mediaType: "all" },
+          {
+            messages: [],
+            toolCallId: "test-call-16b",
+            abortSignal: new AbortController().signal,
+          }
+        );
+      } catch (error) {
+        expect(error).toBeInstanceOf(ToolError);
+        expect((error as ToolError).message).toContain("No users found");
+      }
     });
 
     it("should construct correct search URL with all parameters", async () => {
@@ -559,7 +595,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      (await tool.execute!(
+      (await tool.execute?.(
         { query: "Matrix", limit: 15, mediaType: "movies" },
         {
           messages: [],
@@ -588,7 +624,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "Avatar", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -622,7 +658,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "test", limit: 10, mediaType: "all" },
         {
           messages: [],
@@ -650,7 +686,7 @@ describe("Jellyfin search-media tool", () => {
       });
 
       const tool = createTool();
-      const result = (await tool.execute!(
+      const result = (await tool.execute?.(
         { query: "popular", limit: 2, mediaType: "all" },
         {
           messages: [],

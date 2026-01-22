@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { ToolError } from "../core/errors";
 import type { ToolFactoryProps } from "../core/types";
 import { formatDuration, getImageUrl, JellyfinClient } from "./client";
 import type { ItemsResponse, MediaItem } from "./types";
@@ -80,10 +81,11 @@ export const searchMedia = ({
           message: `Found ${results.length} result(s) for "${query}".`,
         };
       } catch (error) {
-        return {
-          results: [],
-          message: `Error searching media: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+        throw ToolError.fromUnknown(
+          error,
+          "searchMedia",
+          "Failed to search media"
+        );
       }
     },
   });

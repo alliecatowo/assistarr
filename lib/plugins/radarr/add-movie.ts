@@ -81,70 +81,58 @@ export const addMovie = ({ session: _session, config }: ToolFactoryProps) => {
       minimumAvailability,
       searchForMovie,
     }) => {
-      try {
-        const lookupResults = await client.get<RadarrMovie[]>(
-          "/movie/lookup/tmdb",
-          { tmdbId }
-        );
+      const lookupResults = await client.get<RadarrMovie[]>(
+        "/movie/lookup/tmdb",
+        { tmdbId }
+      );
 
-        if (lookupResults.length === 0) {
-          return { error: `No movie found with TMDB ID ${tmdbId}.` };
-        }
-        const movieData = lookupResults[0];
-
-        // Check if exists
-        const existsRef = await checkExisting(client, tmdbId, movieData);
-        if (existsRef) {
-          return existsRef;
-        }
-
-        const profileId = await getProfileId(client, qualityProfileId);
-        if (profileId === null) {
-          return { error: "No quality profiles configured in Radarr." };
-        }
-
-        const rootFolderPath = await getRootFolderPath(client);
-        if (rootFolderPath === null) {
-          return { error: "No root folders configured in Radarr." };
-        }
-
-        const addPayload = {
-          tmdbId: movieData.tmdbId,
-          title: movieData.title,
-          qualityProfileId: profileId,
-          titleSlug: movieData.titleSlug,
-          images: movieData.images,
-          rootFolderPath,
-          monitored: true,
-          minimumAvailability,
-          addOptions: {
-            monitor: "movieOnly",
-            searchForMovie,
-          },
-        };
-
-        const addedMovie = await client.post<RadarrMovie>("/movie", addPayload);
-
-        return {
-          success: true,
-          message: `Successfully added "${addedMovie.title}" to Radarr.`,
-          movie: {
-            id: addedMovie.id,
-            title: addedMovie.title,
-            year: addedMovie.year,
-            path: addedMovie.path,
-            monitored: addedMovie.monitored,
-            minimumAvailability: addedMovie.minimumAvailability,
-            searchingForMovie: searchForMovie,
-          },
-        };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
-        return {
-          error: `Failed to add movie: ${errorMessage}`,
-        };
+      if (lookupResults.length === 0) {
+        throw new Error(`No movie found with TMDB ID ${tmdbId}.`);
       }
+      const movieData = lookupResults[0];
+
+      await checkExisting(client, tmdbId, movieData);
+
+      const profileId = await getProfileId(client, qualityProfileId);
+      if (profileId === null) {
+        throw new Error("No quality profiles configured in Radarr.");
+      }
+
+      const rootFolderPath = await getRootFolderPath(client);
+      if (rootFolderPath === null) {
+        throw new Error("No root folders configured in Radarr.");
+      }
+
+      const addPayload = {
+        tmdbId: movieData.tmdbId,
+        title: movieData.title,
+        qualityProfileId: profileId,
+        titleSlug: movieData.titleSlug,
+        images: movieData.images,
+        rootFolderPath,
+        monitored: true,
+        minimumAvailability,
+        addOptions: {
+          monitor: "movieOnly",
+          searchForMovie,
+        },
+      };
+
+      const addedMovie = await client.post<RadarrMovie>("/movie", addPayload);
+
+      return {
+        success: true,
+        message: `Successfully added "${addedMovie.title}" to Radarr.`,
+        movie: {
+          id: addedMovie.id,
+          title: addedMovie.title,
+          year: addedMovie.year,
+          path: addedMovie.path,
+          monitored: addedMovie.monitored,
+          minimumAvailability: addedMovie.minimumAvailability,
+          searchingForMovie: searchForMovie,
+        },
+      };
     },
   });
 };
@@ -158,15 +146,7 @@ async function checkExisting(
     tmdbId,
   });
   if (existingMovies.length > 0) {
-    return {
-      error: `"${movieData.title}" is already in your Radarr library.`,
-      existingMovie: {
-        title: existingMovies[0].title,
-        id: existingMovies[0].id,
-        path: existingMovies[0].path,
-        hasFile: existingMovies[0].hasFile,
-      },
-    };
+    throw new Error(`"${movieData.title}" is already in your Radarr library.`);
   }
   return null;
 }

@@ -20,18 +20,12 @@ export const deleteMovieFile = ({
         ),
     }),
     execute: async ({ fileId }) => {
-      try {
-        await client.delete(`/moviefile/${fileId}`);
+      await client.delete(`/moviefile/${fileId}`);
 
-        return {
-          success: true,
-          message: `Movie file with ID ${fileId} deleted successfully.`,
-        };
-      } catch (error) {
-        return {
-          error: `Failed to delete movie file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Movie file with ID ${fileId} deleted successfully.`,
+      };
     },
   });
 };

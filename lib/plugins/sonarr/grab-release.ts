@@ -23,23 +23,16 @@ export const grabRelease = ({
         .describe("The indexer ID for the release (from getReleases)"),
     }),
     execute: async ({ guid, indexerId }) => {
-      try {
-        await client.post("/release", {
-          guid,
-          indexerId,
-        });
+      await client.post("/release", {
+        guid,
+        indexerId,
+      });
 
-        return {
-          success: true,
-          message:
-            "Release grabbed successfully. It should appear in the download queue shortly.",
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to grab release: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message:
+          "Release grabbed successfully. It should appear in the download queue shortly.",
+      };
     },
   });
 };

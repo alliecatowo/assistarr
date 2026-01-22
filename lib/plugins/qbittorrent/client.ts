@@ -1,4 +1,11 @@
-import { ApiClient } from "../core/client";
+import { createLogger } from "@/lib/logger";
+import {
+  ApiClient,
+  DEFAULT_TIMEOUT_MS,
+  type RequestOptions,
+} from "../core/client";
+
+const log = createLogger("qbittorrent-client");
 
 export class QBittorrentClient extends ApiClient {
   // biome-ignore lint/suspicious/noExplicitAny: Generic torrent info
@@ -14,7 +21,8 @@ export class QBittorrentClient extends ApiClient {
   async postForm(
     path: string,
     // biome-ignore lint/suspicious/noExplicitAny: Flexible payload
-    body: FormData | URLSearchParams | Record<string, any>
+    body: FormData | URLSearchParams | Record<string, any>,
+    options?: RequestOptions
   ): Promise<void> {
     // If body is a plain object, convert to URLSearchParams because qBittorrent expects form-encoded data or FormData usually
     let requestBody: BodyInit;
@@ -42,16 +50,35 @@ export class QBittorrentClient extends ApiClient {
     const baseUrl = this.config.baseUrl.replace(/\/$/, "");
     const url = `${baseUrl}${path}`;
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: requestBody,
-    });
+    const timeoutMs = options?.timeout ?? DEFAULT_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      throw new Error(
-        `POST ${path} failed: ${response.status} ${response.statusText}`
-      );
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: requestBody,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        log.warn(
+          { url, status: response.status, statusText: response.statusText },
+          `POST ${path} failed`
+        );
+        throw new Error(
+          `POST ${path} failed: ${response.status} ${response.statusText}`
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        log.error({ url, timeoutMs }, `POST ${path} timed out`);
+        throw new Error(`POST ${path} timed out after ${timeoutMs}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

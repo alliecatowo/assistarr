@@ -20,22 +20,15 @@ export const refreshMovie = ({
         ),
     }),
     execute: async ({ movieId }) => {
-      try {
-        await client.post("/command", {
-          name: "RefreshMovie",
-          movieIds: [movieId],
-        });
+      await client.post("/command", {
+        name: "RefreshMovie",
+        movieIds: [movieId],
+      });
 
-        return {
-          success: true,
-          message: `Refresh triggered for movie ID ${movieId}. Metadata will be updated.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to refresh movie: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Refresh triggered for movie ID ${movieId}. Metadata will be updated.`,
+      };
     },
   });
 };

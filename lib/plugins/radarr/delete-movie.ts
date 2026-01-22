@@ -26,23 +26,17 @@ export const deleteMovie = ({
         .describe("Whether to exclude the movie from import lists"),
     }),
     execute: async ({ movieId, deleteFiles, addImportListExclusion }) => {
-      try {
-        const queryParams = {
-          deleteFiles,
-          addImportListExclusion,
-        };
+      const queryParams = {
+        deleteFiles,
+        addImportListExclusion,
+      };
 
-        await client.delete(`/movie/${movieId}`, queryParams);
+      await client.delete(`/movie/${movieId}`, queryParams);
 
-        return {
-          success: true,
-          message: `Movie with ID ${movieId} deleted successfully`,
-        };
-      } catch (error) {
-        return {
-          error: `Failed to delete movie: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Movie with ID ${movieId} deleted successfully`,
+      };
     },
   });
 };

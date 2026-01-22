@@ -15,22 +15,15 @@ export const searchMissingEpisodes = ({
       "Trigger a search for all missing monitored episodes in Sonarr. This will search indexers for every episode that is monitored but not yet downloaded.",
     inputSchema: z.object({}),
     execute: async () => {
-      try {
-        const result = await client.post<SonarrCommand>("/command", {
-          name: "MissingEpisodeSearch",
-        });
+      const result = await client.post<SonarrCommand>("/command", {
+        name: "MissingEpisodeSearch",
+      });
 
-        return {
-          success: true,
-          commandId: result.id,
-          message: `Search started for all missing episodes. Command ID: ${result.id}`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to search missing episodes: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        commandId: result.id,
+        message: `Search started for all missing episodes. Command ID: ${result.id}`,
+      };
     },
   });
 };

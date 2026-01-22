@@ -28,9 +28,19 @@ export interface DisplayableMedia {
   overview?: string;
   rating?: number;
   genres?: string[];
+  runtime?: number;
+  seasonCount?: number;
+  monitored?: boolean;
 
-  // Context-specific actions can use this ID
-  serviceId: string | number;
+  // External service identifiers
+  externalIds?: {
+    tmdb?: number;
+    tvdb?: number;
+    imdb?: string;
+  };
+
+  // Context-specific actions can use this ID (optional for discovery/search results)
+  serviceId?: string | number;
 }
 
 // ============================================================================
@@ -66,6 +76,12 @@ export interface ToolDefinition {
   description: string;
   category: ToolCategory;
   requiresApproval?: boolean;
+  /**
+   * Specifies which chat modes this tool is available in.
+   * If undefined or empty, the tool is available in all modes.
+   * Examples: ['chat'], ['chat', 'discover']
+   */
+  modes?: string[];
   metadata?: {
     usage?: string;
     examples?: string[];

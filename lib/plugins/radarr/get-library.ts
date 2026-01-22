@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { DisplayableMedia, ToolFactoryProps } from "../core/types";
 import { deriveMediaStatus } from "../core/utils";
 import { RadarrClient } from "./client";
-import type { RadarrMovie } from "./types";
+import { type RadarrMovie, RadarrMovieArraySchema } from "./schemas";
 
 export const getLibrary = ({ session: _session, config }: ToolFactoryProps) => {
   const client = new RadarrClient(config);
@@ -38,7 +38,9 @@ export const getLibrary = ({ session: _session, config }: ToolFactoryProps) => {
       limit,
     }) => {
       try {
-        const movies = await client.get<RadarrMovie[]>("/movie");
+        const movies = await client.get<RadarrMovie[]>("/movie", undefined, {
+          schema: RadarrMovieArraySchema,
+        });
 
         const filteredMovies = filterMovies(movies, {
           genre,

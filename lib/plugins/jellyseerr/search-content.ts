@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { getPosterUrl } from "@/lib/utils";
 import type { DisplayableMedia } from "../base";
+import { ToolError } from "../core/errors";
 import type { ToolFactoryProps } from "../core/types";
 import { JellyseerrClient } from "./client";
 import {
@@ -76,10 +77,11 @@ export const searchContent = ({
               : `No results found for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`,
         };
       } catch (error) {
-        return {
-          results: [],
-          message: `Error searching content: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+        throw ToolError.fromUnknown(
+          error,
+          "searchContent",
+          "Failed to search content"
+        );
       }
     },
   });

@@ -23,38 +23,28 @@ export const renameEpisodeFiles = ({
         ),
     }),
     execute: async ({ seriesId, fileIds }) => {
-      try {
-        const commandBody: {
-          name: string;
-          seriesId: number;
-          files?: number[];
-        } = {
-          name: "RenameFiles",
-          seriesId,
-        };
+      const commandBody: {
+        name: string;
+        seriesId: number;
+        files?: number[];
+      } = {
+        name: "RenameFiles",
+        seriesId,
+      };
 
-        if (fileIds && fileIds.length > 0) {
-          commandBody.files = fileIds;
-        }
-
-        const result = await client.post<SonarrCommand>(
-          "/command",
-          commandBody
-        );
-
-        return {
-          success: true,
-          commandId: result.id,
-          message: fileIds
-            ? `Rename started for ${fileIds.length} file(s). Command ID: ${result.id}`
-            : `Rename started for all files needing renaming in series ID ${seriesId}. Command ID: ${result.id}`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to rename episode files: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+      if (fileIds && fileIds.length > 0) {
+        commandBody.files = fileIds;
       }
+
+      const result = await client.post<SonarrCommand>("/command", commandBody);
+
+      return {
+        success: true,
+        commandId: result.id,
+        message: fileIds
+          ? `Rename started for ${fileIds.length} file(s). Command ID: ${result.id}`
+          : `Rename started for all files needing renaming in series ID ${seriesId}. Command ID: ${result.id}`,
+      };
     },
   });
 };

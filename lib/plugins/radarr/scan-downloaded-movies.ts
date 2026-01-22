@@ -22,34 +22,24 @@ export const scanDownloadedMovies = ({
         ),
     }),
     execute: async ({ folder }) => {
-      try {
-        const commandBody: Record<string, unknown> = {
-          name: "DownloadedMoviesScan",
-        };
+      const commandBody: Record<string, unknown> = {
+        name: "DownloadedMoviesScan",
+      };
 
-        if (folder) {
-          commandBody.path = folder;
-        }
-
-        const command = await client.post<RadarrCommand>(
-          "/command",
-          commandBody
-        );
-
-        return {
-          success: true,
-          commandId: command.id,
-          status: command.status,
-          message: folder
-            ? `Scan started for folder: ${folder}. Command ID: ${command.id}. Use getCommandStatus to check completion.`
-            : `Download folder scan started. Command ID: ${command.id}. Use getCommandStatus to check completion.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to scan downloaded movies: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+      if (folder) {
+        commandBody.path = folder;
       }
+
+      const command = await client.post<RadarrCommand>("/command", commandBody);
+
+      return {
+        success: true,
+        commandId: command.id,
+        status: command.status,
+        message: folder
+          ? `Scan started for folder: ${folder}. Command ID: ${command.id}. Use getCommandStatus to check completion.`
+          : `Download folder scan started. Command ID: ${command.id}. Use getCommandStatus to check completion.`,
+      };
     },
   });
 };

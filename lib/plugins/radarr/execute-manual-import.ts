@@ -53,31 +53,24 @@ export const executeManualImport = ({
         ),
     }),
     execute: async ({ files, importMode }) => {
-      try {
-        const command = await client.post<RadarrCommand>("/command", {
-          name: "ManualImport",
-          files: files.map((f) => ({
-            path: f.path,
-            movieId: f.movieId,
-            quality: f.quality,
-            languages: f.languages,
-            downloadId: f.downloadId,
-          })),
-          importMode,
-        });
+      const command = await client.post<RadarrCommand>("/command", {
+        name: "ManualImport",
+        files: files.map((f) => ({
+          path: f.path,
+          movieId: f.movieId,
+          quality: f.quality,
+          languages: f.languages,
+          downloadId: f.downloadId,
+        })),
+        importMode,
+      });
 
-        return {
-          success: true,
-          commandId: command.id,
-          status: command.status,
-          message: `Manual import started for ${files.length} file(s). Command ID: ${command.id}. Use getCommandStatus to check completion.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to execute manual import: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        commandId: command.id,
+        status: command.status,
+        message: `Manual import started for ${files.length} file(s). Command ID: ${command.id}. Use getCommandStatus to check completion.`,
+      };
     },
   });
 };

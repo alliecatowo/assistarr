@@ -1,5 +1,9 @@
 import type { ServiceConfig } from "@/lib/db/schema";
+import { createLogger, type Logger } from "@/lib/logger";
 import type { ServicePlugin, ToolCategory, ToolDefinition } from "./core/types";
+
+// Re-export for convenience
+export type { DisplayableMedia } from "./core/types";
 
 /**
  * Abstract base class for all Service Plugins.
@@ -18,6 +22,18 @@ export abstract class BaseServicePlugin<
 
   protected abstract toolsDefinitions: Record<string, ToolDefinition>;
 
+  /**
+   * Logger instance for this plugin.
+   * Lazily initialized with the plugin name as context.
+   */
+  private _logger: Logger | null = null;
+  protected get logger(): Logger {
+    if (!this._logger) {
+      this._logger = createLogger(this.name);
+    }
+    return this._logger;
+  }
+
   get tools(): Record<string, ToolDefinition> {
     return this.toolsDefinitions;
   }
@@ -33,8 +49,7 @@ export abstract class BaseServicePlugin<
       }
       return await this.performHealthCheck(config);
     } catch (error) {
-      // biome-ignore lint/suspicious/noConsole: Log error for debugging
-      console.error(`[${this.name}] Health check failed:`, error);
+      this.logger.error({ err: error }, "Health check failed");
       return false;
     }
   }
@@ -55,6 +70,7 @@ export abstract class BaseServicePlugin<
       description: string;
       category: ToolCategory;
       requiresApproval?: boolean;
+      modes?: string[];
       metadata?: {
         usage?: string;
         examples?: string[];
@@ -66,25 +82,6 @@ export abstract class BaseServicePlugin<
       ...metadata,
     };
   }
-}
-
-export interface DisplayableMedia {
-  title: string;
-  posterUrl: string | null;
-  mediaType: "movie" | "tv" | "episode";
-  year?: number;
-  overview?: string;
-  rating?: number;
-  genres?: string[];
-  runtime?: number;
-  seasonCount?: number;
-  status: "available" | "wanted" | "downloading" | "requested" | "missing";
-  monitored?: boolean;
-  externalIds?: {
-    tmdb?: number;
-    tvdb?: number;
-    imdb?: string;
-  };
 }
 
 export function deriveMediaStatus(

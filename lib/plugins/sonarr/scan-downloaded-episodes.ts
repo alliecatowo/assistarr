@@ -22,34 +22,24 @@ export const scanDownloadedEpisodes = ({
         ),
     }),
     execute: async ({ path }) => {
-      try {
-        const commandBody: { name: string; path?: string } = {
-          name: "DownloadedEpisodesScan",
-        };
+      const commandBody: { name: string; path?: string } = {
+        name: "DownloadedEpisodesScan",
+      };
 
-        if (path) {
-          commandBody.path = path;
-        }
-
-        const result = await client.post<SonarrCommand>(
-          "/command",
-          commandBody
-        );
-
-        return {
-          success: true,
-          commandId: result.id,
-          status: result.status,
-          message: path
-            ? `Scan started for folder: ${path}. Command ID: ${result.id}. Use getCommandStatus to check completion.`
-            : `Scan started for all download folders. Command ID: ${result.id}. Use getCommandStatus to check completion.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to scan downloaded episodes: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+      if (path) {
+        commandBody.path = path;
       }
+
+      const result = await client.post<SonarrCommand>("/command", commandBody);
+
+      return {
+        success: true,
+        commandId: result.id,
+        status: result.status,
+        message: path
+          ? `Scan started for folder: ${path}. Command ID: ${result.id}. Use getCommandStatus to check completion.`
+          : `Scan started for all download folders. Command ID: ${result.id}. Use getCommandStatus to check completion.`,
+      };
     },
   });
 };

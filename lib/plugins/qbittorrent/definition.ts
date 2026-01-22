@@ -17,17 +17,20 @@ class QBittorrentPlugin extends BaseServicePlugin {
       displayName: "Get Torrents",
       description: "List and filter torrents",
       category: "download",
+      modes: ["chat"],
     }),
     getTransferInfo: this.defineTool(getTransferInfo, {
       displayName: "Transfer Info",
       description: "Global speed and data usage",
       category: "download",
+      modes: ["chat"],
     }),
     pauseResumeTorrent: this.defineTool(pauseResumeTorrent, {
       displayName: "Pause/Resume Torrent",
       description: "Control torrent state",
       category: "download",
       requiresApproval: true,
+      modes: ["chat"],
     }),
   };
 

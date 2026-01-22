@@ -20,19 +20,12 @@ export const deleteEpisodeFile = ({
         ),
     }),
     execute: async ({ fileId }) => {
-      try {
-        await client.delete(`/episodefile/${fileId}`);
+      await client.delete(`/episodefile/${fileId}`);
 
-        return {
-          success: true,
-          message: `Successfully deleted episode file with ID ${fileId}.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to delete episode file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Successfully deleted episode file with ID ${fileId}.`,
+      };
     },
   });
 };

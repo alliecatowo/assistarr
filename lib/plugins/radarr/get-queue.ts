@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { ToolFactoryProps } from "../core/types";
 import { RadarrClient } from "./client";
-import type { RadarrQueueResponse } from "./types";
+import { type RadarrQueueResponse, RadarrQueueResponseSchema } from "./schemas";
 
 export const getQueue = ({ session: _session, config }: ToolFactoryProps) => {
   const client = new RadarrClient(config);
@@ -19,11 +19,15 @@ export const getQueue = ({ session: _session, config }: ToolFactoryProps) => {
     }),
     execute: async ({ pageSize }) => {
       try {
-        const queue = await client.get<RadarrQueueResponse>("/queue", {
-          page: 1,
-          pageSize: Math.min(pageSize, 100),
-          includeMovie: true,
-        });
+        const queue = await client.get<RadarrQueueResponse>(
+          "/queue",
+          {
+            page: 1,
+            pageSize: Math.min(pageSize, 100),
+            includeMovie: true,
+          },
+          { schema: RadarrQueueResponseSchema }
+        );
 
         if (queue.totalRecords === 0) {
           return {

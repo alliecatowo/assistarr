@@ -17,16 +17,19 @@ class JellyfinPlugin extends BaseServicePlugin {
       displayName: "Search Media",
       description: "Search for titles in Jellyfin library",
       category: "search",
+      modes: ["chat"],
     }),
     getContinueWatching: this.defineTool(getContinueWatching, {
       displayName: "Continue Watching",
       description: "Get partially watched content",
       category: "library",
+      modes: ["chat"],
     }),
     getRecentlyAdded: this.defineTool(getRecentlyAdded, {
       displayName: "Recently Added",
       description: "Get recently added content",
       category: "library",
+      modes: ["chat"],
     }),
   };
 

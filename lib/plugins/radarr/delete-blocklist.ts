@@ -27,44 +27,33 @@ export const deleteBlocklist = ({
         ),
     }),
     execute: async ({ id, ids }) => {
-      try {
-        if (!id && (!ids || ids.length === 0)) {
-          return {
-            error:
-              "Please provide either 'id' for a single item or 'ids' for bulk removal.",
-          };
-        }
+      if (!id && (!ids || ids.length === 0)) {
+        throw new Error(
+          "Please provide either 'id' for a single item or 'ids' for bulk removal."
+        );
+      }
 
-        if (id && ids && ids.length > 0) {
-          return {
-            error: "Please provide either 'id' or 'ids', not both.",
-          };
-        }
+      if (id && ids && ids.length > 0) {
+        throw new Error("Please provide either 'id' or 'ids', not both.");
+      }
 
-        if (id) {
-          // Single item deletion
-          await client.delete(`/blocklist/${id}`);
-
-          return {
-            success: true,
-            message: `Blocklist item ${id} removed successfully.`,
-          };
-        }
-
-        // Bulk deletion
-        await client.delete("/blocklist/bulk", {
-          body: JSON.stringify({ ids }),
-        });
+      if (id) {
+        await client.delete(`/blocklist/${id}`);
 
         return {
           success: true,
-          message: `Removed ${ids?.length} item(s) from the blocklist.`,
-        };
-      } catch (error) {
-        return {
-          error: `Failed to delete blocklist item(s): ${error instanceof Error ? error.message : "Unknown error"}`,
+          message: `Blocklist item ${id} removed successfully.`,
         };
       }
+
+      await client.delete("/blocklist/bulk", {
+        body: JSON.stringify({ ids }),
+      });
+
+      return {
+        success: true,
+        message: `Removed ${ids?.length} item(s) from the blocklist.`,
+      };
     },
   });
 };

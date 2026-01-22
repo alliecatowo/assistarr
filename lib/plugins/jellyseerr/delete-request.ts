@@ -16,21 +16,12 @@ export const deleteRequest = ({
       requestId: z.number().describe("The ID of the request to delete"),
     }),
     execute: async ({ requestId }: { requestId: number }) => {
-      try {
-        await client.delete(`/request/${requestId}`);
+      await client.delete(`/request/${requestId}`);
 
-        return {
-          success: true,
-          message: `Request with ID ${requestId} deleted successfully`,
-        };
-      } catch (error) {
-        return {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Refused to delete request",
-        };
-      }
+      return {
+        success: true,
+        message: `Request with ID ${requestId} deleted successfully`,
+      };
     },
   });
 };

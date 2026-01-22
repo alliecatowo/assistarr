@@ -61,39 +61,29 @@ export const executeManualImport = ({
         ),
     }),
     execute: async ({ files, importMode }) => {
-      try {
-        const commandBody = {
-          name: "ManualImport",
-          files: files.map((file) => ({
-            path: file.path,
-            seriesId: file.seriesId,
-            seasonNumber: file.seasonNumber,
-            episodeIds: file.episodeIds,
-            quality: file.quality,
-            languages: file.languages,
-            releaseGroup: file.releaseGroup,
-            downloadId: file.downloadId,
-          })),
-          importMode,
-        };
+      const commandBody = {
+        name: "ManualImport",
+        files: files.map((file) => ({
+          path: file.path,
+          seriesId: file.seriesId,
+          seasonNumber: file.seasonNumber,
+          episodeIds: file.episodeIds,
+          quality: file.quality,
+          languages: file.languages,
+          releaseGroup: file.releaseGroup,
+          downloadId: file.downloadId,
+        })),
+        importMode,
+      };
 
-        const result = await client.post<SonarrCommand>(
-          "/command",
-          commandBody
-        );
+      const result = await client.post<SonarrCommand>("/command", commandBody);
 
-        return {
-          success: true,
-          commandId: result.id,
-          status: result.status,
-          message: `Manual import started for ${files.length} file(s). Command ID: ${result.id}. Use getCommandStatus to check completion.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to execute manual import: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        commandId: result.id,
+        status: result.status,
+        message: `Manual import started for ${files.length} file(s). Command ID: ${result.id}. Use getCommandStatus to check completion.`,
+      };
     },
   });
 };

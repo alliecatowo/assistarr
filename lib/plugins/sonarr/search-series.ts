@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { type DisplayableMedia, deriveMediaStatus } from "../base";
+import { ToolError } from "../core/errors";
 import type { ToolFactoryProps } from "../core/types";
 import { SonarrClient } from "./client";
 import type { SonarrSeries } from "./types";
@@ -68,10 +69,11 @@ export const searchSeries = ({
           message: `Found ${results.length} TV series matching "${query}". Showing top ${series.length} results.`,
         };
       } catch (error) {
-        return {
-          results: [],
-          message: `Error searching series: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+        throw ToolError.fromUnknown(
+          error,
+          "searchSeries",
+          "Failed to search series"
+        );
       }
     },
   });

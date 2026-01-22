@@ -39,43 +39,36 @@ export const editSeries = ({ session: _session, config }: ToolFactoryProps) => {
       rootFolderPath,
       tags,
     }) => {
-      try {
-        const currentSeries = await client.get<SonarrSeries>(
-          `/series/${seriesId}`
-        );
+      const currentSeries = await client.get<SonarrSeries>(
+        `/series/${seriesId}`
+      );
 
-        const updatedSeriesBody = {
-          ...currentSeries,
-          monitored: monitored ?? currentSeries.monitored,
-          qualityProfileId: qualityProfileId ?? currentSeries.qualityProfileId,
-          path: rootFolderPath
-            ? `${rootFolderPath}/${currentSeries.title}`
-            : currentSeries.path,
-          tags: tags ?? currentSeries.tags,
-        };
+      const updatedSeriesBody = {
+        ...currentSeries,
+        monitored: monitored ?? currentSeries.monitored,
+        qualityProfileId: qualityProfileId ?? currentSeries.qualityProfileId,
+        path: rootFolderPath
+          ? `${rootFolderPath}/${currentSeries.title}`
+          : currentSeries.path,
+        tags: tags ?? currentSeries.tags,
+      };
 
-        const result = await client.put<SonarrSeries>(
-          `/series/${seriesId}`,
-          updatedSeriesBody
-        );
+      const result = await client.put<SonarrSeries>(
+        `/series/${seriesId}`,
+        updatedSeriesBody
+      );
 
-        return {
-          success: true,
-          message: `Successfully updated series "${result.title}".`,
-          series: {
-            id: result.id,
-            title: result.title,
-            monitored: result.monitored,
-            qualityProfileId: result.qualityProfileId,
-            path: result.path,
-          },
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to edit series: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Successfully updated series "${result.title}".`,
+        series: {
+          id: result.id,
+          title: result.title,
+          monitored: result.monitored,
+          qualityProfileId: result.qualityProfileId,
+          path: result.path,
+        },
+      };
     },
   });
 };

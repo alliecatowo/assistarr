@@ -83,99 +83,80 @@ export const addSeries = ({ session: _session, config }: ToolFactoryProps) => {
       monitor,
       searchForMissingEpisodes,
     }) => {
-      try {
-        // First, lookup the series to get full details
-        const lookupResults = await client.get<SonarrSeries[]>(
-          "/series/lookup",
-          {
-            term: `tvdb:${tvdbId}`,
-          }
-        );
+      const lookupResults = await client.get<SonarrSeries[]>("/series/lookup", {
+        term: `tvdb:${tvdbId}`,
+      });
 
-        if (lookupResults.length === 0) {
-          return { error: `No series found with TVDB ID ${tvdbId}.` };
-        }
-
-        const seriesData = lookupResults[0];
-
-        // Check if series already exists
-        const existingSeries = await client.get<SonarrSeries[]>("/series", {
-          tvdbId,
-        });
-
-        if (existingSeries.length > 0) {
-          return {
-            error: `"${seriesData.title}" is already in your Sonarr library.`,
-            existingSeries: {
-              title: existingSeries[0].title,
-              id: existingSeries[0].id,
-              path: existingSeries[0].path,
-            },
-          };
-        }
-
-        // Get quality profile
-        const profileId = await getQualityProfileId(client, qualityProfileId);
-        if (!profileId) {
-          return { error: "No quality profiles configured in Sonarr." };
-        }
-
-        // Get root folder
-        const rootFolderPath = await getRootFolderPath(client);
-        if (!rootFolderPath) {
-          return { error: "No root folders configured in Sonarr." };
-        }
-
-        // Add the series
-        const addPayload = {
-          tvdbId: seriesData.tvdbId,
-          title: seriesData.title,
-          qualityProfileId: profileId,
-          titleSlug: seriesData.titleSlug,
-          images: seriesData.images,
-          seasons: seriesData.seasons.map((season) => ({
-            seasonNumber: season.seasonNumber,
-            monitored: shouldMonitorSeason(
-              season.seasonNumber,
-              monitor,
-              seriesData.seasons.length
-            ),
-          })),
-          rootFolderPath,
-          monitored: true,
-          seasonFolder: true,
-          seriesType: seriesData.seriesType,
-          addOptions: {
-            monitor,
-            searchForMissingEpisodes,
-            searchForCutoffUnmetEpisodes: false,
-          },
-        };
-
-        const addedSeries = await client.post<SonarrSeries>(
-          "/series",
-          addPayload
-        );
-
-        return {
-          success: true,
-          message: `Successfully added "${addedSeries.title}" to Sonarr.`,
-          series: {
-            id: addedSeries.id,
-            title: addedSeries.title,
-            year: addedSeries.year,
-            path: addedSeries.path,
-            monitored: addedSeries.monitored,
-            seasonCount: addedSeries.seasons.filter((s) => s.seasonNumber > 0)
-              .length,
-            searchingForEpisodes: searchForMissingEpisodes,
-          },
-        };
-      } catch (error) {
-        return {
-          error: `Failed to add series: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+      if (lookupResults.length === 0) {
+        throw new Error(`No series found with TVDB ID ${tvdbId}.`);
       }
+
+      const seriesData = lookupResults[0];
+
+      const existingSeries = await client.get<SonarrSeries[]>("/series", {
+        tvdbId,
+      });
+
+      if (existingSeries.length > 0) {
+        throw new Error(
+          `"${seriesData.title}" is already in your Sonarr library.`
+        );
+      }
+
+      const profileId = await getQualityProfileId(client, qualityProfileId);
+      if (!profileId) {
+        throw new Error("No quality profiles configured in Sonarr.");
+      }
+
+      const rootFolderPath = await getRootFolderPath(client);
+      if (!rootFolderPath) {
+        throw new Error("No root folders configured in Sonarr.");
+      }
+
+      const addPayload = {
+        tvdbId: seriesData.tvdbId,
+        title: seriesData.title,
+        qualityProfileId: profileId,
+        titleSlug: seriesData.titleSlug,
+        images: seriesData.images,
+        seasons: seriesData.seasons.map((season) => ({
+          seasonNumber: season.seasonNumber,
+          monitored: shouldMonitorSeason(
+            season.seasonNumber,
+            monitor,
+            seriesData.seasons.length
+          ),
+        })),
+        rootFolderPath,
+        monitored: true,
+        seasonFolder: true,
+        seriesType: seriesData.seriesType,
+        addOptions: {
+          monitor,
+          searchForMissingEpisodes,
+          searchForCutoffUnmetEpisodes: false,
+        },
+      };
+
+      const addedSeries = await client.post<SonarrSeries>(
+        "/series",
+        addPayload
+      );
+
+      return {
+        success: true,
+        message: `Successfully added "${addedSeries.title}" to Sonarr.`,
+        series: {
+          id: addedSeries.id,
+          title: addedSeries.title,
+          year: addedSeries.year,
+          path: addedSeries.path,
+          monitored: addedSeries.monitored,
+          seasonCount: addedSeries.seasons.filter((s) => s.seasonNumber > 0)
+            .length,
+          searchingForEpisodes: searchForMissingEpisodes,
+        },
+      };
     },
   });
 };

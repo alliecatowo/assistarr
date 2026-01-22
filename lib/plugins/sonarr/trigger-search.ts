@@ -26,30 +26,23 @@ export const triggerSearch = ({
         .describe("Optional: List of episode IDs to search for."),
     }),
     execute: async ({ seriesId, seasonNumber, episodeIds }) => {
-      try {
-        let commandBody: Record<string, unknown> = {
-          name: "SeriesSearch",
-          seriesId,
-        };
+      let commandBody: Record<string, unknown> = {
+        name: "SeriesSearch",
+        seriesId,
+      };
 
-        if (episodeIds && episodeIds.length > 0) {
-          commandBody = { name: "EpisodeSearch", episodeIds };
-        } else if (seasonNumber !== undefined) {
-          commandBody = { name: "SeasonSearch", seriesId, seasonNumber };
-        }
-
-        await client.post("/command", commandBody);
-
-        return {
-          success: true,
-          message: `Search triggered for series ID ${seriesId}${seasonNumber !== undefined ? ` season ${seasonNumber}` : ""}${episodeIds ? ` episodes ${episodeIds.join(",")}` : ""}.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to trigger search: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+      if (episodeIds && episodeIds.length > 0) {
+        commandBody = { name: "EpisodeSearch", episodeIds };
+      } else if (seasonNumber !== undefined) {
+        commandBody = { name: "SeasonSearch", seriesId, seasonNumber };
       }
+
+      await client.post("/command", commandBody);
+
+      return {
+        success: true,
+        message: `Search triggered for series ID ${seriesId}${seasonNumber !== undefined ? ` season ${seasonNumber}` : ""}${episodeIds ? ` episodes ${episodeIds.join(",")}` : ""}.`,
+      };
     },
   });
 };

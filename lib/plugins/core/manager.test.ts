@@ -10,9 +10,6 @@ import type {
   ToolFactoryProps,
 } from "./types";
 
-// Mock console.warn to test warning messages
-const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
 describe("PluginManager", () => {
   let manager: PluginManager;
 
@@ -67,12 +64,14 @@ describe("PluginManager", () => {
 
   const createMockToolDefinition = (
     toolName: string,
-    category: ToolCategory = "search"
+    category: ToolCategory = "search",
+    modes?: string[]
   ): ToolDefinition => ({
     factory: createMockToolFactory(`${toolName}-result`),
     displayName: `Mock ${toolName}`,
     description: `Description for ${toolName}`,
     category,
+    modes,
   });
 
   // Helper to create a fresh manager instance for each test
@@ -93,7 +92,6 @@ describe("PluginManager", () => {
   beforeEach(() => {
     // Create a fresh manager for each test (not using the singleton)
     manager = createFreshManager();
-    consoleWarnSpy.mockClear();
   });
 
   describe("getInstance()", () => {
@@ -123,9 +121,8 @@ describe("PluginManager", () => {
       manager.register(plugin1);
       manager.register(plugin2);
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "Plugin duplicateService is already registered. Overwriting."
-      );
+      const registered = manager.getService("duplicateService");
+      expect(registered).toBe(plugin2);
     });
 
     it("should overwrite existing plugin when registering duplicate", () => {
@@ -243,7 +240,7 @@ describe("PluginManager", () => {
       expect(tools).toHaveProperty("libraryTool");
     });
 
-    it("should pass session and config to tool factory", async () => {
+    it("should pass session and config to tool factory", () => {
       const factoryMock = vi.fn().mockReturnValue({
         execute: async () => ({}),
       });
@@ -315,20 +312,35 @@ describe("PluginManager", () => {
       expect(tools).not.toHaveProperty("disabledTool");
     });
 
-    describe("discover mode filtering", () => {
-      it("should only include jellyseerr searchContent and getDiscovery tools in discover mode", () => {
+    describe("mode-based tool filtering", () => {
+      it("should only include tools with matching modes in discover mode", () => {
         const radarrPlugin = createMockPlugin("radarr", {
-          searchRadarrMovies: createMockToolDefinition("searchRadarrMovies"),
+          searchRadarrMovies: createMockToolDefinition(
+            "searchRadarrMovies",
+            "search",
+            ["chat"]
+          ),
           getRadarrLibrary: createMockToolDefinition(
             "getRadarrLibrary",
-            "library"
+            "library",
+            ["chat"]
           ),
         });
         const jellyseerrPlugin = createMockPlugin("jellyseerr", {
-          searchContent: createMockToolDefinition("searchContent"),
-          getDiscovery: createMockToolDefinition("getDiscovery"),
-          getRequests: createMockToolDefinition("getRequests", "management"),
-          requestMedia: createMockToolDefinition("requestMedia", "library"),
+          searchContent: createMockToolDefinition("searchContent", "search", [
+            "chat",
+            "discover",
+          ]),
+          getDiscovery: createMockToolDefinition("getDiscovery", "search", [
+            "chat",
+            "discover",
+          ]),
+          getRequests: createMockToolDefinition("getRequests", "management", [
+            "chat",
+          ]),
+          requestMedia: createMockToolDefinition("requestMedia", "library", [
+            "chat",
+          ]),
         });
         manager.register(radarrPlugin);
         manager.register(jellyseerrPlugin);
@@ -352,13 +364,22 @@ describe("PluginManager", () => {
         expect(tools).not.toHaveProperty("requestMedia");
       });
 
-      it("should include all tools when mode is not discover", () => {
+      it("should include tools with chat mode when mode is chat", () => {
         const radarrPlugin = createMockPlugin("radarr", {
-          searchRadarrMovies: createMockToolDefinition("searchRadarrMovies"),
+          searchRadarrMovies: createMockToolDefinition(
+            "searchRadarrMovies",
+            "search",
+            ["chat"]
+          ),
         });
         const jellyseerrPlugin = createMockPlugin("jellyseerr", {
-          searchContent: createMockToolDefinition("searchContent"),
-          getRequests: createMockToolDefinition("getRequests", "management"),
+          searchContent: createMockToolDefinition("searchContent", "search", [
+            "chat",
+            "discover",
+          ]),
+          getRequests: createMockToolDefinition("getRequests", "management", [
+            "chat",
+          ]),
         });
         manager.register(radarrPlugin);
         manager.register(jellyseerrPlugin);
@@ -367,7 +388,7 @@ describe("PluginManager", () => {
         configs.set("radarr", createMockConfig("radarr"));
         configs.set("jellyseerr", createMockConfig("jellyseerr"));
 
-        const tools = manager.getToolsForSession(mockSession, configs);
+        const tools = manager.getToolsForSession(mockSession, configs, "chat");
 
         expect(Object.keys(tools)).toHaveLength(3);
         expect(tools).toHaveProperty("searchRadarrMovies");
@@ -377,9 +398,17 @@ describe("PluginManager", () => {
 
       it("should include all tools when mode is undefined", () => {
         const plugin = createMockPlugin("jellyseerr", {
-          searchContent: createMockToolDefinition("searchContent"),
-          getDiscovery: createMockToolDefinition("getDiscovery"),
-          getRequests: createMockToolDefinition("getRequests", "management"),
+          searchContent: createMockToolDefinition("searchContent", "search", [
+            "chat",
+            "discover",
+          ]),
+          getDiscovery: createMockToolDefinition("getDiscovery", "search", [
+            "chat",
+            "discover",
+          ]),
+          getRequests: createMockToolDefinition("getRequests", "management", [
+            "chat",
+          ]),
         });
         manager.register(plugin);
 
@@ -395,12 +424,18 @@ describe("PluginManager", () => {
         expect(Object.keys(tools)).toHaveLength(3);
       });
 
-      it("should exclude non-jellyseerr plugins entirely in discover mode", () => {
+      it("should exclude tools without modes in non-chat mode", () => {
         const sonarrPlugin = createMockPlugin("sonarr", {
-          searchSonarrSeries: createMockToolDefinition("searchSonarrSeries"),
+          searchSonarrSeries: createMockToolDefinition(
+            "searchSonarrSeries",
+            "search",
+            ["chat"]
+          ),
         });
         const jellyfinPlugin = createMockPlugin("jellyfin", {
-          searchMedia: createMockToolDefinition("searchMedia"),
+          searchMedia: createMockToolDefinition("searchMedia", "search", [
+            "chat",
+          ]),
         });
         manager.register(sonarrPlugin);
         manager.register(jellyfinPlugin);
@@ -416,6 +451,43 @@ describe("PluginManager", () => {
         );
 
         expect(Object.keys(tools)).toHaveLength(0);
+      });
+
+      it("should treat tools without modes as chat-only", () => {
+        const plugin = createMockPlugin("service", {
+          toolWithModes: createMockToolDefinition("toolWithModes", "search", [
+            "chat",
+            "discover",
+          ]),
+          toolWithoutModes: createMockToolDefinition(
+            "toolWithoutModes",
+            "search"
+          ), // No modes = chat only
+        });
+        manager.register(plugin);
+
+        const configs = new Map<string, ServiceConfig>();
+        configs.set("service", createMockConfig("service"));
+
+        // In discover mode, only tools with discover in their modes should be included
+        const discoverTools = manager.getToolsForSession(
+          mockSession,
+          configs,
+          "discover"
+        );
+        expect(Object.keys(discoverTools)).toHaveLength(1);
+        expect(discoverTools).toHaveProperty("toolWithModes");
+        expect(discoverTools).not.toHaveProperty("toolWithoutModes");
+
+        // In chat mode, tools without modes should be included (treated as chat-only)
+        const chatTools = manager.getToolsForSession(
+          mockSession,
+          configs,
+          "chat"
+        );
+        expect(Object.keys(chatTools)).toHaveLength(2);
+        expect(chatTools).toHaveProperty("toolWithModes");
+        expect(chatTools).toHaveProperty("toolWithoutModes");
       });
     });
 

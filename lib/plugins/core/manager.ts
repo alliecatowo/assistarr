@@ -1,6 +1,9 @@
 import type { Session } from "next-auth";
 import type { ServiceConfig } from "@/lib/db/schema";
-import type { ServicePlugin } from "./types";
+import { createLogger } from "@/lib/logger";
+import type { ServicePlugin, ToolDefinition } from "./types";
+
+const log = createLogger("plugin-manager");
 
 export class PluginManager {
   private static instance: PluginManager;
@@ -17,8 +20,10 @@ export class PluginManager {
 
   public register(plugin: ServicePlugin) {
     if (this.services.has(plugin.name)) {
-      // biome-ignore lint/suspicious/noConsole: Log warning
-      console.warn(`Plugin ${plugin.name} is already registered. Overwriting.`);
+      log.warn(
+        { pluginName: plugin.name },
+        "Plugin is already registered. Overwriting."
+      );
     }
     this.services.set(plugin.name, plugin);
   }
@@ -35,18 +40,30 @@ export class PluginManager {
     return Array.from(this.services.values());
   }
 
+  /**
+   * Determines if a tool should be included based on the current chat mode.
+   * Uses the tool's `modes` metadata for declarative filtering.
+   *
+   * @param mode - The current chat mode (e.g., "discover", "chat")
+   * @param tool - The tool definition to check
+   * @returns true if the tool should be included, false otherwise
+   */
   private shouldIncludeTool(
     mode: string | undefined,
-    pluginName: string,
-    toolName: string
+    tool: ToolDefinition
   ): boolean {
-    if (mode === "discover") {
-      if (pluginName !== "jellyseerr") {
-        return false;
-      }
-      return toolName === "searchContent" || toolName === "getDiscovery";
+    // If no mode specified, include all tools
+    if (!mode) {
+      return true;
     }
-    return true;
+
+    // If tool has no modes restriction, it's only available in default/chat mode
+    if (!tool.modes || tool.modes.length === 0) {
+      return mode === "chat" || mode === undefined;
+    }
+
+    // Check if the tool's modes include the current mode
+    return tool.modes.includes(mode);
   }
 
   /**
@@ -68,7 +85,7 @@ export class PluginManager {
       }
 
       for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
-        if (this.shouldIncludeTool(mode, plugin.name, toolName)) {
+        if (this.shouldIncludeTool(mode, toolDef)) {
           tools[toolName] = toolDef.factory({
             session,
             config,

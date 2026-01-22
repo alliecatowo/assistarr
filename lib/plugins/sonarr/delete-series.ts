@@ -34,22 +34,15 @@ export const deleteSeries = ({
         ),
     }),
     execute: async ({ seriesId, deleteFiles, addImportListExclusion }) => {
-      try {
-        await client.delete(`/series/${seriesId}`, {
-          deleteFiles,
-          addImportListExclusion,
-        });
+      await client.delete(`/series/${seriesId}`, {
+        deleteFiles,
+        addImportListExclusion,
+      });
 
-        return {
-          success: true,
-          message: `Successfully deleted series with ID ${seriesId}${deleteFiles ? " and its files" : ""}.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to delete series: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Successfully deleted series with ID ${seriesId}${deleteFiles ? " and its files" : ""}.`,
+      };
     },
   });
 };

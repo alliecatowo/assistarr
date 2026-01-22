@@ -32,34 +32,27 @@ export const editMovie = ({ session: _session, config }: ToolFactoryProps) => {
       rootFolderPath,
       tags,
     }) => {
-      try {
-        // First, get the existing movie to merge updates
-        const existingMovie = await client.get<Record<string, unknown>>(
-          `/movie/${movieId}`
-        );
+      const existingMovie = await client.get<Record<string, unknown>>(
+        `/movie/${movieId}`
+      );
 
-        const body = {
-          ...existingMovie,
-          monitored: monitored ?? existingMovie.monitored,
-          qualityProfileId: qualityProfileId ?? existingMovie.qualityProfileId,
-          rootFolderPath: rootFolderPath ?? existingMovie.path,
-          tags: tags ?? existingMovie.tags,
-        };
+      const body = {
+        ...existingMovie,
+        monitored: monitored ?? existingMovie.monitored,
+        qualityProfileId: qualityProfileId ?? existingMovie.qualityProfileId,
+        rootFolderPath: rootFolderPath ?? existingMovie.path,
+        tags: tags ?? existingMovie.tags,
+      };
 
-        const result = await client.put<Record<string, unknown>>(
-          `/movie/${movieId}`,
-          body
-        );
+      const result = await client.put<Record<string, unknown>>(
+        `/movie/${movieId}`,
+        body
+      );
 
-        return {
-          success: true,
-          movie: result,
-        };
-      } catch (error) {
-        return {
-          error: `Failed to edit movie: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        movie: result,
+      };
     },
   });
 };

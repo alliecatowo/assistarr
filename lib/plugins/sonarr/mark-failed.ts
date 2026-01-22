@@ -17,19 +17,12 @@ export const markFailed = ({ session: _session, config }: ToolFactoryProps) => {
         ),
     }),
     execute: async ({ historyId }) => {
-      try {
-        await client.post(`/history/failed/${historyId}`);
+      await client.post(`/history/failed/${historyId}`);
 
-        return {
-          success: true,
-          message: `Marked history item ${historyId} as failed. Sonarr may now search for an alternative.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to mark history item as failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Marked history item ${historyId} as failed. Sonarr may now search for an alternative.`,
+      };
     },
   });
 };

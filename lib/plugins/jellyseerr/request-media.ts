@@ -16,34 +16,20 @@ import {
  */
 function checkMediaAvailability(
   details: MovieDetails | TvDetails,
-  title: string,
-  tmdbId: number,
-  mediaType: "movie" | "tv"
+  title: string
 ) {
   if (details.mediaInfo?.status === MediaStatus.AVAILABLE) {
-    return {
-      success: false as const,
-      error: `"${title}" is already available in the library.`,
-      tmdbId,
-      title,
-      mediaType,
-    };
+    throw new Error(`"${title}" is already available in library.`);
   }
 
   if (
     details.mediaInfo?.status === MediaStatus.PENDING ||
     details.mediaInfo?.status === MediaStatus.PROCESSING
   ) {
-    return {
-      success: false as const,
-      error: `"${title}" has already been requested and is being processed.`,
-      tmdbId,
-      title,
-      mediaType,
-    };
+    throw new Error(
+      `"${title}" has already been requested and is being processed.`
+    );
   }
-
-  return null;
 }
 
 /**
@@ -99,54 +85,36 @@ export const requestMedia = ({
         .describe("Request the 4K version if available"),
     }),
     execute: async ({ tmdbId, mediaType, seasons, is4k }) => {
-      try {
-        const detailsEndpoint =
-          mediaType === "movie" ? `/movie/${tmdbId}` : `/tv/${tmdbId}`;
+      const detailsEndpoint =
+        mediaType === "movie" ? `/movie/${tmdbId}` : `/tv/${tmdbId}`;
 
-        const details = await client.get<MovieDetails | TvDetails>(
-          detailsEndpoint
-        );
+      const details = await client.get<MovieDetails | TvDetails>(
+        detailsEndpoint
+      );
 
-        const title = "title" in details ? details.title : details.name;
-        const availabilityError = checkMediaAvailability(
-          details,
-          title,
-          tmdbId,
-          mediaType
-        );
+      const title = "title" in details ? details.title : details.name;
+      checkMediaAvailability(details, title);
 
-        if (availabilityError) {
-          return availabilityError;
-        }
+      const requestBody = buildRequestBody(tmdbId, mediaType, seasons, is4k);
 
-        const requestBody = buildRequestBody(tmdbId, mediaType, seasons, is4k);
+      const request = await client.post<MediaRequest>("/request", requestBody);
 
-        const request = await client.post<MediaRequest>(
-          "/request",
-          requestBody
-        );
+      const statusText = getRequestStatusText(request.status);
 
-        const statusText = getRequestStatusText(request.status);
-
-        return {
-          success: true,
-          requestId: request.id,
-          tmdbId,
-          title,
-          mediaType,
-          is4k: request.is4k,
-          status: statusText,
-          message: `Successfully requested "${title}". Status: ${statusText}.`,
-          ...(mediaType === "tv" &&
-            seasons && {
-              requestedSeasons: seasons,
-            }),
-        };
-      } catch (error) {
-        return {
-          error: `Failed to request media: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        requestId: request.id,
+        tmdbId,
+        title,
+        mediaType,
+        is4k: request.is4k,
+        status: statusText,
+        message: `Successfully requested "${title}". Status: ${statusText}.`,
+        ...(mediaType === "tv" &&
+          seasons && {
+            requestedSeasons: seasons,
+          }),
+      };
     },
   });
 };

@@ -19,28 +19,33 @@ export class JellyseerrPlugin extends BaseServicePlugin {
       displayName: "Search Content",
       description: "Search for movies and TV shows to request",
       category: "search",
+      modes: ["chat", "discover"],
     }),
     getDiscovery: this.defineTool(getDiscovery, {
       displayName: "Discover Content",
       description: "Get trending and popular content",
       category: "search",
+      modes: ["chat", "discover"],
     }),
     getRequests: this.defineTool(getRequests, {
       displayName: "Get Requests",
       description: "View media requests and their status",
       category: "management",
+      modes: ["chat"],
     }),
     requestMedia: this.defineTool(requestMedia, {
       displayName: "Request Media",
       description: "Request movies and TV shows",
       category: "library",
       requiresApproval: true,
+      modes: ["chat"],
     }),
     deleteRequest: this.defineTool(deleteRequest, {
       displayName: "Delete Request",
       description: "Cancel/delete a pending request",
       category: "management",
       requiresApproval: true,
+      modes: ["chat"],
     }),
   };
 

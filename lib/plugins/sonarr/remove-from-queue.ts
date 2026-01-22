@@ -34,22 +34,15 @@ export const removeFromQueue = ({
         ),
     }),
     execute: async ({ queueId, removeFromClient, blocklist }) => {
-      try {
-        await client.delete(`/queue/${queueId}`, {
-          removeFromClient,
-          blocklist,
-        });
+      await client.delete(`/queue/${queueId}`, {
+        removeFromClient,
+        blocklist,
+      });
 
-        return {
-          success: true,
-          message: `Removed item from queue.${blocklist ? " The release has been blocklisted." : ""}`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to remove item from queue: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Removed item from queue.${blocklist ? " The release has been blocklisted." : ""}`,
+      };
     },
   });
 };

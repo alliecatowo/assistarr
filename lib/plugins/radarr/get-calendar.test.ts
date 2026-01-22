@@ -442,7 +442,7 @@ describe("Radarr get-calendar tool", () => {
     });
 
     it("should handle network errors gracefully", async () => {
-      fetchMock.mockRejectedValue(new Error("Network timeout"));
+      fetchMock.mockRejectedValue(new Error("Connection failed"));
 
       const tool = createTool();
       const result = await tool.execute(
@@ -456,7 +456,7 @@ describe("Radarr get-calendar tool", () => {
 
       expect(result.movies).toEqual([]);
       expect(result.message).toContain("Error getting calendar");
-      expect(result.message).toContain("Network timeout");
+      expect(result.message).toContain("Connection failed");
     });
 
     it("should preserve all relevant movie fields in output", async () => {

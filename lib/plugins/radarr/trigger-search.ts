@@ -20,22 +20,15 @@ export const triggerSearch = ({
         ),
     }),
     execute: async ({ movieId }) => {
-      try {
-        await client.post("/command", {
-          name: "MoviesSearch",
-          movieIds: [movieId],
-        });
+      await client.post("/command", {
+        name: "MoviesSearch",
+        movieIds: [movieId],
+      });
 
-        return {
-          success: true,
-          message: `Search triggered for movie ID ${movieId}. Radarr will now look for available releases.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to trigger search: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Search triggered for movie ID ${movieId}. Radarr will now look for available releases.`,
+      };
     },
   });
 };

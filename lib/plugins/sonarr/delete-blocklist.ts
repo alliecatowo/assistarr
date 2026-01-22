@@ -25,40 +25,28 @@ export const deleteBlocklist = ({
         .describe("Array of blocklist item IDs to remove in bulk"),
     }),
     execute: async ({ blocklistId, blocklistIds }) => {
-      try {
-        if (!blocklistId && (!blocklistIds || blocklistIds.length === 0)) {
-          return {
-            error:
-              "You must provide either a blocklistId or an array of blocklistIds to remove.",
-          };
-        }
+      if (!blocklistId && (!blocklistIds || blocklistIds.length === 0)) {
+        throw new Error(
+          "You must provide either a blocklistId or an array of blocklistIds to remove."
+        );
+      }
 
-        if (blocklistIds && blocklistIds.length > 0) {
-          await client.delete("/blocklist/bulk", undefined, {
-            ids: blocklistIds,
-          });
+      if (blocklistIds && blocklistIds.length > 0) {
+        await client.delete("/blocklist/bulk", undefined, {
+          ids: blocklistIds,
+        });
 
-          return {
-            success: true,
-            message: `Successfully removed ${blocklistIds.length} item(s) from the blocklist.`,
-          };
-        }
-
-        if (blocklistId) {
-          await client.delete(`/blocklist/${blocklistId}`);
-          return {
-            success: true,
-            message: `Successfully removed item ${blocklistId} from the blocklist.`,
-          };
-        }
-
-        return { error: "No blocklist ID provided." };
-      } catch (error) {
         return {
-          success: false,
-          error: `Failed to remove from blocklist: ${error instanceof Error ? error.message : "Unknown error"}`,
+          success: true,
+          message: `Successfully removed ${blocklistIds.length} item(s) from the blocklist.`,
         };
       }
+
+      await client.delete(`/blocklist/${blocklistId}`);
+      return {
+        success: true,
+        message: `Successfully removed item ${blocklistId} from the blocklist.`,
+      };
     },
   });
 };

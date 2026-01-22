@@ -15,25 +15,18 @@ export const getQualityProfiles = ({
       "Get all quality profiles configured in Radarr. Use this to see available quality options and their IDs before adding or editing movies.",
     inputSchema: z.object({}),
     execute: async () => {
-      try {
-        const profiles =
-          await client.get<RadarrQualityProfile[]>("/qualityprofile");
+      const profiles =
+        await client.get<RadarrQualityProfile[]>("/qualityprofile");
 
-        return {
-          success: true,
-          profiles: profiles.map((profile) => ({
-            id: profile.id,
-            name: profile.name,
-            upgradeAllowed: profile.upgradeAllowed,
-            cutoff: profile.cutoff,
-          })),
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to get quality profiles: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        profiles: profiles.map((profile) => ({
+          id: profile.id,
+          name: profile.name,
+          upgradeAllowed: profile.upgradeAllowed,
+          cutoff: profile.cutoff,
+        })),
+      };
     },
   });
 };

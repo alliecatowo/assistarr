@@ -25,35 +25,25 @@ export const renameMovieFiles = ({
         ),
     }),
     execute: async ({ movieId, fileIds }) => {
-      try {
-        const commandBody: Record<string, unknown> = {
-          name: "RenameFiles",
-          movieId,
-        };
+      const commandBody: Record<string, unknown> = {
+        name: "RenameFiles",
+        movieId,
+      };
 
-        if (fileIds && fileIds.length > 0) {
-          commandBody.files = fileIds;
-        }
-
-        const command = await client.post<RadarrCommand>(
-          "/command",
-          commandBody
-        );
-
-        return {
-          success: true,
-          commandId: command.id,
-          status: command.status,
-          message: fileIds
-            ? `Rename started for ${fileIds.length} file(s). Command ID: ${command.id}`
-            : `Rename started for all files of movie ${movieId}. Command ID: ${command.id}`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to rename movie files: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
+      if (fileIds && fileIds.length > 0) {
+        commandBody.files = fileIds;
       }
+
+      const command = await client.post<RadarrCommand>("/command", commandBody);
+
+      return {
+        success: true,
+        commandId: command.id,
+        status: command.status,
+        message: fileIds
+          ? `Rename started for ${fileIds.length} file(s). Command ID: ${command.id}`
+          : `Rename started for all files of movie ${movieId}. Command ID: ${command.id}`,
+      };
     },
   });
 };

@@ -15,22 +15,15 @@ export const refreshSeries = ({
       seriesId: z.number().describe("The Sonarr series ID to refresh"),
     }),
     execute: async ({ seriesId }) => {
-      try {
-        await client.post("/command", {
-          name: "RefreshSeries",
-          seriesId,
-        });
+      await client.post("/command", {
+        name: "RefreshSeries",
+        seriesId,
+      });
 
-        return {
-          success: true,
-          message: `Refresh triggered for series ID ${seriesId}.`,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: `Failed to refresh series: ${error instanceof Error ? error.message : "Unknown error"}`,
-        };
-      }
+      return {
+        success: true,
+        message: `Refresh triggered for series ID ${seriesId}.`,
+      };
     },
   });
 };
