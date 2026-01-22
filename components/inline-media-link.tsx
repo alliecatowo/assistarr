@@ -149,7 +149,6 @@ export function InlineMediaLink({
                   fill
                   sizes="80px"
                   src={media.posterUrl}
-                  unoptimized
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-muted-foreground">

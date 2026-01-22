@@ -182,7 +182,6 @@ export function ApprovalCard({
               fill
               sizes="96px"
               src={metadata.posterUrl}
-              unoptimized
             />
           </div>
         ) : (

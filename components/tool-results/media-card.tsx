@@ -116,7 +116,6 @@ export function MediaCard({
             fill
             sizes={posterSize}
             src={fullPosterUrl}
-            unoptimized // External URLs need this
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">

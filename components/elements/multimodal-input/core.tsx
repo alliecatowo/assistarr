@@ -1,19 +1,9 @@
 "use client";
 
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
-import equal from "fast-deep-equal";
-import {
-  type Dispatch,
-  memo,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { useChatContext } from "@/components/chat/chat-context";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -21,9 +11,8 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/elements/prompt-input";
-import type { VisibilityType } from "@/components/elements/visibility-selector";
 import { ArrowUpIcon } from "@/components/ui/icons";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PreviewAttachment } from "../preview-attachment";
 import { AttachmentsButton } from "./attachments-button";
@@ -32,41 +21,24 @@ import { ModelSelectorCompact } from "./model-selector-compact";
 import { StopButton } from "./stop-button";
 import { SuggestedActions } from "./suggested-actions";
 
-function PureMultimodalInput({
-  chatId,
-  input,
-  setInput,
-  status,
-  stop,
-  attachments,
-  setAttachments,
-  messages,
-  setMessages,
-  sendMessage,
-  className,
-  selectedVisibilityType,
-  selectedModelId,
-  onModelChange,
-  debugMode,
-  onDebugModeChange,
-}: {
-  chatId: string;
-  input: string;
-  setInput: Dispatch<SetStateAction<string>>;
-  status: UseChatHelpers<ChatMessage>["status"];
-  stop: () => void;
-  attachments: Attachment[];
-  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
-  messages: UIMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  className?: string;
-  selectedVisibilityType: VisibilityType;
-  selectedModelId: string;
-  onModelChange?: (modelId: string) => void;
-  debugMode: boolean;
-  onDebugModeChange: (enabled: boolean) => void;
-}) {
+function PureMultimodalInput({ className }: { className?: string }) {
+  const {
+    chatId,
+    input,
+    setInput,
+    status,
+    stop,
+    attachments,
+    setAttachments,
+    messages,
+    setMessages,
+    sendMessage,
+    selectedVisibilityType,
+    selectedModelId,
+    onModelChange,
+    debugMode,
+    onDebugModeChange,
+  } = useChatContext();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
 
@@ -413,28 +385,12 @@ function PureMultimodalInput({
   );
 }
 
+// With context, memoization is handled by the context value changes
+// The component will only re-render when context values it uses change
 export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
-    if (prevProps.input !== nextProps.input) {
-      return false;
-    }
-    if (prevProps.status !== nextProps.status) {
-      return false;
-    }
-    if (!equal(prevProps.attachments, nextProps.attachments)) {
-      return false;
-    }
-    if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {
-      return false;
-    }
-    if (prevProps.selectedModelId !== nextProps.selectedModelId) {
-      return false;
-    }
-    if (prevProps.debugMode !== nextProps.debugMode) {
-      return false;
-    }
-
-    return true;
+    // Only compare className since all other state comes from context
+    return prevProps.className === nextProps.className;
   }
 );

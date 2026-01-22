@@ -20,7 +20,6 @@ export function ExpandedCardPoster({
           className="rounded-lg shadow-md"
           height={192}
           src={fullPosterUrl}
-          unoptimized
           width={128}
         />
       ) : (

@@ -76,7 +76,6 @@ export function ItemsPreview({
                   fill
                   sizes="20px"
                   src={posterUrl}
-                  unoptimized
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-muted text-[6px] text-muted-foreground">

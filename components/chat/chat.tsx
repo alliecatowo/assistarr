@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { useLocalStorage } from "usehooks-ts";
@@ -30,6 +30,7 @@ import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { type ChatContextValue, ChatProvider } from "./chat-context";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
 
@@ -194,8 +195,50 @@ export function Chat({
     setMessages,
   });
 
+  const chatContextValue: ChatContextValue = useMemo(
+    () => ({
+      chatId: id,
+      isReadonly,
+      messages,
+      setMessages,
+      status,
+      stop,
+      sendMessage,
+      regenerate,
+      addToolApprovalResponse,
+      input,
+      setInput,
+      attachments,
+      setAttachments,
+      selectedModelId: currentModelId,
+      onModelChange: setCurrentModelId,
+      selectedVisibilityType: visibilityType,
+      debugMode,
+      onDebugModeChange: setDebugMode,
+      votes,
+    }),
+    [
+      id,
+      isReadonly,
+      messages,
+      setMessages,
+      status,
+      stop,
+      sendMessage,
+      regenerate,
+      addToolApprovalResponse,
+      input,
+      attachments,
+      currentModelId,
+      visibilityType,
+      debugMode,
+      setDebugMode,
+      votes,
+    ]
+  );
+
   return (
-    <>
+    <ChatProvider value={chatContextValue}>
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
         <ChatHeader
           chatId={id}
@@ -204,61 +247,16 @@ export function Chat({
         />
 
         <Messages
-          addToolApprovalResponse={addToolApprovalResponse}
-          chatId={id}
           isArtifactVisible={isArtifactVisible}
-          isReadonly={isReadonly}
-          messages={messages}
-          regenerate={regenerate}
           selectedModelId={initialChatModel}
-          setMessages={setMessages}
-          status={status}
-          votes={votes}
         />
 
         <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
-          {!isReadonly && (
-            <MultimodalInput
-              attachments={attachments}
-              chatId={id}
-              debugMode={debugMode}
-              input={input}
-              messages={messages}
-              onDebugModeChange={setDebugMode}
-              onModelChange={setCurrentModelId}
-              selectedModelId={currentModelId}
-              selectedVisibilityType={visibilityType}
-              sendMessage={sendMessage}
-              setAttachments={setAttachments}
-              setInput={setInput}
-              setMessages={setMessages}
-              status={status}
-              stop={stop}
-            />
-          )}
+          {!isReadonly && <MultimodalInput />}
         </div>
       </div>
 
-      <Artifact
-        addToolApprovalResponse={addToolApprovalResponse}
-        attachments={attachments}
-        chatId={id}
-        debugMode={debugMode}
-        input={input}
-        isReadonly={isReadonly}
-        messages={messages}
-        onDebugModeChange={setDebugMode}
-        regenerate={regenerate}
-        selectedModelId={currentModelId}
-        selectedVisibilityType={visibilityType}
-        sendMessage={sendMessage}
-        setAttachments={setAttachments}
-        setInput={setInput}
-        setMessages={setMessages}
-        status={status}
-        stop={stop}
-        votes={votes}
-      />
+      <Artifact />
 
       <AlertDialog
         onOpenChange={setShowCreditCardAlert}
@@ -289,6 +287,6 @@ export function Chat({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </ChatProvider>
   );
 }

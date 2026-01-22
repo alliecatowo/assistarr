@@ -76,6 +76,14 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
   );
 };
 
+/**
+ * Encode cursor for keyset pagination: "timestamp_id"
+ */
+function encodeCursor(timestamp: Date, id: string): string {
+  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+  return `${date.toISOString()}_${id}`;
+}
+
 export function getChatHistoryPaginationKey(
   pageIndex: number,
   previousPageData: ChatHistory
@@ -88,13 +96,15 @@ export function getChatHistoryPaginationKey(
     return `/api/history?limit=${PAGE_SIZE}`;
   }
 
-  const firstChatFromPage = previousPageData.chats.at(-1);
+  const lastChatFromPage = previousPageData.chats.at(-1);
 
-  if (!firstChatFromPage) {
+  if (!lastChatFromPage) {
     return null;
   }
 
-  return `/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
+  // Use composite cursor (timestamp_id) for stable keyset pagination
+  const cursor = encodeCursor(lastChatFromPage.createdAt, lastChatFromPage.id);
+  return `/api/history?ending_before=${encodeURIComponent(cursor)}&limit=${PAGE_SIZE}`;
 }
 
 export function SidebarHistory({ user }: { user: User | undefined }) {

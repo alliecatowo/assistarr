@@ -1,36 +1,27 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
 import { ArrowDownIcon } from "lucide-react";
+import { memo } from "react";
+import { useChatContext } from "@/components/chat/chat-context";
 import { PreviewMessage, ThinkingMessage } from "@/components/chat/message";
 import { useMessages } from "@/hooks/use-messages";
-import type { Vote } from "@/lib/db/schema";
-import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 
 type MessagesProps = {
-  addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
-  chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
-  votes: Vote[] | undefined;
-  messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
-  isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
 };
 
-function PureMessages({
-  addToolApprovalResponse,
-  chatId,
-  status,
-  votes,
-  messages,
-  setMessages,
-  regenerate,
-  isReadonly,
-  selectedModelId: _selectedModelId,
-}: MessagesProps) {
+function PureMessages({ selectedModelId: _selectedModelId }: MessagesProps) {
+  const {
+    addToolApprovalResponse,
+    chatId,
+    status,
+    votes,
+    messages,
+    setMessages,
+    regenerate,
+    isReadonly,
+  } = useChatContext();
   const {
     containerRef: messagesContainerRef,
     endRef: messagesEndRef,
@@ -155,4 +146,14 @@ function PureMessages({
   );
 }
 
-export const Messages = PureMessages;
+// With context, memoization is handled by the context value changes
+// Only compare props that are still passed directly
+export const Messages = memo(PureMessages, (prevProps, nextProps) => {
+  if (prevProps.isArtifactVisible !== nextProps.isArtifactVisible) {
+    return false;
+  }
+  if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+    return false;
+  }
+  return true;
+});

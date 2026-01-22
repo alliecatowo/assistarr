@@ -1,18 +1,13 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
 import { formatDistance } from "date-fns";
-import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
-import { type Dispatch, memo, type SetStateAction, useEffect } from "react";
+import { memo, useEffect } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { codeArtifact } from "@/artifacts/code/client";
 import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { MultimodalInput } from "@/components/elements/multimodal-input/index";
-import type { VisibilityType } from "@/components/elements/visibility-selector";
 import { useSidebar } from "@/components/ui/sidebar";
-import type { Vote } from "@/lib/db/schema";
-import type { Attachment, ChatMessage } from "@/lib/types";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
@@ -44,45 +39,7 @@ export type UIArtifact = {
 };
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: View controller requires logic
-function PureArtifact({
-  addToolApprovalResponse,
-  chatId,
-  input,
-  setInput,
-  status,
-  stop,
-  attachments,
-  setAttachments,
-  sendMessage,
-  messages,
-  setMessages,
-  regenerate,
-  votes,
-  isReadonly,
-  selectedVisibilityType,
-  selectedModelId,
-  debugMode,
-  onDebugModeChange,
-}: {
-  addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
-  chatId: string;
-  input: string;
-  setInput: Dispatch<SetStateAction<string>>;
-  status: UseChatHelpers<ChatMessage>["status"];
-  stop: UseChatHelpers<ChatMessage>["stop"];
-  attachments: Attachment[];
-  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
-  messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  votes: Vote[] | undefined;
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
-  isReadonly: boolean;
-  selectedVisibilityType: VisibilityType;
-  selectedModelId: string;
-  debugMode: boolean;
-  onDebugModeChange: (enabled: boolean) => void;
-}) {
+function PureArtifact() {
   const {
     artifact,
     metadata,
@@ -180,36 +137,10 @@ function PureArtifact({
               </AnimatePresence>
 
               <div className="flex h-full flex-col items-center justify-between">
-                <ArtifactMessages
-                  addToolApprovalResponse={addToolApprovalResponse}
-                  artifactStatus={artifact.status}
-                  chatId={chatId}
-                  isReadonly={isReadonly}
-                  messages={messages}
-                  regenerate={regenerate}
-                  setMessages={setMessages}
-                  status={status}
-                  votes={votes}
-                />
+                <ArtifactMessages artifactStatus={artifact.status} />
 
                 <div className="relative flex w-full flex-row items-end gap-2 px-4 pb-4">
-                  <MultimodalInput
-                    attachments={attachments}
-                    chatId={chatId}
-                    className="bg-background dark:bg-muted"
-                    debugMode={debugMode}
-                    input={input}
-                    messages={messages}
-                    onDebugModeChange={onDebugModeChange}
-                    selectedModelId={selectedModelId}
-                    selectedVisibilityType={selectedVisibilityType}
-                    sendMessage={sendMessage}
-                    setAttachments={setAttachments}
-                    setInput={setInput}
-                    setMessages={setMessages}
-                    status={status}
-                    stop={stop}
-                  />
+                  <MultimodalInput className="bg-background dark:bg-muted" />
                 </div>
               </div>
             </motion.div>
@@ -347,11 +278,7 @@ function PureArtifact({
                   <Toolbar
                     artifactKind={artifact.kind}
                     isToolbarVisible={isToolbarVisible}
-                    sendMessage={sendMessage}
                     setIsToolbarVisible={setIsToolbarVisible}
-                    setMessages={setMessages}
-                    status={status}
-                    stop={stop}
                   />
                 )}
               </AnimatePresence>
@@ -373,22 +300,6 @@ function PureArtifact({
   );
 }
 
-export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
-  if (prevProps.status !== nextProps.status) {
-    return false;
-  }
-  if (!equal(prevProps.votes, nextProps.votes)) {
-    return false;
-  }
-  if (prevProps.input !== nextProps.input) {
-    return false;
-  }
-  if (!equal(prevProps.messages, nextProps.messages.length)) {
-    return false;
-  }
-  if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {
-    return false;
-  }
-
-  return true;
-});
+// With context, memoization is handled by the context value changes
+// The component has no props now, so it will re-render based on context changes
+export const Artifact = memo(PureArtifact);

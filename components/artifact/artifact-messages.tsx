@@ -1,35 +1,25 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo } from "react";
 import type { UIArtifact } from "@/components/artifact/artifact";
+import { useChatContext } from "@/components/chat/chat-context";
 import { PreviewMessage, ThinkingMessage } from "@/components/chat/message";
 import { useMessages } from "@/hooks/use-messages";
-import type { Vote } from "@/lib/db/schema";
-import type { ChatMessage } from "@/lib/types";
 
 type ArtifactMessagesProps = {
-  addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
-  chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
-  votes: Vote[] | undefined;
-  messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
-  isReadonly: boolean;
   artifactStatus: UIArtifact["status"];
 };
 
-function PureArtifactMessages({
-  addToolApprovalResponse,
-  chatId,
-  status,
-  votes,
-  messages,
-  setMessages,
-  regenerate,
-  isReadonly,
-}: ArtifactMessagesProps) {
+function PureArtifactMessages({ artifactStatus: _ }: ArtifactMessagesProps) {
+  const {
+    addToolApprovalResponse,
+    chatId,
+    status,
+    votes,
+    messages,
+    setMessages,
+    regenerate,
+    isReadonly,
+  } = useChatContext();
   const {
     containerRef: messagesContainerRef,
     endRef: messagesEndRef,
@@ -85,10 +75,13 @@ function PureArtifactMessages({
   );
 }
 
+// With context, most state comes from context
+// Only compare the artifactStatus prop that's still passed directly
 function areEqual(
   prevProps: ArtifactMessagesProps,
   nextProps: ArtifactMessagesProps
 ) {
+  // Skip updates while artifact is streaming to avoid performance issues
   if (
     prevProps.artifactStatus === "streaming" &&
     nextProps.artifactStatus === "streaming"
@@ -96,20 +89,7 @@ function areEqual(
     return true;
   }
 
-  if (prevProps.status !== nextProps.status) {
-    return false;
-  }
-  if (prevProps.status && nextProps.status) {
-    return false;
-  }
-  if (prevProps.messages.length !== nextProps.messages.length) {
-    return false;
-  }
-  if (!equal(prevProps.votes, nextProps.votes)) {
-    return false;
-  }
-
-  return true;
+  return prevProps.artifactStatus === nextProps.artifactStatus;
 }
 
 export const ArtifactMessages = memo(PureArtifactMessages, areEqual);

@@ -22,6 +22,7 @@ import {
   type ArtifactKind,
   artifactDefinitions,
 } from "@/components/artifact/artifact";
+import { useChatContext } from "@/components/chat/chat-context";
 import { ArrowUpIcon, StopIcon, SummarizeIcon } from "@/components/ui/icons";
 import {
   Tooltip,
@@ -307,20 +308,13 @@ export const Tools = ({
 const PureToolbar = ({
   isToolbarVisible,
   setIsToolbarVisible,
-  sendMessage,
-  status,
-  stop,
-  setMessages,
   artifactKind,
 }: {
   isToolbarVisible: boolean;
   setIsToolbarVisible: Dispatch<SetStateAction<boolean>>;
-  status: UseChatHelpers<ChatMessage>["status"];
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  stop: UseChatHelpers<ChatMessage>["stop"];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   artifactKind: ArtifactKind;
 }) => {
+  const { sendMessage, status, stop, setMessages } = useChatContext();
   const toolbarRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -464,10 +458,8 @@ const PureToolbar = ({
   );
 };
 
+// With context, status comes from context so we only compare the remaining props
 export const Toolbar = memo(PureToolbar, (prevProps, nextProps) => {
-  if (prevProps.status !== nextProps.status) {
-    return false;
-  }
   if (prevProps.isToolbarVisible !== nextProps.isToolbarVisible) {
     return false;
   }

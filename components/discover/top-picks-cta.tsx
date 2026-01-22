@@ -11,7 +11,7 @@ import {
   StarIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, getBackdropUrl, getPosterUrl } from "@/lib/utils";
@@ -85,15 +85,13 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
   };
 
   return (
-    <div
+    <button
       className={cn(
         "group relative overflow-hidden rounded-xl border bg-card shadow-lg text-left cursor-pointer",
         "transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-primary/50"
       )}
       onClick={handleCardClick}
-      onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
-      role="button"
-      tabIndex={0}
+      type="button"
     >
       {/* Poster Image */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
@@ -105,7 +103,6 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
             priority
             sizes="(max-width: 768px) 50vw, 33vw"
             src={posterUrl || backdropUrl || ""}
-            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -209,7 +206,7 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -225,7 +222,7 @@ export function TopPicksCta() {
   const [requestingId, setRequestingId] = useState<number | null>(null);
   const { updateItemStatus } = useDiscover();
 
-  const fetchTopPicks = async (isRefresh = false) => {
+  const fetchTopPicks = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setIsRefreshing(true);
     } else {
@@ -247,11 +244,11 @@ export function TopPicksCta() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTopPicks();
-  }, []);
+  }, [fetchTopPicks]);
 
   const handleRequest = async (tmdbId: number, mediaType: "movie" | "tv") => {
     setRequestingId(tmdbId);

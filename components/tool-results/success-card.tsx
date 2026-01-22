@@ -123,7 +123,6 @@ export function SuccessCard({ output, toolName }: SuccessCardProps) {
               fill
               sizes="75px"
               src={metadata.posterUrl}
-              unoptimized
             />
           </div>
         ) : (

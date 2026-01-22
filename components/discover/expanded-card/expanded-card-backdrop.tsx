@@ -19,7 +19,6 @@ export function ExpandedCardBackdrop({
         fill
         sizes="100vw"
         src={backdropUrl}
-        unoptimized
       />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
     </div>

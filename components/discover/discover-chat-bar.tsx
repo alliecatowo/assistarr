@@ -123,12 +123,7 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
     });
   }, [chatId]);
 
-  const {
-    sendMessage,
-    status,
-    messages,
-    error,
-  } = useChat<ChatMessage>({
+  const { sendMessage, status, messages, error } = useChat<ChatMessage>({
     id: chatId,
     generateId: generateUUID,
     transport,
@@ -140,7 +135,8 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
       setLoading(false);
       toast({
         type: "error",
-        description: error.message || "Failed to get recommendations. Please try again.",
+        description:
+          error.message || "Failed to get recommendations. Please try again.",
       });
     }
   }, [error, setLoading]);

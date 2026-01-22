@@ -35,7 +35,6 @@ export function CastList({ cast }: CastListProps) {
                   className="rounded-full mx-auto object-cover"
                   height={48}
                   src={profileImage}
-                  unoptimized
                   width={48}
                 />
               ) : (

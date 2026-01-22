@@ -133,7 +133,6 @@ function RecommendationCard({
             fill
             sizes="80px"
             src={fullPosterUrl}
-            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">

@@ -1,4 +1,3 @@
-/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
@@ -469,6 +468,7 @@ function BrowseCard({
   isRequesting,
 }: BrowseCardProps) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: Div acts as clickable card
     <div
       onClick={onExpand}
       onKeyDown={(e) => e.key === "Enter" && onExpand()}

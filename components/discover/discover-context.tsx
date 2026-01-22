@@ -5,6 +5,7 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -165,27 +166,47 @@ export function DiscoverProvider({
     setExpandedItem(undefined);
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      sections,
+      mode,
+      activeQuery,
+      aiIntro,
+      isLoading,
+      refineOptions,
+      setSections,
+      showAIResults,
+      clearAIResults,
+      setLoading,
+      updateItemStatus,
+      submitQuery,
+      registerSubmitHandler,
+      expandedItem,
+      expandItem,
+      collapseItem,
+    }),
+    [
+      sections,
+      mode,
+      activeQuery,
+      aiIntro,
+      isLoading,
+      refineOptions,
+      setSections,
+      showAIResults,
+      clearAIResults,
+      setLoading,
+      updateItemStatus,
+      submitQuery,
+      registerSubmitHandler,
+      expandedItem,
+      expandItem,
+      collapseItem,
+    ]
+  );
+
   return (
-    <DiscoverContext.Provider
-      value={{
-        sections,
-        mode,
-        activeQuery,
-        aiIntro,
-        isLoading,
-        refineOptions,
-        setSections,
-        showAIResults,
-        clearAIResults,
-        setLoading,
-        updateItemStatus,
-        submitQuery,
-        registerSubmitHandler,
-        expandedItem,
-        expandItem,
-        collapseItem,
-      }}
-    >
+    <DiscoverContext.Provider value={contextValue}>
       {children}
     </DiscoverContext.Provider>
   );

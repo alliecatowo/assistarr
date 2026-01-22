@@ -1,4 +1,3 @@
-/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
@@ -71,6 +70,7 @@ export function DiscoverCard({
       )}
     >
       {/* Poster - clickable for expand */}
+      {/* biome-ignore lint/a11y/useSemanticElements: Div acts as clickable card */}
       <div
         className="relative aspect-[2/3] w-full overflow-hidden bg-muted p-0"
         onClick={handleCardClick}
@@ -85,7 +85,6 @@ export function DiscoverCard({
             fill
             sizes="160px"
             src={posterUrl}
-            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs">
@@ -128,8 +127,8 @@ export function DiscoverCard({
           )}
         </div>
       </div>
-
       {/* Info - also clickable */}
+      {/* biome-ignore lint/a11y/useSemanticElements: Div acts as clickable card */}
       <div
         className="w-full p-2.5 space-y-1.5 text-left"
         onClick={handleCardClick}
