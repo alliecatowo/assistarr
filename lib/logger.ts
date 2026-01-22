@@ -160,8 +160,8 @@ const loggerOptions: LoggerOptions = {
   formatters: {
     level: (label) => ({ level: label }),
   },
-  // Add Sentry hook for error-level logs
-  hooks: createSentryHook(),
+  // Add Sentry hook for error-level logs (only if Sentry is enabled)
+  ...(sentryEnabled && { hooks: createSentryHook() }),
 };
 
 /**
