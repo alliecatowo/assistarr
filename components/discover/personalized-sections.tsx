@@ -163,9 +163,10 @@ interface TasteProfileCardProps {
 }
 
 function TasteProfileCard({ profile }: TasteProfileCardProps) {
-  const moviePercentage = profile.totalItems > 0
-    ? Math.round((profile.totalMovies / profile.totalItems) * 100)
-    : 0;
+  const moviePercentage =
+    profile.totalItems > 0
+      ? Math.round((profile.totalMovies / profile.totalItems) * 100)
+      : 0;
   const showPercentage = 100 - moviePercentage;
 
   return (
@@ -176,7 +177,9 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Your Library
           </p>
-          <p className="text-3xl font-bold">{profile.totalItems.toLocaleString()}</p>
+          <p className="text-3xl font-bold">
+            {profile.totalItems.toLocaleString()}
+          </p>
           <div className="space-y-1">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Movies</span>
@@ -279,15 +282,16 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
             Your Stats
           </p>
           <div className="space-y-2">
-            {profile.averageRating !== undefined && profile.averageRating > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Avg Rating</span>
-                <span className="flex items-center gap-1 font-medium">
-                  <StarIcon className="size-3 fill-yellow-500 text-yellow-500" />
-                  {profile.averageRating.toFixed(1)}
-                </span>
-              </div>
-            )}
+            {profile.averageRating !== undefined &&
+              profile.averageRating > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Avg Rating</span>
+                  <span className="flex items-center gap-1 font-medium">
+                    <StarIcon className="size-3 fill-yellow-500 text-yellow-500" />
+                    {profile.averageRating.toFixed(1)}
+                  </span>
+                </div>
+              )}
             {profile.totalRuntimeHours !== undefined &&
               profile.totalRuntimeHours > 0 && (
                 <div className="flex items-center justify-between text-sm">
@@ -314,7 +318,9 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
                 <div className="space-y-0.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Diversity</span>
-                    <span className="font-medium">{profile.genreDiversityScore}/100</span>
+                    <span className="font-medium">
+                      {profile.genreDiversityScore}/100
+                    </span>
                   </div>
                   <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
                     <div
@@ -334,7 +340,8 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
                 <div className="text-xs">
                   <span className="text-muted-foreground">Top Director: </span>
                   <span className="font-medium">
-                    {profile.favoriteDirectors[0].name} ({profile.favoriteDirectors[0].count})
+                    {profile.favoriteDirectors[0].name} (
+                    {profile.favoriteDirectors[0].count})
                   </span>
                 </div>
               )}
@@ -342,7 +349,8 @@ function TasteProfileCard({ profile }: TasteProfileCardProps) {
                 <div className="text-xs">
                   <span className="text-muted-foreground">Top Actor: </span>
                   <span className="font-medium">
-                    {profile.favoriteActors[0].name} ({profile.favoriteActors[0].count})
+                    {profile.favoriteActors[0].name} (
+                    {profile.favoriteActors[0].count})
                   </span>
                 </div>
               )}
@@ -363,11 +371,14 @@ interface TasteProfileTriggerProps {
   isLoading: boolean;
 }
 
-export function TasteProfileTrigger({ profile, isLoading }: TasteProfileTriggerProps) {
+export function TasteProfileTrigger({
+  profile,
+  isLoading,
+}: TasteProfileTriggerProps) {
   if (isLoading) {
     return (
-      <div className="mb-6 flex justify-center">
-        <Skeleton className="h-9 w-44" />
+      <div className="mb-3 flex justify-center">
+        <Skeleton className="h-8 w-40" />
       </div>
     );
   }
@@ -377,22 +388,26 @@ export function TasteProfileTrigger({ profile, isLoading }: TasteProfileTriggerP
   }
 
   return (
-    <div className="mb-6 flex justify-center">
+    <div className="mb-3 flex justify-center">
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <SparklesIcon className="size-4" />
-            View Your Taste Profile
+          <Button className="h-7 gap-1.5 text-xs" size="sm" variant="outline">
+            <SparklesIcon className="size-3.5" />
+            View Taste Profile
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent
+          className="w-full sm:max-w-lg overflow-y-auto"
+          side="right"
+        >
           <SheetHeader className="mb-6">
             <SheetTitle className="flex items-center gap-2">
               <SparklesIcon className="size-5 text-primary" />
               Your Taste Profile
             </SheetTitle>
             <SheetDescription>
-              Insights based on your library of {profile.totalItems.toLocaleString()} items
+              Insights based on your library of{" "}
+              {profile.totalItems.toLocaleString()} items
             </SheetDescription>
           </SheetHeader>
           <TasteProfileCard profile={profile} />
@@ -480,7 +495,7 @@ export function PersonalizedSections() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <TasteProfileTrigger profile={null} isLoading={true} />
+        <TasteProfileTrigger isLoading={true} profile={null} />
         <PersonalizedSectionSkeleton />
         <PersonalizedSectionSkeleton />
         <PersonalizedSectionSkeleton />
@@ -534,7 +549,7 @@ export function PersonalizedSections() {
   return (
     <div className="space-y-2">
       {/* Taste Profile Button (opens sheet) */}
-      <TasteProfileTrigger profile={profile} isLoading={false} />
+      <TasteProfileTrigger isLoading={false} profile={profile} />
 
       {/* Header with Refresh */}
       <div className="mb-6 flex items-center justify-between">
