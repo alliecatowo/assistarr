@@ -92,7 +92,7 @@ interface DiscoverChatBarProps {
   userId: string;
 }
 
-export function DiscoverChatBar({ userId }: DiscoverChatBarProps) {
+export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
   const [input, setInput] = useState("");
   const [lastQuery, setLastQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -102,7 +102,6 @@ export function DiscoverChatBar({ userId }: DiscoverChatBarProps) {
   // Generate a stable chat ID for this discover session
   // Use a lazy initialization to ensure the same UUID across SSR and hydration
   const [chatId] = useState(() => generateUUID());
-  console.log("[DiscoverChatBar] Chat ID:", chatId);
 
   // Memoize the transport to avoid recreating it on every render
   const transport = useMemo(() => {
@@ -110,7 +109,6 @@ export function DiscoverChatBar({ userId }: DiscoverChatBarProps) {
       api: "/api/chat",
       prepareSendMessagesRequest(request) {
         const lastMessage = request.messages.at(-1);
-        console.log("[DiscoverChatBar] prepareSendMessagesRequest - chatId:", chatId, "lastMessage:", lastMessage);
         return {
           body: {
             id: chatId,
@@ -124,30 +122,16 @@ export function DiscoverChatBar({ userId }: DiscoverChatBarProps) {
     });
   }, [chatId]);
 
-  const { sendMessage, status, messages, error } = useChat<ChatMessage>({
+  const {
+    sendMessage,
+    status,
+    messages,
+    error: _error,
+  } = useChat<ChatMessage>({
     id: chatId,
     generateId: generateUUID,
     transport,
-    onError: (err) => {
-      console.error("[DiscoverChatBar] useChat error:", err);
-    },
   });
-
-  // Log any errors
-  useEffect(() => {
-    if (error) {
-      console.error("[DiscoverChatBar] Chat error state:", error);
-    }
-  }, [error]);
-
-  // Debug: Log on mount
-  useEffect(() => {
-    console.log("[DiscoverChatBar] Component mounted, chatId:", chatId);
-    console.log("[DiscoverChatBar] sendMessage function:", typeof sendMessage);
-    return () => {
-      console.log("[DiscoverChatBar] Component unmounting");
-    };
-  }, [chatId, sendMessage]);
 
   // Process AI responses and extract recommendations
   useEffect(() => {
@@ -193,25 +177,16 @@ export function DiscoverChatBar({ userId }: DiscoverChatBarProps) {
 
   const submitQuery = useCallback(
     (query: string) => {
-      console.log("[DiscoverChatBar] submitQuery called with:", query);
-      console.log("[DiscoverChatBar] status:", status);
       if (!query.trim() || status === "streaming") {
-        console.log("[DiscoverChatBar] Skipping - empty query or streaming");
         return;
       }
 
       setLastQuery(query);
       setLoading(true);
-      console.log("[DiscoverChatBar] Calling sendMessage...");
-      try {
-        sendMessage({
-          role: "user",
-          parts: [{ type: "text", text: query.trim() }],
-        });
-        console.log("[DiscoverChatBar] sendMessage called successfully");
-      } catch (err) {
-        console.error("[DiscoverChatBar] sendMessage threw error:", err);
-      }
+      sendMessage({
+        role: "user",
+        parts: [{ type: "text", text: query.trim() }],
+      });
       setInput("");
     },
     [status, sendMessage, setLoading]
@@ -219,7 +194,6 @@ export function DiscoverChatBar({ userId }: DiscoverChatBarProps) {
 
   // Register the submit handler with context so quick actions can use it
   useEffect(() => {
-    console.log("[DiscoverChatBar] Registering submit handler");
     registerSubmitHandler(submitQuery);
   }, [registerSubmitHandler, submitQuery]);
 

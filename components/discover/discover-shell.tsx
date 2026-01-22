@@ -54,9 +54,7 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
     if (open) {
       setOpen(false);
     }
-    // Only run on mount, not when `open` changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [open, setOpen]);
 
   return (
     <div className="flex h-full flex-col">

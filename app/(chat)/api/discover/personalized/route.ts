@@ -254,10 +254,7 @@ function initializeMetrics(): LibraryMetrics {
   };
 }
 
-function processMovie(
-  movie: RadarrMovie,
-  metrics: LibraryMetrics
-): void {
+function processMovie(movie: RadarrMovie, metrics: LibraryMetrics): void {
   for (const genre of movie.genres ?? []) {
     metrics.genreCounts[genre] = (metrics.genreCounts[genre] || 0) + 1;
   }
@@ -269,7 +266,8 @@ function processMovie(
   }
 
   if (movie.studio) {
-    metrics.studioCounts[movie.studio] = (metrics.studioCounts[movie.studio] || 0) + 1;
+    metrics.studioCounts[movie.studio] =
+      (metrics.studioCounts[movie.studio] || 0) + 1;
   }
 
   const rating = movie.ratings?.imdb?.value ?? movie.ratings?.tmdb?.value;
@@ -333,10 +331,7 @@ async function fetchRadarrLibrary(
   }
 }
 
-function processSeries(
-  series: SonarrSeries,
-  metrics: LibraryMetrics
-): void {
+function processSeries(series: SonarrSeries, metrics: LibraryMetrics): void {
   for (const genre of series.genres ?? []) {
     metrics.genreCounts[genre] = (metrics.genreCounts[genre] || 0) + 1;
   }
@@ -344,11 +339,13 @@ function processSeries(
   if (series.year) {
     const decade = getDecade(series.year);
     metrics.decadeCounts[decade] = (metrics.decadeCounts[decade] || 0) + 1;
-    metrics.yearCounts[series.year] = (metrics.yearCounts[series.year] || 0) + 1;
+    metrics.yearCounts[series.year] =
+      (metrics.yearCounts[series.year] || 0) + 1;
   }
 
   if (series.network) {
-    metrics.networkCounts[series.network] = (metrics.networkCounts[series.network] || 0) + 1;
+    metrics.networkCounts[series.network] =
+      (metrics.networkCounts[series.network] || 0) + 1;
   }
 
   const rating = series.ratings?.value;
@@ -358,7 +355,8 @@ function processSeries(
   }
 
   if (series.runtime > 0 && series.statistics?.episodeFileCount) {
-    metrics.totalRuntimeMinutes += series.runtime * series.statistics.episodeFileCount;
+    metrics.totalRuntimeMinutes +=
+      series.runtime * series.statistics.episodeFileCount;
   }
 
   if (series.statistics?.sizeOnDisk && series.statistics.sizeOnDisk > 0) {
@@ -449,7 +447,10 @@ function processMovieCredits(
 async function fetchMovieCreditsBatches(
   jellyseerrClient: JellyseerrClient,
   moviesToFetch: { tmdbId: number; mediaType: "movie" | "tv" }[]
-): Promise<{ directorCounts: Record<string, PersonCount>; actorCounts: Record<string, PersonCount> }> {
+): Promise<{
+  directorCounts: Record<string, PersonCount>;
+  actorCounts: Record<string, PersonCount>;
+}> {
   const directorCounts: Record<string, PersonCount> = {};
   const actorCounts: Record<string, PersonCount> = {};
 
@@ -497,9 +498,7 @@ function calculateGenreDiversity(genreCounts: Record<string, number>): number {
   return Math.min(100, (diversityScore / 3.5) * 100);
 }
 
-function buildGenreResults(
-  genreCounts: Record<string, number>
-): GenreCount[] {
+function buildGenreResults(genreCounts: Record<string, number>): GenreCount[] {
   const totalGenreCount = Object.values(genreCounts).reduce((a, b) => a + b, 0);
 
   return Object.entries(genreCounts)
@@ -1141,8 +1140,7 @@ export async function GET() {
           ? `Generated ${sections.length} personalized sections based on your ${profile.totalMovies + profile.totalShows} items`
           : "No personalized recommendations available",
     });
-  } catch (error) {
-    console.error("Personalized recommendations error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to generate personalized recommendations" },
       { status: 500 }

@@ -21,13 +21,17 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
 
   // Create infinite loop by tripling items (prev + current + next)
   const loopedItems = useMemo(() => {
-    if (items.length < 4) return items; // Don't loop for small lists
+    if (items.length < 4) {
+      return items;
+    }
     return [...items, ...items, ...items];
   }, [items]);
 
   const handleRequest = useCallback(
     async (tmdbId: number, mediaType: "movie" | "tv") => {
-      if (requestingIds.has(tmdbId)) return;
+      if (requestingIds.has(tmdbId)) {
+        return;
+      }
 
       setRequestingIds((prev) => new Set(prev).add(tmdbId));
       try {
@@ -58,14 +62,18 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
 
   const checkScrollability = useCallback(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     setCanScroll(el.scrollWidth > el.clientWidth);
   }, []);
 
   // Set initial scroll position to middle set and handle infinite loop
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || items.length < 4) return;
+    if (!el || items.length < 4) {
+      return;
+    }
 
     // Start at the middle set (index = items.length)
     const cardWidth = 172;
@@ -100,7 +108,9 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
 
   const scroll = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
 
     const cardWidth = 172;
     const scrollAmount = cardWidth * 3;
@@ -114,11 +124,15 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
   // Handle mouse wheel horizontal scroll (native event for passive: false)
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
 
     const handleWheel = (e: WheelEvent) => {
       // If scrolling horizontally already, let it pass through
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        return;
+      }
 
       // Convert vertical scroll to horizontal
       if (e.deltaY !== 0) {
@@ -134,7 +148,9 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
     };
   }, []);
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return null;
+  }
 
   const displayItems = items.length >= 4 ? loopedItems : items;
 
@@ -158,17 +174,11 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
 
       {/* Scrollable container */}
       <div
-        className={cn(
-          "flex gap-3 overflow-x-auto pb-2",
-          "scrollbar-none"
-        )}
+        className={cn("flex gap-3 overflow-x-auto pb-2", "scrollbar-none")}
         ref={scrollRef}
       >
         {displayItems.map((item, index) => (
-          <div
-            className="shrink-0"
-            key={`${item.id}-${index}`}
-          >
+          <div className="shrink-0" key={`${item.id}-${index}`}>
             <DiscoverCard
               isRequesting={requestingIds.has(item.tmdbId ?? 0)}
               item={item}
