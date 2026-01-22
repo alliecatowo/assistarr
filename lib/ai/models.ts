@@ -1,6 +1,76 @@
 // Curated list of top models from Vercel AI Gateway
 export const DEFAULT_CHAT_MODEL = "google/gemini-2.5-flash";
 
+// =============================================================================
+// Model Tiers - Quality/Speed tradeoff presets
+// =============================================================================
+
+export const MODEL_TIERS = {
+  lite: {
+    name: "Lite",
+    description: "Fast responses, lower cost - great for simple tasks",
+    models: {
+      google: "google/gemini-2.5-flash-lite",
+      anthropic: "anthropic/claude-haiku-4.5",
+      openai: "openai/gpt-4.1-mini",
+    },
+    default: "google/gemini-2.5-flash-lite",
+  },
+  fast: {
+    name: "Fast",
+    description: "Balanced speed and quality - recommended for most tasks",
+    models: {
+      google: "google/gemini-2.5-flash",
+      anthropic: "anthropic/claude-sonnet-4.5",
+      openai: "openai/gpt-4.1-mini",
+    },
+    default: "google/gemini-2.5-flash",
+  },
+  heavy: {
+    name: "Heavy",
+    description: "Best quality, slower - for complex reasoning tasks",
+    models: {
+      google: "google/gemini-2.5-pro",
+      anthropic: "anthropic/claude-opus-4.5",
+      openai: "openai/gpt-5.2",
+    },
+    default: "google/gemini-2.5-pro",
+  },
+  thinking: {
+    name: "Thinking",
+    description: "Extended reasoning - for complex multi-step problems",
+    models: {
+      anthropic: "anthropic/claude-3.7-sonnet-thinking",
+    },
+    default: "anthropic/claude-3.7-sonnet-thinking",
+  },
+} as const;
+
+export type ModelTier = keyof typeof MODEL_TIERS;
+export const MODEL_TIER_OPTIONS: ModelTier[] = [
+  "lite",
+  "fast",
+  "heavy",
+  "thinking",
+];
+
+/**
+ * Get the model ID for a specific tier and provider
+ */
+export function getModelForTier(tier: ModelTier, provider?: string): string {
+  const tierConfig = MODEL_TIERS[tier];
+
+  if (provider) {
+    const providerKey =
+      provider.toLowerCase() as keyof typeof tierConfig.models;
+    if (providerKey in tierConfig.models) {
+      return tierConfig.models[providerKey as keyof typeof tierConfig.models];
+    }
+  }
+
+  return tierConfig.default;
+}
+
 export type ChatModel = {
   id: string;
   name: string;

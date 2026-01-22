@@ -11,6 +11,7 @@ import {
 import { isTestEnvironment } from "../constants";
 import type { UserAIConfig } from "../db/schema";
 import { env, getAIProvider } from "../env";
+import { getModelForTier, type ModelTier } from "./models";
 
 const THINKING_SUFFIX_REGEX = /-thinking$/;
 
@@ -210,3 +211,18 @@ export function getArtifactModel() {
 export function hasUserAIConfig(userConfig?: UserAIConfig): boolean {
   return !!userConfig && userConfig.isEnabled;
 }
+
+/**
+ * Get a language model based on user's preferred tier
+ * Falls back to 'fast' tier if not specified
+ */
+export function getLanguageModelForTier(userConfig?: UserAIConfig) {
+  const tier: ModelTier =
+    (userConfig?.preferredModelTier as ModelTier) ?? "fast";
+  const provider = userConfig?.providerName;
+  const modelId = getModelForTier(tier, provider);
+  return getLanguageModel(modelId, userConfig);
+}
+
+// Re-export getModelForTier for convenience
+export { getModelForTier, type ModelTier } from "./models";

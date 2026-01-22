@@ -50,6 +50,47 @@ export async function getUserAIConfigs({
       .where(eq(userAIConfig.userId, userId));
     return configs.map(decryptConfig);
   } catch (_error) {
+    // If the preferredModelTier column does not exist (e.g., migration not applied),
+    // try fetching without it and provide a default.
+    // This is a temporary workaround until the migration is properly applied.
+    if (
+      _error instanceof Error &&
+      _error.message.includes('column "preferredModelTier" does not exist')
+    ) {
+      log.warn(
+        { userId },
+        "Attempting to fetch user AI configs without preferredModelTier due to missing column"
+      );
+      try {
+        const configsWithoutModelTier = await db
+          .select({
+            id: userAIConfig.id,
+            userId: userAIConfig.userId,
+            providerName: userAIConfig.providerName,
+            apiKey: userAIConfig.apiKey,
+            isEnabled: userAIConfig.isEnabled,
+            createdAt: userAIConfig.createdAt,
+            updatedAt: userAIConfig.updatedAt,
+          })
+          .from(userAIConfig)
+          .where(eq(userAIConfig.userId, userId));
+
+        // Manually add default preferredModelTier for compatibility
+        return configsWithoutModelTier.map((config) =>
+          decryptConfig({ ...config, preferredModelTier: "fast" })
+        );
+      } catch (retryError) {
+        log.error(
+          { error: retryError, userId },
+          "Failed to get user AI configs even after retrying without preferredModelTier"
+        );
+        throw new ChatSDKError(
+          "bad_request:database",
+          "Failed to get user AI configs"
+        );
+      }
+    }
+
     log.error({ error: _error, userId }, "Failed to get user AI configs");
     throw new ChatSDKError(
       "bad_request:database",
@@ -224,6 +265,49 @@ export async function deleteUserAIConfig({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete user AI config"
+    );
+  }
+}
+
+/**
+ * Update the preferred model tier for a user's AI config
+ */
+export async function updateUserModelTier({
+  userId,
+  providerName,
+  preferredModelTier,
+}: {
+  userId: string;
+  providerName: string;
+  preferredModelTier: "lite" | "fast" | "heavy" | "thinking";
+}): Promise<UserAIConfig | null> {
+  try {
+    log.info(
+      { userId, providerName, preferredModelTier },
+      "Updating user model tier"
+    );
+    const [updatedConfig] = await db
+      .update(userAIConfig)
+      .set({
+        preferredModelTier,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(userAIConfig.userId, userId),
+          eq(userAIConfig.providerName, providerName)
+        )
+      )
+      .returning();
+    return updatedConfig ? decryptConfig(updatedConfig) : null;
+  } catch (_error) {
+    log.error(
+      { error: _error, userId, providerName },
+      "Failed to update user model tier"
+    );
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user model tier"
     );
   }
 }

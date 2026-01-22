@@ -2,8 +2,9 @@ import { generateText } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
-import { getLanguageModel } from "@/lib/ai/providers";
+import { getLanguageModel, getLanguageModelForTier } from "@/lib/ai/providers";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
+import { getActiveUserAIConfig } from "@/lib/db/queries/user-ai-config";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { MediaStatus } from "@/lib/plugins/jellyseerr/types";
 import { RadarrClient } from "@/lib/plugins/radarr/client";
@@ -476,7 +477,8 @@ async function generatePersonalizedPitches(
     name?: string;
     overview?: string;
     mediaType: "movie" | "tv";
-  }>
+  }>,
+  userConfig?: Awaited<ReturnType<typeof getActiveUserAIConfig>>
 ): Promise<PitchGeneration[]> {
   const profileSummary = `
 User's Library Profile:
@@ -521,8 +523,13 @@ Format your response as a JSON array of objects with "title" and "pitch" fields.
 Return ONLY the JSON array, no other text.`;
 
   try {
+    // Use user's preferred model tier, or default to fast tier
+    const model = userConfig
+      ? getLanguageModelForTier(userConfig)
+      : getLanguageModel("google/gemini-2.5-flash");
+
     const result = await generateText({
-      model: getLanguageModel("google/gemini-2.5-flash"),
+      model,
       prompt,
     });
 
@@ -569,6 +576,11 @@ export async function GET() {
     }
 
     const client = new JellyseerrClient(jellyseerrConfig);
+
+    // Get user's AI config for model tier preference
+    const userAIConfig = await getActiveUserAIConfig({
+      userId: session.user.id,
+    });
 
     // Step 1: Analyze user's taste profile
     const profile = await analyzeTasteProfile(session.user.id, client);
@@ -632,10 +644,11 @@ export async function GET() {
       result.status === "fulfilled" ? result.value : topCandidates[index]
     );
 
-    // Step 4: Generate personalized pitches using AI
+    // Step 4: Generate personalized pitches using AI (with user's preferred model tier)
     const pitches = await generatePersonalizedPitches(
       profile,
-      detailedCandidates
+      detailedCandidates,
+      userAIConfig ?? undefined
     );
 
     // Step 5: Build response

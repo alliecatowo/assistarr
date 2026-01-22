@@ -189,6 +189,16 @@ export const serviceConfig = pgTable(
 
 export type ServiceConfig = InferSelectModel<typeof serviceConfig>;
 
+// Model tier enum for AI quality/speed presets
+export const modelTierEnum = pgEnum("model_tier", [
+  "lite",
+  "fast",
+  "heavy",
+  "thinking",
+]);
+
+export type ModelTierType = "lite" | "fast" | "heavy" | "thinking";
+
 // User AI provider configurations (Bring Your Own Keys)
 export const userAIConfig = pgTable(
   "UserAIConfig",
@@ -200,6 +210,7 @@ export const userAIConfig = pgTable(
     providerName: varchar("providerName", { length: 50 }).notNull(), // 'openrouter', 'openai', 'anthropic', 'google', 'gateway'
     apiKey: text("apiKey").notNull(), // Encrypted at rest
     isEnabled: boolean("isEnabled").notNull().default(true),
+    preferredModelTier: modelTierEnum("preferredModelTier").default("fast"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },

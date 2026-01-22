@@ -721,37 +721,35 @@ async function getDecadeSection(
     const startYear = Number.parseInt(decade.decade.replace("s", ""), 10);
     const endYear = startYear + 9;
 
-    const topGenre = topGenres[0]?.genre?.toLowerCase();
-    const genreId = topGenre ? GENRE_TO_ID[topGenre] : undefined;
-
-    let endpoint = `/discover/${mediaType}?page=1`;
-    endpoint += `&primaryReleaseDateGte=${startYear}-01-01`;
-    endpoint += `&primaryReleaseDateLte=${endYear}-12-31`;
-    if (genreId) {
-      endpoint += `&genre=${genreId}`;
-    }
-    endpoint += "&sortBy=vote_average.desc";
-    endpoint += "&voteCountGte=100";
-
+    const endpoint =
+      mediaType === "movie" ? "/discover/movies" : "/discover/tv";
     const response = await client.get<JellyseerrDiscoverResponse>(endpoint);
 
+    const decadeName = decade.decade;
+    const genreName = topGenres[0]?.genre ?? "";
+
     const filtered = (response.results ?? [])
+      .filter((m) => m.mediaType === mediaType)
       .filter((m) => !existingTmdbIds.has(m.id))
       .filter((m) => mapStatus(m.mediaInfo) !== "available")
+      .filter((m) => {
+        const year = parseYear(m.releaseDate ?? m.firstAirDate);
+        if (!year) {
+          return false;
+        }
+        return year >= startYear && year <= endYear;
+      })
       .slice(0, 12);
 
     if (filtered.length < 3) {
       return null;
     }
 
-    const decadeName = decade.decade;
-    const genreName = topGenres[0]?.genre ?? "";
-
     return {
       id: `decade-${decadeName}`,
       title: `Your ${decadeName} obsession`,
       subtitle: `${decade.count} items from this era in your library`,
-      reason: `You have ${decade.count} ${genreName.toLowerCase()} titles from the ${decadeName}`,
+      reason: `You have ${decade.count} ${genreName.toLowerCase()} titles from ${decadeName}`,
       type: "decade",
       items: filtered.map((m) =>
         mapResultToItem(m, `Classic ${decadeName} ${genreName.toLowerCase()}`)
@@ -769,22 +767,17 @@ async function getHiddenGemsSection(
 ): Promise<PersonalizedSection | null> {
   try {
     const genreName = topGenres[0]?.genre?.toLowerCase();
-    const genreId = genreName ? GENRE_TO_ID[genreName] : undefined;
 
-    let endpoint = "/discover/movie?page=1";
-    endpoint += "&sortBy=vote_average.desc";
-    endpoint += "&voteCountGte=50";
-    endpoint += "&voteCountLte=1000";
-    endpoint += "&voteAverageGte=7";
-    if (genreId) {
-      endpoint += `&genre=${genreId}`;
-    }
-
+    const endpoint = "/discover/movies";
     const response = await client.get<JellyseerrDiscoverResponse>(endpoint);
 
     const filtered = (response.results ?? [])
       .filter((m) => !existingTmdbIds.has(m.id))
       .filter((m) => mapStatus(m.mediaInfo) !== "available")
+      .filter((m) => {
+        const avg = m.voteAverage ?? 0;
+        return avg >= 7 && avg < 8.5;
+      })
       .slice(0, 12);
 
     if (filtered.length < 3) {
@@ -813,21 +806,14 @@ async function getCriticallyAcclaimedSection(
 ): Promise<PersonalizedSection | null> {
   try {
     const genreName = topGenres[0]?.genre?.toLowerCase();
-    const genreId = genreName ? GENRE_TO_ID[genreName] : undefined;
 
-    let endpoint = "/discover/movie?page=1";
-    endpoint += "&sortBy=vote_average.desc";
-    endpoint += "&voteCountGte=1000";
-    endpoint += "&voteAverageGte=7.5";
-    if (genreId) {
-      endpoint += `&genre=${genreId}`;
-    }
-
+    const endpoint = "/discover/movies";
     const response = await client.get<JellyseerrDiscoverResponse>(endpoint);
 
     const filtered = (response.results ?? [])
       .filter((m) => !existingTmdbIds.has(m.id))
       .filter((m) => mapStatus(m.mediaInfo) !== "available")
+      .filter((m) => (m.voteAverage ?? 0) >= 8.5)
       .slice(0, 12);
 
     if (filtered.length < 3) {
@@ -856,19 +842,8 @@ async function getNewReleasesSection(
 ): Promise<PersonalizedSection | null> {
   try {
     const genreName = topGenres[0]?.genre?.toLowerCase();
-    const genreId = genreName ? GENRE_TO_ID[genreName] : undefined;
 
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    const dateStr = oneYearAgo.toISOString().split("T")[0];
-
-    let endpoint = "/discover/movie?page=1";
-    endpoint += "&sortBy=popularity.desc";
-    endpoint += `&primaryReleaseDateGte=${dateStr}`;
-    if (genreId) {
-      endpoint += `&genre=${genreId}`;
-    }
-
+    const endpoint = "/discover/trending";
     const response = await client.get<JellyseerrDiscoverResponse>(endpoint);
 
     const filtered = (response.results ?? [])
@@ -942,16 +917,15 @@ async function getGenreDeepDiveSection(
       return null;
     }
 
-    let endpoint = `/discover/${mediaType}?page=1`;
-    endpoint += "&sortBy=vote_average.desc";
-    endpoint += "&voteCountGte=200";
-    endpoint += `&genre=${genreId}`;
-
+    const endpoint =
+      mediaType === "movie" ? "/discover/movies" : "/discover/tv";
     const response = await client.get<JellyseerrDiscoverResponse>(endpoint);
 
     const filtered = (response.results ?? [])
+      .filter((m) => m.mediaType === mediaType)
       .filter((m) => !existingTmdbIds.has(m.id))
       .filter((m) => mapStatus(m.mediaInfo) !== "available")
+      .filter((m) => (m.genreIds ?? []).includes(genreId))
       .slice(0, 12);
 
     if (filtered.length < 3) {
@@ -973,30 +947,20 @@ async function getGenreDeepDiveSection(
 
 async function getUnderratedPicksSection(
   client: JellyseerrClient,
-  topGenres: GenreCount[],
+  _topGenres: GenreCount[],
   existingTmdbIds: Set<number>
 ): Promise<PersonalizedSection | null> {
   try {
-    const genreIds = topGenres
-      .slice(0, 3)
-      .map((g) => GENRE_TO_ID[g.genre.toLowerCase()])
-      .filter(Boolean);
-
-    let endpoint = "/discover/movie?page=1";
-    endpoint += "&sortBy=popularity.desc";
-    endpoint += "&voteCountGte=100";
-    endpoint += "&voteCountLte=2000";
-    endpoint += "&voteAverageGte=6.5";
-    endpoint += "&voteAverageLte=7.5";
-    if (genreIds.length > 0) {
-      endpoint += `&genre=${genreIds[0]}`;
-    }
-
+    const endpoint = "/discover/movies";
     const response = await client.get<JellyseerrDiscoverResponse>(endpoint);
 
     const filtered = (response.results ?? [])
       .filter((m) => !existingTmdbIds.has(m.id))
       .filter((m) => mapStatus(m.mediaInfo) !== "available")
+      .filter((m) => {
+        const avg = m.voteAverage ?? 0;
+        return avg >= 6.5 && avg <= 7.5;
+      })
       .slice(0, 12);
 
     if (filtered.length < 3) {
