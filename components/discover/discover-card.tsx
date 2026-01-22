@@ -1,3 +1,4 @@
+/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
@@ -68,11 +69,12 @@ export function DiscoverCard({
       )}
     >
       {/* Poster - clickable for expand */}
-      <button
+      <div
         className="relative aspect-[2/3] w-full overflow-hidden bg-muted p-0"
         onClick={handleCardClick}
+        onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
+        role="button"
         tabIndex={0}
-        type="button"
       >
         {posterUrl ? (
           <Image
@@ -123,15 +125,15 @@ export function DiscoverCard({
             </Button>
           )}
         </div>
-      </button>
+      </div>
 
       {/* Info - also clickable */}
-      <button
+      <div
         className="w-full p-2.5 space-y-1.5 text-left"
         onClick={handleCardClick}
         onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
+        role="button"
         tabIndex={-1}
-        type="button"
       >
         <h4 className="text-xs font-medium line-clamp-2 min-h-[2rem]">
           {item.title}
@@ -193,7 +195,7 @@ export function DiscoverCard({
             <span>{item.reason}</span>
           </p>
         )}
-      </button>
+      </div>
     </div>
   );
 }
