@@ -547,23 +547,9 @@ export function PersonalizedSections() {
     );
   }
 
-  // Empty state
+  // Empty state - don't show personalized section
   if (sections.length === 0) {
-    return (
-      <section className="mb-8">
-        <div className="mb-3 flex items-center gap-2">
-          <SparklesIcon className="size-5 text-primary" />
-          <h3 className="text-lg font-semibold">Personalized For You</h3>
-        </div>
-        <div className="rounded-lg border bg-muted/30 p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Add more movies and shows to your library to unlock deeply
-            personalized recommendations based on your favorite directors,
-            actors, and genres.
-          </p>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (
