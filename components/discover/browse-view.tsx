@@ -521,6 +521,7 @@ function BrowseHeader({
         <Sheet>
           <SheetTrigger asChild>
             <Button
+              aria-label="Open filters"
               className="relative sm:hidden"
               size="icon"
               variant="outline"

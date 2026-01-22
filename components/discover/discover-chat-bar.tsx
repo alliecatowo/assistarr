@@ -236,6 +236,7 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
           />
         </div>
         <Button
+          aria-label={isLoading ? "Loading" : "Send message"}
           className="h-12 w-12"
           disabled={!input.trim() || isLoading}
           onClick={handleSubmit}

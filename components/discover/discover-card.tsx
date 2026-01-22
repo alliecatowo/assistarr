@@ -70,13 +70,11 @@ export function DiscoverCard({
       )}
     >
       {/* Poster - clickable for expand */}
-      {/* biome-ignore lint/a11y/useSemanticElements: Div acts as clickable card */}
-      <div
-        className="relative aspect-[2/3] w-full overflow-hidden bg-muted p-0"
+      <button
+        aria-label={`View details for ${item.title}`}
+        className="relative aspect-[2/3] w-full overflow-hidden bg-muted p-0 text-left"
         onClick={handleCardClick}
-        onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
-        role="button"
-        tabIndex={0}
+        type="button"
       >
         {posterUrl ? (
           <Image
@@ -126,16 +124,9 @@ export function DiscoverCard({
             </Button>
           )}
         </div>
-      </div>
-      {/* Info - also clickable */}
-      {/* biome-ignore lint/a11y/useSemanticElements: Div acts as clickable card */}
-      <div
-        className="w-full p-2.5 space-y-1.5 text-left"
-        onClick={handleCardClick}
-        onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
-        role="button"
-        tabIndex={-1}
-      >
+      </button>
+      {/* Info section */}
+      <div className="w-full p-2.5 space-y-1.5 text-left">
         <h4 className="text-xs font-medium line-clamp-2 min-h-[2rem]">
           {item.title}
           {item.year && (

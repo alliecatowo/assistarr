@@ -116,6 +116,7 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
             <div>Console</div>
           </div>
           <Button
+            aria-label="Close console"
             className="size-fit p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700"
             onClick={() => setConsoleOutputs([])}
             size="icon"

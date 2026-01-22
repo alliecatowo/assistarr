@@ -10,6 +10,7 @@ interface ExpandedCardHeaderProps {
 export function ExpandedCardHeader({ onClose }: ExpandedCardHeaderProps) {
   return (
     <Button
+      aria-label="Close details"
       className="absolute right-2 top-2 z-20"
       onClick={onClose}
       size="icon"
