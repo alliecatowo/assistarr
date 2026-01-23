@@ -1,5 +1,6 @@
 import type { Geo } from "@vercel/functions";
 import {
+  type Tool,
   convertToModelMessages,
   createUIMessageStream,
   stepCountIs,
@@ -116,7 +117,8 @@ export function createChatStream(config: StreamConfig) {
         mode
       );
 
-      let effectiveTools = {
+      // biome-ignore lint/suspicious/noExplicitAny: Tools have varying generic types
+      let effectiveTools: Record<string, Tool<any, any>> = {
         ...baseTools,
         ...serviceTools,
       };

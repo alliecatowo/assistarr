@@ -207,8 +207,11 @@ export const MiscIcons: Story = () => (
   <div className="space-y-4">
     <h3 className="text-sm font-medium">Misc Icons</h3>
     <div className="flex flex-wrap gap-4">
+      <div className="flex flex-col items-center gap-1 w-16">
+        <BotIcon />
+        <span className="text-xs text-muted-foreground">Bot</span>
+      </div>
       {[
-        { Icon: BotIcon, name: "Bot" },
         { Icon: UserIcon, name: "User" },
         { Icon: BoxIcon, name: "Box" },
         { Icon: GlobeIcon, name: "Globe" },
@@ -236,27 +239,27 @@ export const Sizes: Story = () => (
     <h3 className="text-sm font-medium">Icon Sizes</h3>
     <div className="flex items-end gap-4">
       <div className="flex flex-col items-center gap-1">
-        <BotIcon size={12} />
+        <SparklesIcon size={12} />
         <span className="text-xs text-muted-foreground">12px</span>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <BotIcon size={16} />
+        <SparklesIcon size={16} />
         <span className="text-xs text-muted-foreground">16px</span>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <BotIcon size={20} />
+        <SparklesIcon size={20} />
         <span className="text-xs text-muted-foreground">20px</span>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <BotIcon size={24} />
+        <SparklesIcon size={24} />
         <span className="text-xs text-muted-foreground">24px</span>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <BotIcon size={32} />
+        <SparklesIcon size={32} />
         <span className="text-xs text-muted-foreground">32px</span>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <BotIcon size={48} />
+        <SparklesIcon size={48} />
         <span className="text-xs text-muted-foreground">48px</span>
       </div>
     </div>
@@ -268,11 +271,21 @@ export const WithColors: Story = () => (
   <div className="space-y-4">
     <h3 className="text-sm font-medium">Icons with Colors</h3>
     <div className="flex gap-4">
-      <CheckCircleFillIcon size={24} className="text-green-500" />
-      <WarningIcon size={24} className="text-yellow-500" />
-      <CrossIcon size={24} className="text-red-500" />
-      <InfoIcon size={24} className="text-blue-500" />
-      <SparklesIcon size={24} className="text-purple-500" />
+      <span className="text-green-500">
+        <CheckCircleFillIcon size={24} />
+      </span>
+      <span className="text-yellow-500">
+        <WarningIcon size={24} />
+      </span>
+      <span className="text-red-500">
+        <CrossIcon size={24} />
+      </span>
+      <span className="text-blue-500">
+        <InfoIcon size={24} />
+      </span>
+      <span className="text-purple-500">
+        <SparklesIcon size={24} />
+      </span>
     </div>
   </div>
 );

@@ -1,12 +1,7 @@
 import type { Tool } from "ai";
 import { createLogger } from "../logger";
-import {
-  type MCPClientWrapper,
-  getMCPTools,
-  namespaceMCPTool,
-  sanitizeName,
-} from "./client-manager";
-import type { NamespacedMCPTool } from "./types";
+import { getMCPTools, namespaceMCPTool } from "./client-manager";
+import type { MCPClientWrapper, NamespacedMCPTool } from "./types";
 
 const log = createLogger("mcp:tool-adapter");
 
@@ -17,8 +12,10 @@ const log = createLogger("mcp:tool-adapter");
 export async function adaptMCPTools(
   wrapper: MCPClientWrapper,
   serverDisplayName: string
+  // biome-ignore lint/suspicious/noExplicitAny: MCP Tool types are dynamically typed
 ): Promise<Record<string, Tool<any, any>>> {
   const mcpTools = await getMCPTools(wrapper);
+  // biome-ignore lint/suspicious/noExplicitAny: MCP Tool types are dynamically typed
   const adaptedTools: Record<string, Tool<any, any>> = {};
 
   for (const [originalName, mcpTool] of Object.entries(mcpTools)) {
@@ -31,6 +28,7 @@ export async function adaptMCPTools(
 
     // The MCP tools from AI SDK should already be in the correct format
     // We just need to rename them with namespacing
+    // biome-ignore lint/suspicious/noExplicitAny: MCP Tool types are dynamically typed
     adaptedTools[namespacedName] = mcpTool as Tool<any, any>;
   }
 
@@ -48,7 +46,7 @@ export async function getMCPToolsInfo(
   const toolsInfo: NamespacedMCPTool[] = [];
 
   for (const [originalName, mcpTool] of Object.entries(mcpTools)) {
-    const tool = mcpTool as any;
+    const tool = mcpTool as { description?: string; parameters?: object };
     toolsInfo.push({
       originalName,
       namespacedName: namespaceMCPTool(serverDisplayName, originalName),
@@ -66,9 +64,11 @@ export async function getMCPToolsInfo(
  * If a tool name already exists in the base tools, it will be skipped with a warning.
  */
 export async function mergeMCPToolsWithBase(
+  // biome-ignore lint/suspicious/noExplicitAny: Tools have varying generic types
   baseTools: Record<string, Tool<any, any>>,
   mcpWrappers: Array<{ wrapper: MCPClientWrapper; displayName: string }>
 ): Promise<{
+  // biome-ignore lint/suspicious/noExplicitAny: Tools have varying generic types
   tools: Record<string, Tool<any, any>>;
   mcpToolCount: number;
   conflicts: string[];

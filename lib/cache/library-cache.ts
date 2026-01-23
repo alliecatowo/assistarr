@@ -142,7 +142,7 @@ export function getOrFetchProfile(
   // Check cache first
   const cached = getCachedProfile(userId);
   if (cached) {
-    return cached;
+    return Promise.resolve(cached);
   }
 
   // Check if there's already a request in flight

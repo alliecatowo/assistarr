@@ -78,10 +78,13 @@ export async function discoverMCPTools(
   const wrapper = await createMCPClientWrapper(options);
 
   try {
-    const tools = await wrapper.client.tools();
+    // biome-ignore lint/suspicious/noExplicitAny: MCP client type is dynamic
+    const mcpClient = wrapper.client as any;
+    const tools = await mcpClient.tools();
 
     // Convert to MCPToolInfo format
     const toolInfos: MCPToolInfo[] = Object.entries(tools).map(
+      // biome-ignore lint/suspicious/noExplicitAny: MCP tool schema is dynamic
       ([name, tool]: [string, any]) => ({
         name,
         description: tool.description || "",
@@ -138,8 +141,11 @@ export async function checkMCPHealth(
  */
 export async function getMCPTools(
   wrapper: MCPClientWrapper
-): Promise<Record<string, any>> {
-  return await wrapper.client.tools();
+  // biome-ignore lint/suspicious/noExplicitAny: MCP tools are dynamically typed
+): Promise<Record<string, unknown>> {
+  // biome-ignore lint/suspicious/noExplicitAny: MCP client type is dynamic
+  const mcpClient = wrapper.client as any;
+  return await mcpClient.tools();
 }
 
 /**
