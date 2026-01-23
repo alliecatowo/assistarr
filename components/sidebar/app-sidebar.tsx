@@ -18,6 +18,7 @@ import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/sidebar/sidebar-history";
+import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { SidebarUserNav } from "@/components/sidebar/sidebar-user-nav";
 import {
   AlertDialog,
@@ -46,7 +47,7 @@ import {
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, open, isMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
@@ -74,17 +75,21 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarHeader>
           <SidebarMenu>
             <div className="flex flex-row items-center justify-between">
-              <Link
-                className="flex flex-row items-center gap-3"
-                href="/"
-                onClick={() => {
-                  setOpenMobile(false);
-                }}
-              >
-                <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Assistarr
-                </span>
-              </Link>
+              <div className="flex flex-row items-center gap-2">
+                {/* Show toggle inside sidebar when open on desktop */}
+                {open && !isMobile && <SidebarToggle />}
+                <Link
+                  className="flex flex-row items-center gap-3"
+                  href="/"
+                  onClick={() => {
+                    setOpenMobile(false);
+                  }}
+                >
+                  <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
+                    Assistarr
+                  </span>
+                </Link>
+              </div>
               <div className="flex flex-row gap-1">
                 {user && (
                   <Tooltip>

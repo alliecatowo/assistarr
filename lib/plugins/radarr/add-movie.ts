@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { invalidateUserCache } from "@/lib/cache/library-cache";
 import type { ToolFactoryProps } from "../core/types";
 import { RadarrClient } from "./client";
 import type {
@@ -39,7 +40,7 @@ const displayableMediaSchema = z
   })
   .optional();
 
-export const addMovie = ({ session: _session, config }: ToolFactoryProps) => {
+export const addMovie = ({ session, config }: ToolFactoryProps) => {
   const client = new RadarrClient(config);
 
   return tool({
@@ -119,6 +120,11 @@ export const addMovie = ({ session: _session, config }: ToolFactoryProps) => {
       };
 
       const addedMovie = await client.post<RadarrMovie>("/movie", addPayload);
+
+      // Invalidate library cache so personalized recommendations update
+      if (session.user?.id) {
+        invalidateUserCache(session.user.id);
+      }
 
       return {
         success: true,

@@ -1,12 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { invalidateUserCache } from "@/lib/cache/library-cache";
 import type { ToolFactoryProps } from "../core/types";
 import { RadarrClient } from "./client";
 
-export const deleteMovie = ({
-  session: _session,
-  config,
-}: ToolFactoryProps) => {
+export const deleteMovie = ({ session, config }: ToolFactoryProps) => {
   const client = new RadarrClient(config);
 
   return tool({
@@ -32,6 +30,11 @@ export const deleteMovie = ({
       };
 
       await client.delete(`/movie/${movieId}`, queryParams);
+
+      // Invalidate library cache so personalized recommendations update
+      if (session.user?.id) {
+        invalidateUserCache(session.user.id);
+      }
 
       return {
         success: true,

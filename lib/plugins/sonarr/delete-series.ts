@@ -1,12 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { invalidateUserCache } from "@/lib/cache/library-cache";
 import type { ToolFactoryProps } from "../core/types";
 import { SonarrClient } from "./client";
 
-export const deleteSeries = ({
-  session: _session,
-  config,
-}: ToolFactoryProps) => {
+export const deleteSeries = ({ session, config }: ToolFactoryProps) => {
   const client = new SonarrClient(config);
 
   return tool({
@@ -38,6 +36,11 @@ export const deleteSeries = ({
         deleteFiles,
         addImportListExclusion,
       });
+
+      // Invalidate library cache so personalized recommendations update
+      if (session.user?.id) {
+        invalidateUserCache(session.user.id);
+      }
 
       return {
         success: true,

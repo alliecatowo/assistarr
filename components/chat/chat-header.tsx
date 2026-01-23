@@ -23,13 +23,16 @@ function PureChatHeader({
   isReadonly: boolean;
 }) {
   const router = useRouter();
-  const { open } = useSidebar();
+  const { open, isMobile } = useSidebar();
 
   const { width: windowWidth } = useWindowSize();
 
+  // Hide toggle in header when sidebar is open on desktop (it moves inside the sidebar)
+  const showToggleInHeader = !open || isMobile;
+
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
-      <SidebarToggle />
+      {showToggleInHeader && <SidebarToggle />}
 
       {(!open || windowWidth < 768) && (
         <Button

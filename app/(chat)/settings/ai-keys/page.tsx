@@ -22,6 +22,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 interface AIProviderConfig {
@@ -29,6 +36,7 @@ interface AIProviderConfig {
   providerName: string;
   apiKey: string; // Masked in responses
   isEnabled: boolean;
+  preferredModelTier?: "lite" | "fast" | "heavy" | "thinking";
 }
 
 interface ProviderInfo {
@@ -70,12 +78,114 @@ const AI_PROVIDERS: ProviderInfo[] = [
   },
 ];
 
+// Model tier options for quality/speed tradeoff
+const MODEL_TIERS = [
+  {
+    value: "lite",
+    name: "Lite",
+    description: "Fast responses, lower cost - great for simple tasks",
+  },
+  {
+    value: "fast",
+    name: "Fast",
+    description: "Balanced speed and quality - recommended for most tasks",
+  },
+  {
+    value: "heavy",
+    name: "Heavy",
+    description: "Best quality, slower - for complex reasoning tasks",
+  },
+  {
+    value: "thinking",
+    name: "Thinking",
+    description: "Extended reasoning - for complex multi-step problems",
+  },
+] as const;
+
 type ConnectionStatus = "idle" | "testing" | "success" | "error";
 
 interface TestResult {
   status: ConnectionStatus;
   message?: string;
   latency?: number;
+}
+
+// Model Tier Selector Component
+function ModelTierSelector({
+  currentTier,
+  onTierChange,
+  disabled,
+}: {
+  currentTier: string;
+  onTierChange: (tier: "lite" | "fast" | "heavy" | "thinking") => Promise<void>;
+  disabled?: boolean;
+}) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleChange = async (value: string) => {
+    setIsSaving(true);
+    try {
+      await onTierChange(value as "lite" | "fast" | "heavy" | "thinking");
+      toast.success(
+        `Model tier changed to ${MODEL_TIERS.find((t) => t.value === value)?.name ?? value}`
+      );
+    } catch (_error) {
+      toast.error("Failed to update model tier");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const selectedTier = MODEL_TIERS.find((t) => t.value === currentTier);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ZapIcon className="size-5" />
+          Model Tier
+        </CardTitle>
+        <CardDescription>
+          Choose the balance between response speed and quality
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="model-tier">Preferred Tier</Label>
+          <Select
+            defaultValue={currentTier}
+            disabled={disabled || isSaving}
+            onValueChange={handleChange}
+            value={currentTier}
+          >
+            <SelectTrigger id="model-tier">
+              <SelectValue placeholder="Select a tier" />
+            </SelectTrigger>
+            <SelectContent>
+              {MODEL_TIERS.map((tier) => (
+                <SelectItem key={tier.value} value={tier.value}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{tier.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {selectedTier && (
+          <p className="text-sm text-muted-foreground">
+            {selectedTier.description}
+          </p>
+        )}
+        {isSaving && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2Icon className="size-4 animate-spin" />
+            Saving...
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function ProviderCard({
@@ -401,7 +511,53 @@ export default function AIKeysSettingsPage() {
     return configs.find((c) => c.providerName === providerName);
   };
 
+  const handleTierChange = async (
+    tier: "lite" | "fast" | "heavy" | "thinking"
+  ) => {
+    // Get the first enabled config (the "active" one)
+    const activeConfig = configs.find((c) => c.isEnabled);
+    if (!activeConfig) {
+      throw new Error("No active provider to update tier for");
+    }
+
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 30_000);
+
+    try {
+      const response = await fetch("/api/settings/ai-keys/tier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerName: activeConfig.providerName,
+          preferredModelTier: tier,
+        }),
+        signal: abortController.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update tier");
+      }
+
+      // Update local state
+      setConfigs((prev) =>
+        prev.map((c) =>
+          c.providerName === activeConfig.providerName
+            ? { ...c, preferredModelTier: tier }
+            : c
+        )
+      );
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  };
+
   const hasAnyConfig = configs.length > 0;
+  const activeConfig = configs.find((c) => c.isEnabled);
+  const currentTier = activeConfig?.preferredModelTier ?? "fast";
 
   if (isLoading) {
     return (
@@ -467,6 +623,15 @@ export default function AIKeysSettingsPage() {
             be configured. OpenRouter is recommended as it provides access to
             all major AI models.
           </p>
+
+          {/* Model Tier Selector - only show if user has a config */}
+          {hasAnyConfig && (
+            <ModelTierSelector
+              currentTier={currentTier}
+              disabled={!activeConfig}
+              onTierChange={handleTierChange}
+            />
+          )}
 
           <div className="grid gap-4">
             {AI_PROVIDERS.map((provider) => (
