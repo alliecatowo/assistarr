@@ -1,6 +1,13 @@
 import type { ServiceConfig } from "@/lib/db/schema";
 import { createLogger, type Logger } from "@/lib/logger";
-import type { ServicePlugin, ToolCategory, ToolDefinition } from "./core/types";
+import type {
+  BundledMCPServer,
+  BundledSkill,
+  PluginCategory,
+  ServicePlugin,
+  ToolCategory,
+  ToolDefinition,
+} from "./core/types";
 
 // Re-export for convenience
 export type { DisplayableMedia } from "./core/types";
@@ -19,6 +26,13 @@ export abstract class BaseServicePlugin<
   abstract displayName: string;
   abstract description: string;
   abstract iconId: string;
+
+  // Optional category for settings UI organization
+  category?: PluginCategory;
+
+  // Optional bundled capabilities
+  bundledMCPServers?: BundledMCPServer[];
+  bundledSkills?: BundledSkill[];
 
   protected abstract toolsDefinitions: Record<string, ToolDefinition>;
 
