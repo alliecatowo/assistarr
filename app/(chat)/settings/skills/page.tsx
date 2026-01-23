@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CheckCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   Loader2Icon,
@@ -67,7 +66,7 @@ function SkillCard({
       await onUpdate(skill.id, { displayName, description, instructions });
       setIsEditing(false);
       toast.success("Skill updated");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to save");
     } finally {
       setIsSaving(false);
@@ -79,7 +78,7 @@ function SkillCard({
     try {
       await onDelete(skill.id);
       toast.success("Skill deleted");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to delete");
     } finally {
       setIsDeleting(false);
@@ -89,13 +88,13 @@ function SkillCard({
   const handleToggle = async (enabled: boolean) => {
     try {
       await onUpdate(skill.id, { isEnabled: enabled });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to update");
     }
   };
 
   return (
-    <Card className={!skill.isEnabled ? "opacity-60" : ""}>
+    <Card className={skill.isEnabled ? "" : "opacity-60"}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -130,10 +129,7 @@ function SkillCard({
               </CardDescription>
             </div>
           </div>
-          <Switch
-            checked={skill.isEnabled}
-            onCheckedChange={handleToggle}
-          />
+          <Switch checked={skill.isEnabled} onCheckedChange={handleToggle} />
         </div>
       </CardHeader>
 
@@ -181,44 +177,37 @@ function SkillCard({
       {isExpanded && (
         <CardFooter className="flex justify-between gap-2 pt-0">
           <div className="flex gap-2">
-            {!isReadOnly && (
-              <>
-                {isEditing ? (
-                  <>
-                    <Button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setDisplayName(skill.displayName);
-                        setDescription(skill.description);
-                        setInstructions(skill.instructions);
-                      }}
-                      size="sm"
-                      variant="outline"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      disabled={isSaving}
-                      onClick={handleSave}
-                      size="sm"
-                    >
-                      {isSaving && (
-                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Save
-                    </Button>
-                  </>
-                ) : (
+            {!isReadOnly &&
+              (isEditing ? (
+                <>
                   <Button
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setDisplayName(skill.displayName);
+                      setDescription(skill.description);
+                      setInstructions(skill.instructions);
+                    }}
                     size="sm"
                     variant="outline"
                   >
-                    Edit
+                    Cancel
                   </Button>
-                )}
-              </>
-            )}
+                  <Button disabled={isSaving} onClick={handleSave} size="sm">
+                    {isSaving && (
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Save
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  size="sm"
+                  variant="outline"
+                >
+                  Edit
+                </Button>
+              ))}
           </div>
           {!isReadOnly && (
             <Button
@@ -280,7 +269,7 @@ Instructions for the AI go here. These will be injected into the system prompt w
       } else {
         setValidationErrors(result.errors);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to add skill");
     } finally {
       setIsAdding(false);
@@ -315,8 +304,8 @@ Instructions for the AI go here. These will be injected into the system prompt w
               Validation Errors
             </div>
             <ul className="list-disc list-inside text-sm text-destructive/80 space-y-1">
-              {validationErrors.map((error, i) => (
-                <li key={i}>{error}</li>
+              {validationErrors.map((error) => (
+                <li key={error}>{error}</li>
               ))}
             </ul>
           </div>
@@ -355,8 +344,8 @@ export default function SkillsSettingsPage() {
         const data = await response.json();
         setSkills(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch skills:", error);
+    } catch (_error) {
+      // Silently fail - skills will show as empty
     } finally {
       setIsLoading(false);
     }

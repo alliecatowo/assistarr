@@ -6,12 +6,15 @@ import {
   getUserSkill,
   updateUserSkill,
 } from "@/lib/db/queries/user-skill";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("api:settings:skills");
 
 const updateSkillSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   displayName: z.string().min(1).max(200).optional(),
   description: z.string().min(10).max(500).optional(),
-  instructions: z.string().min(20).max(50000).optional(),
+  instructions: z.string().min(20).max(50_000).optional(),
   isEnabled: z.boolean().optional(),
 });
 
@@ -35,11 +38,8 @@ export async function GET(
 
     return NextResponse.json(skill);
   } catch (error) {
-    console.error("Failed to get skill:", error);
-    return NextResponse.json(
-      { error: "Failed to get skill" },
-      { status: 500 }
-    );
+    log.error({ error }, "Failed to get skill");
+    return NextResponse.json({ error: "Failed to get skill" }, { status: 500 });
   }
 }
 
@@ -66,14 +66,15 @@ export async function PATCH(
     const json = await request.json();
     const body = updateSkillSchema.parse(json);
 
-    if (existingSkill.source !== "user") {
-      // Only allow toggling isEnabled for non-user skills
-      if (Object.keys(body).some((key) => key !== "isEnabled")) {
-        return NextResponse.json(
-          { error: "Cannot edit plugin or builtin skills" },
-          { status: 403 }
-        );
-      }
+    // Only allow toggling isEnabled for non-user skills
+    if (
+      existingSkill.source !== "user" &&
+      Object.keys(body).some((key) => key !== "isEnabled")
+    ) {
+      return NextResponse.json(
+        { error: "Cannot edit plugin or builtin skills" },
+        { status: 403 }
+      );
     }
 
     const skill = await updateUserSkill({
@@ -97,7 +98,7 @@ export async function PATCH(
 
     const message =
       error instanceof Error ? error.message : "Failed to update skill";
-    console.error("Failed to update skill:", error);
+    log.error({ error }, "Failed to update skill");
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
@@ -137,7 +138,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete skill:", error);
+    log.error({ error }, "Failed to delete skill");
     return NextResponse.json(
       { error: "Failed to delete skill" },
       { status: 500 }

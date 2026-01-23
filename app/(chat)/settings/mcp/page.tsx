@@ -3,7 +3,6 @@
 import {
   CheckCircleIcon,
   Loader2Icon,
-  PlusIcon,
   ServerIcon,
   Trash2Icon,
   XCircleIcon,
@@ -48,6 +47,7 @@ interface MCPToolInfo {
 
 type ConnectionStatus = "idle" | "testing" | "success" | "error";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex form component with multiple states
 function MCPServerCard({
   config,
   onUpdate,
@@ -57,7 +57,11 @@ function MCPServerCard({
   config?: MCPServerConfig;
   onUpdate: (data: Partial<MCPServerConfig> & { id?: string }) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
-  onTest: (data: { url: string; transport: string; apiKey?: string }) => Promise<{
+  onTest: (data: {
+    url: string;
+    transport: string;
+    apiKey?: string;
+  }) => Promise<{
     success: boolean;
     latency?: number;
     tools?: MCPToolInfo[];
@@ -109,7 +113,7 @@ function MCPServerCard({
         setLatency(null);
         toast.error(result.error || "Connection failed");
       }
-    } catch (error) {
+    } catch (_error) {
       setConnectionStatus("error");
       toast.error("Connection test failed");
     }
@@ -143,7 +147,7 @@ function MCPServerCard({
         setDiscoveredTools(null);
         setConnectionStatus("idle");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to save");
     } finally {
       setIsSaving(false);
@@ -151,13 +155,15 @@ function MCPServerCard({
   };
 
   const handleDelete = async () => {
-    if (!config?.id || !onDelete) return;
+    if (!config?.id || !onDelete) {
+      return;
+    }
 
     setIsDeleting(true);
     try {
       await onDelete(config.id);
       toast.success("MCP server removed");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to remove");
     } finally {
       setIsDeleting(false);
@@ -177,9 +183,7 @@ function MCPServerCard({
                 {isNew ? "Add MCP Server" : config.name}
               </CardTitle>
               <CardDescription className="text-sm">
-                {isNew
-                  ? "Connect to an external MCP tool server"
-                  : config.url}
+                {isNew ? "Connect to an external MCP tool server" : config.url}
               </CardDescription>
             </div>
           </div>
@@ -218,7 +222,9 @@ function MCPServerCard({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor={`transport-${config?.id || "new"}`}>Transport</Label>
+            <Label htmlFor={`transport-${config?.id || "new"}`}>
+              Transport
+            </Label>
             <Select
               onValueChange={(v) => setTransport(v as "sse" | "http")}
               value={transport}
@@ -253,7 +259,9 @@ function MCPServerCard({
             {connectionStatus === "testing" && (
               <>
                 <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-muted-foreground">Testing connection...</span>
+                <span className="text-muted-foreground">
+                  Testing connection...
+                </span>
               </>
             )}
             {connectionStatus === "success" && (
@@ -350,8 +358,8 @@ export default function MCPSettingsPage() {
         const data = await response.json();
         setConfigs(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch MCP configs:", error);
+    } catch (_error) {
+      // Silently fail - configs will show as empty
     } finally {
       setIsLoading(false);
     }

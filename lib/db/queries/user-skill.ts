@@ -155,7 +155,10 @@ export async function updateUserSkill({
   isEnabled?: boolean;
 }): Promise<UserSkill | null> {
   try {
-    log.info({ userId, id, name, displayName, isEnabled }, "Updating user skill");
+    log.info(
+      { userId, id, name, displayName, isEnabled },
+      "Updating user skill"
+    );
 
     // If name is changing, check for duplicates
     if (name) {
@@ -172,11 +175,21 @@ export async function updateUserSkill({
       updatedAt: new Date(),
     };
 
-    if (name !== undefined) updateData.name = name;
-    if (displayName !== undefined) updateData.displayName = displayName;
-    if (description !== undefined) updateData.description = description;
-    if (instructions !== undefined) updateData.instructions = instructions;
-    if (isEnabled !== undefined) updateData.isEnabled = isEnabled;
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (displayName !== undefined) {
+      updateData.displayName = displayName;
+    }
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+    if (instructions !== undefined) {
+      updateData.instructions = instructions;
+    }
+    if (isEnabled !== undefined) {
+      updateData.isEnabled = isEnabled;
+    }
 
     const [updatedSkill] = await db
       .update(userSkill)
@@ -239,9 +252,7 @@ export async function getEnabledUserSkills({
     const skills = await db
       .select()
       .from(userSkill)
-      .where(
-        and(eq(userSkill.userId, userId), eq(userSkill.isEnabled, true))
-      );
+      .where(and(eq(userSkill.userId, userId), eq(userSkill.isEnabled, true)));
 
     return skills;
   } catch (_error) {
@@ -269,10 +280,7 @@ export async function upsertPluginSkill({
   pluginName: string;
 }): Promise<UserSkill> {
   try {
-    log.info(
-      { userId, name, pluginName },
-      "Upserting plugin skill"
-    );
+    log.info({ userId, name, pluginName }, "Upserting plugin skill");
 
     const existing = await getUserSkillByName({ userId, name });
 

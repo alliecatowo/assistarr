@@ -11,9 +11,46 @@ const log = createLogger("skills:parser");
 const FRONTMATTER_DELIMITER = "---";
 
 /**
+ * Parses an inline array like [a, b, c]
+ */
+function parseInlineArray(value: string): string[] {
+  const arrayContent = value.slice(1, -1);
+  return arrayContent
+    .split(",")
+    .map((v) => v.trim().replace(/^["']|["']$/g, ""))
+    .filter((v) => v);
+}
+
+/**
+ * Parses a single YAML value into its appropriate type
+ */
+function parseYAMLValue(value: string): unknown {
+  if (value.startsWith("[") && value.endsWith("]")) {
+    return parseInlineArray(value);
+  }
+  if (value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1);
+  }
+  if (value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1);
+  }
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  if (!Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return value;
+}
+
+/**
  * Parses YAML frontmatter manually.
  * Supports basic key: value pairs and simple arrays.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: YAML parsing requires handling multiple syntax cases
 function parseYAMLFrontmatter(yaml: string): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   const lines = yaml.trim().split("\n");
@@ -26,14 +63,14 @@ function parseYAMLFrontmatter(yaml: string): Record<string, unknown> {
     const trimmed = line.trim();
 
     // Skip empty lines
-    if (!trimmed) continue;
+    if (!trimmed) {
+      continue;
+    }
 
     // Check for array continuation
-    if (trimmed.startsWith("- ")) {
-      if (inArray && currentKey) {
-        arrayValues.push(trimmed.slice(2).trim());
-        continue;
-      }
+    if (trimmed.startsWith("- ") && inArray && currentKey) {
+      arrayValues.push(trimmed.slice(2).trim());
+      continue;
     }
 
     // End previous array if we're not continuing
@@ -55,27 +92,8 @@ function parseYAMLFrontmatter(yaml: string): Record<string, unknown> {
         currentKey = key;
         inArray = true;
         arrayValues = [];
-      } else if (value.startsWith("[") && value.endsWith("]")) {
-        // Inline array: [a, b, c]
-        const arrayContent = value.slice(1, -1);
-        result[key] = arrayContent
-          .split(",")
-          .map((v) => v.trim().replace(/^["']|["']$/g, ""))
-          .filter((v) => v);
-      } else if (value.startsWith('"') && value.endsWith('"')) {
-        // Quoted string
-        result[key] = value.slice(1, -1);
-      } else if (value.startsWith("'") && value.endsWith("'")) {
-        // Single-quoted string
-        result[key] = value.slice(1, -1);
-      } else if (value === "true") {
-        result[key] = true;
-      } else if (value === "false") {
-        result[key] = false;
-      } else if (!Number.isNaN(Number(value))) {
-        result[key] = Number(value);
       } else {
-        result[key] = value;
+        result[key] = parseYAMLValue(value);
       }
     }
   }
@@ -142,9 +160,7 @@ export function parseSkillContent(content: string): ParsedSkill | null {
     requiredTools: Array.isArray(parsed.requiredTools)
       ? (parsed.requiredTools as string[])
       : undefined,
-    modes: Array.isArray(parsed.modes)
-      ? (parsed.modes as string[])
-      : undefined,
+    modes: Array.isArray(parsed.modes) ? (parsed.modes as string[]) : undefined,
     category: typeof parsed.category === "string" ? parsed.category : undefined,
   };
 
@@ -205,7 +221,7 @@ export function validateSkillContent(content: string): SkillValidationResult {
     errors.push("Instructions must be at least 20 characters");
   }
 
-  if (parsed.instructions && parsed.instructions.length > 50000) {
+  if (parsed.instructions && parsed.instructions.length > 50_000) {
     errors.push("Instructions must be 50,000 characters or less");
   }
 

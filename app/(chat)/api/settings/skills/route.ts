@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
-import {
-  createUserSkill,
-  getUserSkills,
-} from "@/lib/db/queries/user-skill";
-import {
-  generateDisplayName,
-  parseSkillContent,
-  validateSkillContent,
-} from "@/lib/skills";
+import { createUserSkill, getUserSkills } from "@/lib/db/queries/user-skill";
+import { createLogger } from "@/lib/logger";
+import { generateDisplayName, validateSkillContent } from "@/lib/skills";
+
+const log = createLogger("api:settings:skills");
 
 const createSkillSchema = z.object({
   content: z.string().min(1),
@@ -26,7 +22,7 @@ export async function GET() {
     const skills = await getUserSkills({ userId: session.user.id });
     return NextResponse.json(skills);
   } catch (error) {
-    console.error("Failed to get skills:", error);
+    log.error({ error }, "Failed to get skills");
     return NextResponse.json(
       { error: "Failed to get skills" },
       { status: 500 }
@@ -84,7 +80,7 @@ export async function POST(request: Request) {
 
     const message =
       error instanceof Error ? error.message : "Failed to create skill";
-    console.error("Failed to create skill:", error);
+    log.error({ error }, "Failed to create skill");
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

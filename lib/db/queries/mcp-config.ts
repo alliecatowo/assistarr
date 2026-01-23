@@ -8,7 +8,6 @@ import {
   type MCPToolInfo,
   mcpServerConfig,
 } from "../schema";
-import { withTransaction } from "../utils";
 
 const log = createLogger("db:mcp-config");
 
@@ -135,7 +134,10 @@ export async function createMCPConfig({
   isEnabled?: boolean;
 }): Promise<MCPServerConfig> {
   try {
-    log.info({ userId, name, url, transport, isEnabled }, "Creating MCP config");
+    log.info(
+      { userId, name, url, transport, isEnabled },
+      "Creating MCP config"
+    );
 
     // Check for duplicate name
     const existing = await getMCPConfigByName({ userId, name });
@@ -174,6 +176,7 @@ export async function createMCPConfig({
   }
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Multiple optional fields require individual checks
 export async function updateMCPConfig({
   userId,
   id,
@@ -215,15 +218,30 @@ export async function updateMCPConfig({
       updatedAt: new Date(),
     };
 
-    if (name !== undefined) updateData.name = name;
-    if (url !== undefined) updateData.url = url;
-    if (transport !== undefined) updateData.transport = transport;
-    if (apiKey !== undefined) updateData.apiKey = encryptApiKey(apiKey);
-    if (headers !== undefined) updateData.headers = headers;
-    if (isEnabled !== undefined) updateData.isEnabled = isEnabled;
-    if (availableTools !== undefined) updateData.availableTools = availableTools;
-    if (lastHealthCheck !== undefined)
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (url !== undefined) {
+      updateData.url = url;
+    }
+    if (transport !== undefined) {
+      updateData.transport = transport;
+    }
+    if (apiKey !== undefined) {
+      updateData.apiKey = encryptApiKey(apiKey);
+    }
+    if (headers !== undefined) {
+      updateData.headers = headers;
+    }
+    if (isEnabled !== undefined) {
+      updateData.isEnabled = isEnabled;
+    }
+    if (availableTools !== undefined) {
+      updateData.availableTools = availableTools;
+    }
+    if (lastHealthCheck !== undefined) {
       updateData.lastHealthCheck = lastHealthCheck;
+    }
 
     const [updatedConfig] = await db
       .update(mcpServerConfig)
