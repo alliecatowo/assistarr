@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type ComponentType, useEffect, useMemo, useState } from "react";
+import { type ComponentType, useMemo, useState } from "react";
 import type { MonitorStatus } from "@/app/(monitor)/api/status/route";
 import type {
   DiscoverItem,
@@ -111,22 +111,25 @@ const WIDGETS: Array<{ key: WidgetKey; label: string; tone: string }> = [
 ];
 
 function useWidgetPreferences(keys: WidgetKey[]) {
-  const [enabledWidgets, setEnabledWidgets] = useState<WidgetKey[]>(keys);
-
-  useEffect(() => {
+  const [enabledWidgets, setEnabledWidgets] = useState<WidgetKey[]>(() => {
+    // Initialize from localStorage on first render (client-side only)
+    if (typeof window === "undefined") {
+      return keys;
+    }
     const stored = localStorage.getItem("home.widgets");
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as WidgetKey[];
         const filtered = parsed.filter((key) => keys.includes(key));
         if (filtered.length) {
-          setEnabledWidgets(filtered);
+          return filtered;
         }
       } catch {
         // Ignore invalid localStorage state
       }
     }
-  }, [keys]);
+    return keys;
+  });
 
   const toggleWidget = (key: WidgetKey) => {
     setEnabledWidgets((prev) => {
