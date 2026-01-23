@@ -11,6 +11,7 @@ import {
   LibraryIcon,
   MoonStarIcon,
   PanelTopIcon,
+  PlayIcon,
   PlugZapIcon,
   RocketIcon,
   ScanLineIcon,
@@ -41,6 +42,7 @@ export type ContinueWatchingItem = {
   remaining?: string;
   lastWatched?: string | null;
   badge?: string;
+  jellyfinBaseUrl?: string;
 };
 
 export type ForYouProfile = {
@@ -236,7 +238,7 @@ function HeroSection({ userName }: { userName?: string }) {
             {greeting} here is your media universe—alive, synced, and remixable.
           </p>
           <h1 className="text-2xl font-semibold leading-tight sm:text-3xl">
-            Everything now in one adaptive canvas.
+            Your media, all in one place.
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -485,6 +487,10 @@ function ServicePill({
 }
 
 function ContinueCard({ item }: { item: ContinueWatchingItem }) {
+  const watchUrl = item.jellyfinBaseUrl
+    ? `${item.jellyfinBaseUrl}/web/index.html#!/details?id=${item.id}`
+    : null;
+
   return (
     <div className="relative flex w-[160px] shrink-0 flex-col overflow-hidden rounded-xl border bg-muted/40 shadow-sm">
       <div className="relative h-24 w-full overflow-hidden">
@@ -524,6 +530,19 @@ function ContinueCard({ item }: { item: ContinueWatchingItem }) {
           className="h-1.5"
           value={Math.min(100, Math.max(0, item.progress))}
         />
+        {watchUrl && (
+          <Button
+            asChild
+            className="mt-1 h-6 w-full text-[10px]"
+            size="sm"
+            variant="secondary"
+          >
+            <a href={watchUrl} rel="noopener noreferrer" target="_blank">
+              <PlayIcon className="size-3 mr-1" />
+              Watch
+            </a>
+          </Button>
+        )}
       </div>
     </div>
   );

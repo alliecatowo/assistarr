@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="assistarr-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Simplified for small sizes: solid hexagon with play button -->
+  <path d="M128 16 L220 72 L220 184 L128 240 L36 184 L36 72 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="10" 
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Play button - bold and clear -->
+  <path d="M108 104 L162 128 L108 152 Z" 
+        fill="url(#assistarr-gradient)"/>
+  
+  <!-- Spark accent at top -->
+  <path d="M128 44 L128 32" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+</svg>

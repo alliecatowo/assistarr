@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="assistarr-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6"/>
+      <stop offset="50%" style="stop-color:#A855F7"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: Rounded square with gradient -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#assistarr-gradient)"/>
+
+  <!-- Center: Stylized play button / spark hybrid -->
+  <path d="M52 32L88 64L52 96V32Z" fill="white" opacity="0.95"/>
+
+  <!-- Sparkle accents -->
+  <path d="M96 24L102 36L114 36L105 44L109 56L96 48L83 56L87 44L78 36L90 36L96 24Z" fill="white" opacity="0.9"/>
+
+  <!-- Decorative sparkles -->
+  <circle cx="36" cy="40" r="3" fill="white" opacity="0.7"/>
+  <circle cx="28" cy="88" r="2" fill="white" opacity="0.5"/>
+
+  <!-- Subtle shine effect -->
+  <ellipse cx="40" cy="36" rx="16" ry="10" fill="white" opacity="0.12"/>
+</svg>

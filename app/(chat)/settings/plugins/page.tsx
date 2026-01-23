@@ -2,6 +2,8 @@
 
 import {
   CheckCircleIcon,
+  EyeIcon,
+  EyeOffIcon,
   Loader2Icon,
   SearchIcon,
   XCircleIcon,
@@ -28,6 +30,8 @@ interface ServiceConfig {
   serviceName: string;
   baseUrl: string;
   apiKey: string;
+  username?: string | null;
+  password?: string | null;
   isEnabled: boolean;
 }
 
@@ -240,27 +244,28 @@ function ServiceCard({
   externalApiKey?: string;
   onTestSuccess?: () => void;
 }) {
+  const isQbittorrent = service.serviceName === "qbittorrent";
   const [baseUrl, setBaseUrl] = useState(config?.baseUrl || "");
   const [apiKey, setApiKey] = useState(config?.apiKey || "");
-  // Services should be disabled by default until configured
+  const [username, setUsername] = useState(config?.username || "");
+  const [password, setPassword] = useState(config?.password || "");
+  const [showPassword, setShowPassword] = useState(false);
   const [isEnabled, setIsEnabled] = useState(config?.isEnabled ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult>({ status: "idle" });
 
-  // Track if external values have been applied to avoid re-applying
   const appliedExternalRef = useRef<{ baseUrl?: string; apiKey?: string }>({});
 
   useEffect(() => {
     setBaseUrl(config?.baseUrl || "");
     setApiKey(config?.apiKey || "");
-    // Default to disabled if no config exists
+    setUsername(config?.username || "");
+    setPassword(config?.password || "");
     setIsEnabled(config?.isEnabled ?? false);
-    // Reset test result when config changes
     setTestResult({ status: "idle" });
   }, [config]);
 
-  // Apply external values when they change (from auto-discovery)
   useEffect(() => {
     if (
       externalBaseUrl &&
@@ -279,7 +284,12 @@ function ServiceCard({
   }, [externalBaseUrl, externalApiKey]);
 
   const handleTest = async () => {
-    if (!baseUrl.trim() || !apiKey.trim()) {
+    if (isQbittorrent) {
+      if (!baseUrl.trim() || !username.trim() || !password.trim()) {
+        toast.error("Base URL, username and password are required to test");
+        return;
+      }
+    } else if (!baseUrl.trim() || !apiKey.trim()) {
       toast.error("Base URL and API Key are required to test");
       return;
     }
@@ -290,14 +300,23 @@ function ServiceCard({
     const timeoutId = setTimeout(() => abortController.abort(), 30_000);
 
     try {
+      const body: Record<string, string | boolean> = {
+        serviceName: service.serviceName,
+        baseUrl: baseUrl.trim(),
+        isEnabled,
+      };
+
+      if (isQbittorrent) {
+        body.username = username.trim();
+        body.password = password.trim();
+      } else {
+        body.apiKey = apiKey.trim();
+      }
+
       const response = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          serviceName: service.serviceName,
-          baseUrl: baseUrl.trim(),
-          apiKey: apiKey.trim(),
-        }),
+        body: JSON.stringify(body),
         signal: abortController.signal,
       });
 
@@ -330,7 +349,12 @@ function ServiceCard({
   };
 
   const handleSave = async () => {
-    if (!baseUrl.trim() || !apiKey.trim()) {
+    if (isQbittorrent) {
+      if (!baseUrl.trim() || !username.trim() || !password.trim()) {
+        toast.error("Base URL, username and password are required");
+        return;
+      }
+    } else if (!baseUrl.trim() || !apiKey.trim()) {
       toast.error("Base URL and API Key are required");
       return;
     }
@@ -340,7 +364,9 @@ function ServiceCard({
       await onSave({
         serviceName: service.serviceName,
         baseUrl: baseUrl.trim(),
-        apiKey: apiKey.trim(),
+        apiKey: isQbittorrent ? "" : apiKey.trim(),
+        username: isQbittorrent ? username.trim() : null,
+        password: isQbittorrent ? password.trim() : null,
         isEnabled,
       });
       toast.success(`${service.name} configuration saved`);
@@ -361,6 +387,8 @@ function ServiceCard({
       await onDelete(service.serviceName);
       setBaseUrl("");
       setApiKey("");
+      setUsername("");
+      setPassword("");
       setIsEnabled(true);
       toast.success(`${service.name} configuration removed`);
     } catch (_error) {
@@ -373,6 +401,8 @@ function ServiceCard({
   const hasChanges =
     baseUrl !== (config?.baseUrl || "") ||
     apiKey !== (config?.apiKey || "") ||
+    username !== (config?.username || "") ||
+    password !== (config?.password || "") ||
     isEnabled !== (config?.isEnabled ?? true);
 
   return (
@@ -409,27 +439,59 @@ function ServiceCard({
             value={baseUrl}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${service.serviceName}-key`}>
-            {service.serviceName === "qbittorrent" ? "Credentials" : "API Key"}
-          </Label>
-          <Input
-            id={`${service.serviceName}-key`}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder={
-              service.serviceName === "qbittorrent"
-                ? "username:password"
-                : "Enter your API key"
-            }
-            type="password"
-            value={apiKey}
-          />
-          {service.serviceName === "qbittorrent" && (
-            <p className="text-xs text-muted-foreground">
-              Format: username:password (e.g., admin:yourpassword)
-            </p>
-          )}
-        </div>
+        {isQbittorrent ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor={`${service.serviceName}-username`}>
+                Username
+              </Label>
+              <Input
+                id={`${service.serviceName}-username`}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                value={username}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${service.serviceName}-password`}>
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id={`${service.serviceName}-password`}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                />
+                <Button
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="size-4 text-muted-foreground" />
+                  ) : (
+                    <EyeIcon className="size-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor={`${service.serviceName}-key`}>API Key</Label>
+            <Input
+              id={`${service.serviceName}-key`}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your API key"
+              type="password"
+              value={apiKey}
+            />
+          </div>
+        )}
         <ToolPills serviceName={service.serviceName} />
       </CardContent>
       <CardFooter className="flex justify-between">
@@ -441,7 +503,6 @@ function ServiceCard({
           {isDeleting ? "Removing..." : "Remove"}
         </Button>
         <div className="flex items-center gap-2">
-          {/* Connection status indicator */}
           {testResult.status === "success" && (
             <div className="flex items-center gap-1 text-xs text-green-600">
               <CheckCircleIcon className="size-4" />
@@ -454,12 +515,13 @@ function ServiceCard({
               <span>Failed</span>
             </div>
           )}
-          {/* Test button */}
           <Button
             disabled={
               testResult.status === "testing" ||
               !baseUrl.trim() ||
-              !apiKey.trim()
+              (isQbittorrent
+                ? !username.trim() || !password.trim()
+                : !apiKey.trim())
             }
             onClick={handleTest}
             variant="outline"

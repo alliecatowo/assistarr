@@ -175,6 +175,8 @@ export const serviceConfig = pgTable(
     serviceName: varchar("serviceName", { length: 50 }).notNull(), // 'radarr', 'sonarr', 'jellyfin', 'jellyseerr'
     baseUrl: text("baseUrl").notNull(),
     apiKey: text("apiKey").notNull(),
+    username: text("username"), // For qBittorrent basic auth
+    password: text("password"), // For qBittorrent basic auth (encrypted)
     isEnabled: boolean("isEnabled").notNull().default(true),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),

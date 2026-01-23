@@ -2,7 +2,6 @@
 
 import {
   BarChart3Icon,
-  HomeIcon,
   MessageSquareIcon,
   PlusIcon,
   SettingsIcon,
@@ -32,6 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import {
   Sidebar,
   SidebarContent,
@@ -87,9 +87,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     setOpenMobile(false);
                   }}
                 >
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <HomeIcon className="size-4" />
-                  </div>
+                  <Logo size={32} />
                   <span className="font-semibold text-lg">Assistarr</span>
                 </Link>
               </SidebarMenuButton>

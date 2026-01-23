@@ -22,7 +22,9 @@ export interface DiscoverItem {
   mediaType: "movie" | "tv";
   tmdbId?: number;
   status: "available" | "requested" | "pending" | "unavailable";
-  reason?: string; // AI-generated "why this recommendation"
+  reason?: string;
+  jellyfinId?: string;
+  jellyfinBaseUrl?: string;
 }
 
 /**

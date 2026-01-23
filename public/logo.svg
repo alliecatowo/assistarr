@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Hexagon frame -->
+  <path d="M128 20 L220 78 L220 178 L128 236 L36 178 L36 78 Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="12"/>
+
+  <!-- 6 spark rays emerging from hexagon - like GPT -->
+  <line x1="128" y1="20" x2="128" y2="4" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+  <line x1="220" y1="78" x2="238" y2="62" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+  <line x1="220" y1="178" x2="238" y2="194" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+  <line x1="128" y1="236" x2="128" y2="252" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+  <line x1="36" y1="178" x2="18" y2="194" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+  <line x1="36" y1="78" x2="18" y2="62" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Central element: Play triangle that also looks like a spark -->
+  <path d="M112 100 L160 128 L112 156 Z" fill="currentColor"/>
+</svg>

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="assistarr-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+    <linearGradient id="spark-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E0E7FF"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Hexagon base with subtle glow -->
+  <path d="M128 16 L224 72 L224 184 L128 240 L32 184 L32 72 Z" 
+        fill="url(#assistarr-gradient)" 
+        opacity="0.15"/>
+  
+  <!-- Main hexagon outline -->
+  <path d="M128 20 L220 72 L220 180 L128 232 L36 180 L36 72 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="8" 
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Inner hexagon - creates depth -->
+  <path d="M128 44 L188 76 L188 164 L128 196 L68 164 L68 76 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="4" 
+        stroke-linejoin="round"
+        fill="none"
+        opacity="0.6"/>
+  
+  <!-- Play button triangle - emerging from center -->
+  <path d="M108 100 L160 128 L108 156 Z" 
+        fill="url(#assistarr-gradient)"/>
+  
+  <!-- Spark/star rays emerging from play button -->
+  <!-- Top ray -->
+  <path d="M128 44 L128 28" stroke="url(#spark-gradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Top-right ray -->
+  <path d="M164 68 L176 52" stroke="url(#spark-gradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Bottom-right ray -->
+  <path d="M164 188 L176 204" stroke="url(#spark-gradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Bottom ray -->
+  <path d="M128 196 L128 212" stroke="url(#spark-gradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Bottom-left ray -->
+  <path d="M92 188 L80 204" stroke="url(#spark-gradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Top-left ray -->
+  <path d="M92 68 L80 52" stroke="url(#spark-gradient)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Central sparkle at play button tip -->
+  <circle cx="128" cy="128" r="6" fill="url(#spark-gradient)"/>
+</svg>

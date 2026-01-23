@@ -13,11 +13,19 @@ import { QBittorrentClient } from "@/lib/plugins/qbittorrent/client";
 import { RadarrClient } from "@/lib/plugins/radarr/client";
 import { SonarrClient } from "@/lib/plugins/sonarr/client";
 
-const settingsSchema = z.object({
+const baseSettingsSchema = z.object({
   serviceName: z.string(),
   baseUrl: z.string().url(),
-  apiKey: z.string().min(1),
   isEnabled: z.boolean().optional(),
+});
+
+const apiKeySchema = baseSettingsSchema.extend({
+  apiKey: z.string().min(1),
+});
+
+const credentialsSchema = baseSettingsSchema.extend({
+  username: z.string().min(1),
+  password: z.string().min(1),
 });
 
 async function checkServiceHealth(config: ServiceConfig): Promise<boolean> {
@@ -49,11 +57,9 @@ async function checkServiceHealth(config: ServiceConfig): Promise<boolean> {
         return true;
       }
       default:
-        // For unknown services, assume healthy if configured
         return true;
     }
   } catch {
-    // console.error(`Health check failed for ${config.serviceName}:`, error);
     return false;
   }
 }
@@ -76,24 +82,33 @@ export async function POST(request: Request) {
 
   try {
     const json = await request.json();
-    const body = settingsSchema.parse(json);
 
-    // Initial config for testing
+    let body: z.infer<typeof apiKeySchema> | z.infer<typeof credentialsSchema>;
+    if (json.serviceName === "qbittorrent") {
+      body = credentialsSchema.parse(json);
+    } else {
+      body = apiKeySchema.parse(json);
+    }
+
     const tempConfig: ServiceConfig = {
-      ...body,
       id: "temp",
       userId: session.user.id,
+      serviceName: body.serviceName,
+      baseUrl: body.baseUrl,
+      apiKey: "apiKey" in body ? body.apiKey : "",
+      username: "username" in body ? body.username : null,
+      password: "password" in body ? body.password : null,
+      isEnabled: body.isEnabled ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isEnabled: body.isEnabled ?? true,
     };
 
-    // Verify connection
     const isHealthy = await checkServiceHealth(tempConfig);
     if (!isHealthy) {
       return NextResponse.json(
         {
-          error: "Could not connect to service. Please check URL and API Key.",
+          error:
+            "Could not connect to service. Please check URL and credentials.",
         },
         { status: 400 }
       );
@@ -101,7 +116,12 @@ export async function POST(request: Request) {
 
     const config = await upsertServiceConfig({
       userId: session.user.id,
-      ...body,
+      serviceName: body.serviceName,
+      baseUrl: body.baseUrl,
+      apiKey: "apiKey" in body ? body.apiKey : "",
+      username: "username" in body ? body.username : null,
+      password: "password" in body ? body.password : null,
+      isEnabled: body.isEnabled ?? true,
     });
 
     return NextResponse.json(config);
@@ -116,7 +136,6 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT - Test connection only (does not save)
 export async function PUT(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -125,19 +144,27 @@ export async function PUT(request: Request) {
 
   try {
     const json = await request.json();
-    const body = settingsSchema.parse(json);
 
-    // Create temp config for testing
+    let body: z.infer<typeof apiKeySchema> | z.infer<typeof credentialsSchema>;
+    if (json.serviceName === "qbittorrent") {
+      body = credentialsSchema.parse(json);
+    } else {
+      body = apiKeySchema.parse(json);
+    }
+
     const tempConfig: ServiceConfig = {
-      ...body,
       id: "temp",
       userId: session.user.id,
+      serviceName: body.serviceName,
+      baseUrl: body.baseUrl,
+      apiKey: "apiKey" in body ? body.apiKey : "",
+      username: "username" in body ? body.username : null,
+      password: "password" in body ? body.password : null,
+      isEnabled: body.isEnabled ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isEnabled: body.isEnabled ?? true,
     };
 
-    // Measure latency
     const startTime = Date.now();
     const isHealthy = await checkServiceHealth(tempConfig);
     const latency = Date.now() - startTime;
@@ -146,7 +173,8 @@ export async function PUT(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "Could not connect to service. Please check URL and API Key.",
+          error:
+            "Could not connect to service. Please check URL and credentials.",
         },
         { status: 400 }
       );

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="assistarr-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main hexagon - clean and bold -->
+  <path d="M128 12 L228 76 L228 180 L128 244 L28 180 L28 76 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="12" 
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Inner hexagon - creates depth -->
+  <path d="M128 48 L196 86 L196 170 L128 208 L60 170 L60 86 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="6" 
+        stroke-linejoin="round"
+        fill="none"
+        opacity="0.7"/>
+  
+  <!-- Play button triangle - solid and clear -->
+  <path d="M108 100 L164 128 L108 156 Z" 
+        fill="url(#assistarr-gradient)"/>
+  
+  <!-- Top sparkle point -->
+  <path d="M128 48 L128 32" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Right sparkle point -->
+  <path d="M196 86 L212 100" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Bottom-right sparkle point -->
+  <path d="M196 170 L212 156" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Bottom sparkle point -->
+  <path d="M128 208 L128 224" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Bottom-left sparkle point -->
+  <path d="M60 170 L44 156" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Left sparkle point -->
+  <path d="M60 86 L44 100" stroke="url(#assistarr-gradient)" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Central sparkle accent -->
+  <circle cx="128" cy="128" r="8" fill="url(#assistarr-gradient)"/>
+</svg>

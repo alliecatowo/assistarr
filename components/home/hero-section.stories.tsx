@@ -70,7 +70,7 @@ export const Default: Story = () => (
                 remixable.
               </p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                Everything now in one adaptive canvas.
+                Your media, all in one place.
               </h1>
             </div>
             <HeroButtons />
@@ -125,7 +125,7 @@ export const Anonymous: Story = () => (
                 remixable.
               </p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                Everything now in one adaptive canvas.
+                Your media, all in one place.
               </h1>
             </div>
           </div>
@@ -179,7 +179,7 @@ export const NoDownloads: Story = () => (
                 remixable.
               </p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                Everything now in one adaptive canvas.
+                Your media, all in one place.
               </h1>
             </div>
           </div>
@@ -233,7 +233,7 @@ export const HeavyActivity: Story = () => (
                 remixable.
               </p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                Everything now in one adaptive canvas.
+                Your media, all in one place.
               </h1>
             </div>
           </div>

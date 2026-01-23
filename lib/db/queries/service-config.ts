@@ -8,34 +8,36 @@ import { withTransaction } from "../utils";
 
 const log = createLogger("db:service-config");
 
-/**
- * Decrypts the apiKey field in a service config if encryption is configured.
- * Falls back to returning the config as-is for legacy unencrypted data.
- */
-function decryptServiceConfig(config: ServiceConfig): ServiceConfig {
+function decryptField(value: string | null | undefined): string {
+  if (!value) {
+    return "";
+  }
   if (!isEncryptionConfigured()) {
-    return config;
+    return value;
   }
   try {
-    return {
-      ...config,
-      apiKey: decrypt(config.apiKey),
-    };
-  } catch (_error) {
-    // If decryption fails, it might be legacy unencrypted data
-    // Return the config as-is to allow migration
-    return config;
+    return decrypt(value) ?? "";
+  } catch {
+    return value;
   }
 }
 
-/**
- * Encrypts an API key if encryption is configured.
- */
-function encryptApiKey(apiKey: string): string {
-  if (!isEncryptionConfigured()) {
-    return apiKey;
+function encryptField(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
   }
-  return encrypt(apiKey);
+  if (!isEncryptionConfigured()) {
+    return value;
+  }
+  return encrypt(value);
+}
+
+function decryptServiceConfig(config: ServiceConfig): ServiceConfig {
+  return {
+    ...config,
+    apiKey: decryptField(config.apiKey) ?? "",
+    password: decryptField(config.password),
+  };
 }
 
 export async function getServiceConfigs({
@@ -50,7 +52,6 @@ export async function getServiceConfigs({
       .from(serviceConfig)
       .where(eq(serviceConfig.userId, userId));
 
-    // Decrypt apiKey for each config
     return configs.map(decryptServiceConfig);
   } catch (_error) {
     log.error({ error: _error, userId }, "Failed to get service configs");
@@ -85,7 +86,6 @@ export async function getServiceConfig({
       return null;
     }
 
-    // Decrypt apiKey before returning
     return decryptServiceConfig(config);
   } catch (_error) {
     log.error(
@@ -104,12 +104,16 @@ export async function upsertServiceConfig({
   serviceName,
   baseUrl,
   apiKey,
+  username,
+  password,
   isEnabled = true,
 }: {
   userId: string;
   serviceName: string;
   baseUrl: string;
   apiKey: string;
+  username?: string | null;
+  password?: string | null;
   isEnabled?: boolean;
 }): Promise<ServiceConfig> {
   try {
@@ -117,12 +121,10 @@ export async function upsertServiceConfig({
       { userId, serviceName, baseUrl, isEnabled },
       "Upserting service config"
     );
-    // Encrypt the apiKey before storing (if encryption is configured)
-    const encryptedApiKey = encryptApiKey(apiKey);
+    const encryptedApiKey = encryptField(apiKey);
+    const encryptedPassword = encryptField(password);
 
     return await withTransaction(async (tx) => {
-      // Check if config exists by querying directly (not using getServiceConfig
-      // which would decrypt, which we don't need here)
       const [existingConfig] = await tx
         .select({ id: serviceConfig.id })
         .from(serviceConfig)
@@ -134,14 +136,22 @@ export async function upsertServiceConfig({
         );
 
       if (existingConfig) {
+        const updateData: Record<string, unknown> = {
+          baseUrl,
+          apiKey: encryptedApiKey,
+          isEnabled,
+          updatedAt: new Date(),
+        };
+        if (username !== undefined) {
+          updateData.username = username;
+        }
+        if (password !== undefined) {
+          updateData.password = encryptedPassword;
+        }
+
         const [updatedConfig] = await tx
           .update(serviceConfig)
-          .set({
-            baseUrl,
-            apiKey: encryptedApiKey,
-            isEnabled,
-            updatedAt: new Date(),
-          })
+          .set(updateData)
           .where(
             and(
               eq(serviceConfig.userId, userId),
@@ -150,8 +160,12 @@ export async function upsertServiceConfig({
           )
           .returning();
 
-        // Return with decrypted apiKey for consistency
-        return { ...updatedConfig, apiKey };
+        return {
+          ...updatedConfig,
+          apiKey: apiKey ?? "",
+          username: username ?? null,
+          password: password ?? null,
+        };
       }
 
       const [newConfig] = await tx
@@ -160,13 +174,19 @@ export async function upsertServiceConfig({
           userId,
           serviceName,
           baseUrl,
-          apiKey: encryptedApiKey,
+          apiKey: encryptedApiKey ?? "",
+          username: username ?? null,
+          password: encryptedPassword,
           isEnabled,
         })
         .returning();
 
-      // Return with decrypted apiKey for consistency
-      return { ...newConfig, apiKey };
+      return {
+        ...newConfig,
+        apiKey: apiKey ?? "",
+        username: username ?? null,
+        password: password ?? null,
+      };
     });
   } catch (_error) {
     log.error(
@@ -203,7 +223,6 @@ export async function deleteServiceConfig({
       return null;
     }
 
-    // Return with decrypted apiKey for consistency
     return decryptServiceConfig(deletedConfig);
   } catch (_error) {
     log.error(

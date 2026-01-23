@@ -8,14 +8,101 @@ import {
 const log = createLogger("qbittorrent-client");
 
 export class QBittorrentClient extends ApiClient {
-  // biome-ignore lint/suspicious/noExplicitAny: Generic torrent info
-  async getTorrents(): Promise<any[]> {
-    // biome-ignore lint/suspicious/noExplicitAny: Generic torrent info
-    return await this.get<any[]>("/api/v2/torrents/info");
+  private cookie: string | null = null;
+
+  private async authenticate(): Promise<void> {
+    const baseUrl = this.config.baseUrl.replace(/\/$/, "");
+    const url = `${baseUrl}/api/v2/auth/login`;
+
+    const body = new URLSearchParams({
+      username: this.config.username ?? "",
+      password: this.config.password ?? "",
+    });
+
+    const timeoutMs = DEFAULT_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body,
+        signal: controller.signal,
+      });
+
+      const text = await response.text();
+
+      if (text !== "Ok.") {
+        throw new Error(`Authentication failed: ${text}`);
+      }
+
+      const setCookie = response.headers.get("set-cookie");
+      if (setCookie) {
+        this.cookie = setCookie.split(";")[0];
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  private async getCookie(): Promise<string | null> {
+    if (!this.cookie && this.config.username && this.config.password) {
+      await this.authenticate();
+    }
+    return this.cookie;
+  }
+
+  protected override getHeaders(): Promise<HeadersInit> {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+    };
+
+    return this.getCookie().then((cookie) => {
+      if (cookie) {
+        headers.Cookie = cookie;
+      }
+      return headers;
+    });
   }
 
   async getAppVersion(): Promise<string> {
-    return await this.get<string>("/api/v2/app/version");
+    const baseUrl = this.config.baseUrl.replace(/\/$/, "");
+    const url = `${baseUrl}/api/v2/app/version`;
+
+    const cookie = await this.getCookie();
+
+    const timeoutMs = DEFAULT_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          ...(cookie ? { Cookie: cookie } : {}),
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `GET /api/v2/app/version failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return await response.text();
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: Generic torrent info
+  async getTorrents(): Promise<any[]> {
+    return await this.get<any[]>("/api/v2/torrents/info");
   }
 
   async postForm(
@@ -24,29 +111,20 @@ export class QBittorrentClient extends ApiClient {
     body: FormData | URLSearchParams | Record<string, any>,
     options?: RequestOptions
   ): Promise<void> {
-    // If body is a plain object, convert to URLSearchParams because qBittorrent expects form-encoded data or FormData usually
     let requestBody: BodyInit;
-    const headers: Record<string, string> = {
-      "X-Api-Key": this.config.apiKey,
-    };
 
     if (body instanceof FormData) {
       requestBody = body;
-      // fetch handles Content-Type for FormData
     } else if (body instanceof URLSearchParams) {
       requestBody = body;
-      headers["Content-Type"] = "application/x-www-form-urlencoded";
     } else {
-      // Assume plain object, convert to URLSearchParams for qBit (common pattern)
       const params = new URLSearchParams();
       for (const [key, value] of Object.entries(body)) {
         params.append(key, String(value));
       }
       requestBody = params;
-      headers["Content-Type"] = "application/x-www-form-urlencoded";
     }
 
-    // Reconstruct URL using config
     const baseUrl = this.config.baseUrl.replace(/\/$/, "");
     const url = `${baseUrl}${path}`;
 
@@ -54,10 +132,16 @@ export class QBittorrentClient extends ApiClient {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+    const cookie = await this.getCookie();
+
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+          ...(cookie ? { Cookie: cookie } : {}),
+        },
         body: requestBody,
         signal: controller.signal,
       });
@@ -82,7 +166,6 @@ export class QBittorrentClient extends ApiClient {
     }
   }
 
-  // Helpers methods
   formatBytes(bytes: number, decimals = 2): string {
     return formatBytes(bytes, decimals);
   }
@@ -96,7 +179,6 @@ export class QBittorrentClient extends ApiClient {
   }
 }
 
-// Standalone exports
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) {
     return "0 Bytes";

@@ -113,3 +113,7 @@ export function calculateProgressPercentage(
 export function ticksToMinutes(ticks: number): number {
   return Math.round(ticks / 600_000_000);
 }
+
+export function getWatchUrl(baseUrl: string, itemId: string): string {
+  return `${baseUrl}/web/index.html#!/details?id=${itemId}`;
+}

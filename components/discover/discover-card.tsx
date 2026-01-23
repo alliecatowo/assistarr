@@ -120,17 +120,38 @@ export function DiscoverCard({
               )}
             </Button>
           )}
-          {item.status === "available" && (
-            <Button
-              className="w-full"
-              onClick={(e) => e.stopPropagation()}
-              size="sm"
-              variant="secondary"
-            >
-              <PlayIcon className="size-4 mr-1" />
-              Watch
-            </Button>
-          )}
+          {item.status === "available" &&
+            item.jellyfinId &&
+            item.jellyfinBaseUrl && (
+              <Button
+                asChild
+                className="w-full"
+                onClick={(e) => e.stopPropagation()}
+                size="sm"
+                variant="secondary"
+              >
+                <a
+                  href={`${item.jellyfinBaseUrl}/web/index.html#!/details?id=${item.jellyfinId}`}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <PlayIcon className="size-4 mr-1" />
+                  Watch
+                </a>
+              </Button>
+            )}
+          {item.status === "available" &&
+            (!item.jellyfinId || !item.jellyfinBaseUrl) && (
+              <Button
+                className="w-full"
+                onClick={(e) => e.stopPropagation()}
+                size="sm"
+                variant="secondary"
+              >
+                <PlayIcon className="size-4 mr-1" />
+                Watch
+              </Button>
+            )}
         </div>
       </div>
       {/* Info section */}

@@ -90,7 +90,13 @@ async function buildLocalStatus(userId: string): Promise<MonitorStatus> {
     "jellyfin",
     "qbittorrent",
   ] as const;
-  const serviceConfigs = await getServiceConfigs({ userId });
+
+  let serviceConfigs: Awaited<ReturnType<typeof getServiceConfigs>> = [];
+  try {
+    serviceConfigs = await getServiceConfigs({ userId });
+  } catch {
+    serviceConfigs = [];
+  }
 
   const configuredMap = new Map<string, (typeof serviceConfigs)[number]>(
     serviceConfigs.map((c) => [c.serviceName, c])
@@ -282,5 +288,6 @@ function mapContinueWatchingItem(
         : item.Type === "Movie"
           ? "Movie"
           : "Media",
+    jellyfinBaseUrl: baseUrl,
   };
 }
