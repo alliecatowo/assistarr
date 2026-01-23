@@ -121,3 +121,102 @@ GOOGLE_GENERATIVE_AI_API_KEY=
 # Optional
 REDIS_URL=  # For resumable streams
 ```
+
+## Visual Testing with Ladle
+
+Assistarr uses [Ladle](https://ladle.dev) for component development and visual regression testing.
+
+### Commands
+
+```bash
+# Start Ladle development server (component playground)
+pnpm ladle
+
+# Build Ladle for production/CI
+pnpm ladle:build
+
+# Preview built Ladle
+pnpm ladle:preview
+
+# Run visual regression tests
+pnpm test:visual
+```
+
+### Writing Stories
+
+Stories are co-located with components using the pattern `component.stories.tsx`:
+
+```
+components/ui/button.tsx
+components/ui/button.stories.tsx
+```
+
+#### Basic Story Structure
+
+```typescript
+import type { Story, StoryDefault } from "@ladle/react";
+import { Button } from "./button";
+
+export default {
+  title: "UI / Button",
+} satisfies StoryDefault;
+
+export const Default: Story = () => <Button>Click me</Button>;
+
+export const Variants: Story = () => (
+  <div className="flex gap-2">
+    <Button variant="default">Default</Button>
+    <Button variant="destructive">Destructive</Button>
+  </div>
+);
+```
+
+#### With Controls/Args
+
+```typescript
+export const Interactive: Story<{ label: string; disabled: boolean }> = (args) => (
+  <Button disabled={args.disabled}>{args.label}</Button>
+);
+Interactive.args = { label: "Hello", disabled: false };
+Interactive.argTypes = {
+  disabled: { control: { type: "check" } },
+};
+```
+
+#### With Decorators
+
+```typescript
+import { SidebarWrapper } from "@/.ladle/wrappers/sidebar-wrapper";
+
+export const WithSidebar: Story = () => (
+  <SidebarWrapper>
+    <YourComponent />
+  </SidebarWrapper>
+);
+```
+
+### Story Meta Options
+
+- `meta.skip: true` - Skip in visual regression tests
+- `meta.desktopOnly: true` - Skip mobile viewport tests
+
+### Visual Regression Testing
+
+```bash
+# Generate/update baseline screenshots
+pnpm ladle:build
+pnpm ladle:preview &
+pnpm exec playwright test tests/visual/ --update-snapshots
+
+# Run regression tests
+pnpm test:visual
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `.ladle/config.mjs` | Ladle configuration |
+| `.ladle/components.tsx` | Global providers (theme, Tailwind) |
+| `.ladle/mocks/index.ts` | Mock data for stories |
+| `tests/visual/snapshot.spec.ts` | Playwright visual tests |
