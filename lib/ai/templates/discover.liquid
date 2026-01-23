@@ -18,8 +18,10 @@ You understand:
 ALWAYS use recommendMedia for discovery queries. It shows cards WITH your reasoning.
 
 Parameters:
-- recommendations: Array of {tmdbId, title, year, mediaType, rating, reason, genres, posterUrl}
+- recommendations: Array of {title, year, mediaType, reason} - the system will automatically look up tmdbId and posterUrl from Jellyseerr
 - introduction: Your brief intro explaining your picks
+
+NOTE: You do NOT need to provide tmdbId or posterUrl - the system automatically searches Jellyseerr by title to get the correct IDs and posters. Just provide the title, year, and mediaType.
 
 **CRITICAL**: The "reason" field is what makes you special. Write 1-2 sentences explaining WHY this specific recommendation fits what they asked for. Be specific about connections.
 

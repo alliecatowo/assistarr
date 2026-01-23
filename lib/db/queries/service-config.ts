@@ -121,7 +121,9 @@ export async function upsertServiceConfig({
       { userId, serviceName, baseUrl, isEnabled },
       "Upserting service config"
     );
-    const encryptedApiKey = encryptField(apiKey);
+    // For services like qBittorrent that use username/password instead of API key,
+    // we need to ensure apiKey is never null (database constraint)
+    const encryptedApiKey = encryptField(apiKey) ?? "";
     const encryptedPassword = encryptField(password);
 
     return await withTransaction(async (tx) => {

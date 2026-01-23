@@ -115,7 +115,7 @@ export function createChatStream(config: StreamConfig) {
         createDocument: createDocument({ session, dataStream }),
         updateDocument: updateDocument({ session, dataStream }),
         requestSuggestions: requestSuggestions({ session, dataStream }),
-        recommendMedia: recommendMedia(),
+        recommendMedia: recommendMedia(session.user.id),
         findSimilarUsers: findSimilarUsers(),
         presentSimilarUsersRecommendations:
           presentSimilarUsersRecommendations(),

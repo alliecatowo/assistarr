@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  ChevronRightIcon,
-  LoaderIcon,
-  SparklesIcon,
-  XIcon,
-} from "lucide-react";
+import { ChevronRightIcon, SparklesIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+import { PlasmaOrb } from "@/components/ai-loading/plasma-orb";
 import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -105,11 +101,11 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
 
           {/* Loading State */}
           {isLoading && (
-            <div className="flex flex-col items-center justify-center gap-3 py-16">
-              <div className="flex animate-pulse items-center gap-2">
-                <LoaderIcon className="size-5 animate-spin text-primary" />
-                <span className="text-muted-foreground">Thinking...</span>
-              </div>
+            <div className="flex flex-col items-center justify-center gap-4 py-16">
+              <PlasmaOrb size={80} />
+              <span className="text-sm text-muted-foreground animate-pulse">
+                Finding recommendations...
+              </span>
             </div>
           )}
 
@@ -180,7 +176,19 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
                   <Button
                     disabled={isLoading}
                     key={option}
-                    onClick={() => submitQuery(option)}
+                    onClick={() => {
+                      // Include context from the original query for better results
+                      const contextualQuery =
+                        activeQuery && option.toLowerCase().includes("like")
+                          ? `${option} my "${activeQuery}" results`
+                          : activeQuery &&
+                              option.toLowerCase().includes("different")
+                            ? `Show me something different from "${activeQuery}"`
+                            : activeQuery
+                              ? `${option} versions of "${activeQuery}"`
+                              : option;
+                      submitQuery(contextualQuery);
+                    }}
                     size="sm"
                     variant="outline"
                   >

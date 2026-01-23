@@ -13,7 +13,7 @@ export function Logo({ size = 32, className = "", showText = false }: LogoProps)
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div
-        className="relative"
+        className="relative text-foreground"
         style={{ width: size, height: size }}
       >
         <Image
@@ -25,7 +25,7 @@ export function Logo({ size = 32, className = "", showText = false }: LogoProps)
         />
       </div>
       {showText && (
-        <span className="font-semibold text-lg">Assistarr</span>
+        <span className="font-semibold text-lg text-foreground">Assistarr</span>
       )}
     </div>
   );
@@ -33,7 +33,7 @@ export function Logo({ size = 32, className = "", showText = false }: LogoProps)
 
 export function LogoIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
   return (
-    <div className={`relative ${className}`} style={{ width: size, height: size }}>
+    <div className={`relative text-foreground ${className}`} style={{ width: size, height: size }}>
       <Image
         src="/logo.svg"
         alt="Assistarr"

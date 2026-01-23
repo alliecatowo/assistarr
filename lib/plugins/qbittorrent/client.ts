@@ -102,7 +102,38 @@ export class QBittorrentClient extends ApiClient {
 
   // biome-ignore lint/suspicious/noExplicitAny: Generic torrent info
   async getTorrents(): Promise<any[]> {
-    return await this.get<any[]>("/api/v2/torrents/info");
+    const baseUrl = this.config.baseUrl.replace(/\/$/, "");
+    const url = `${baseUrl}/api/v2/torrents/info`;
+
+    const cookie = await this.getCookie();
+
+    const timeoutMs = DEFAULT_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          ...(cookie ? { Cookie: cookie } : {}),
+        },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `GET /api/v2/torrents/info failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const text = await response.text();
+      if (!text) {
+        return [];
+      }
+      return JSON.parse(text);
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   async postForm(

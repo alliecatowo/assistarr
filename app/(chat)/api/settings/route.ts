@@ -53,7 +53,7 @@ async function checkServiceHealth(config: ServiceConfig): Promise<boolean> {
       }
       case "qbittorrent": {
         const client = new QBittorrentClient(config);
-        await client.get("/api/v2/app/version");
+        await client.getAppVersion();
         return true;
       }
       default:

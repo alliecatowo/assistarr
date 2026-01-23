@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import type { ChatMessage } from "@/lib/types";
-import { generateUUID } from "@/lib/utils";
+import { fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { type DiscoverItem, useDiscover } from "./discover-context";
 
 /** Convert a RecommendationItem to a DiscoverItem */
@@ -108,6 +108,7 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
   const transport = useMemo(() => {
     return new DefaultChatTransport({
       api: "/api/chat",
+      fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
         const lastMessage = request.messages.at(-1);
         return {
@@ -127,6 +128,13 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
     id: chatId,
     generateId: generateUUID,
     transport,
+    onError: (err) => {
+      setLoading(false);
+      toast({
+        type: "error",
+        description: err.message || "Failed to get recommendations. Please try again.",
+      });
+    },
   });
 
   // Show error toast when chat errors occur
@@ -142,7 +150,13 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
   }, [error, setLoading]);
 
   // Process AI responses and extract recommendations
+  // Only process when streaming is complete (status is "ready" or idle)
   useEffect(() => {
+    // Don't process while still streaming - wait for final state
+    if (status === "streaming" || status === "submitted") {
+      return;
+    }
+
     const lastMessage = messages.at(-1);
     if (lastMessage?.role !== "assistant") {
       return;
@@ -176,7 +190,12 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
         return;
       }
     }
-  }, [messages, showAIResults, lastQuery]);
+
+    // If we have an assistant message but no tool results, the AI responded
+    // with just text. This can happen if the query is unclear or the AI
+    // decides not to use tools. We'll silently continue - the loading state
+    // will stop via the status effect.
+  }, [messages, showAIResults, lastQuery, status]);
 
   // Update loading state based on chat status
   useEffect(() => {
