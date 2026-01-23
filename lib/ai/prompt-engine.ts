@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createLogger } from "@/lib/logger";
 import type { ToolDefinition } from "@/lib/plugins/core/types";
 import { pluginManager } from "@/lib/plugins/registry";
+import type { InjectedSkill } from "@/lib/skills";
 import { formatTemplateSync } from "@/lib/templates/liquid";
 import type { RequestHints } from "./prompts";
 
@@ -39,6 +40,7 @@ export type PromptOptions = {
   debugMode?: boolean;
   requestHints: RequestHints;
   artifactsPrompt?: string; // Optional prompt injected for artifacts
+  skills?: InjectedSkill[]; // Optional skills to inject
 };
 
 export function generateSystemPrompt(options: PromptOptions): string {
@@ -47,6 +49,7 @@ export function generateSystemPrompt(options: PromptOptions): string {
     debugMode = false,
     requestHints,
     artifactsPrompt,
+    skills = [],
   } = options;
 
   // 1. Select Template
@@ -77,11 +80,46 @@ export function generateSystemPrompt(options: PromptOptions): string {
       .sort((a, b) => a.name.localeCompare(b.name)),
   }));
 
-  // 3. Render
-  return formatTemplateSync(templateContent, {
+  // 3. Render template
+  let prompt = formatTemplateSync(templateContent, {
     plugins,
     requestHints,
     mode,
     artifactsPrompt,
   });
+
+  // 4. Append skills if any
+  if (skills.length > 0) {
+    prompt += generateSkillsSection(skills);
+  }
+
+  return prompt;
+}
+
+/**
+ * Generates a skills section to append to the system prompt.
+ */
+function generateSkillsSection(skills: InjectedSkill[]): string {
+  if (skills.length === 0) {
+    return "";
+  }
+
+  const lines: string[] = [
+    "",
+    "",
+    "## Active Skills",
+    "",
+    "The following skills provide specialized guidance for this session:",
+    "",
+  ];
+
+  for (const skill of skills) {
+    lines.push(`### ${skill.displayName}`);
+    lines.push(`*${skill.description}*`);
+    lines.push("");
+    lines.push(skill.instructions);
+    lines.push("");
+  }
+
+  return lines.join("\n");
 }

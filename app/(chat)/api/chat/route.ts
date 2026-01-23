@@ -7,6 +7,8 @@ import {
   createStreamId,
   deleteChatById,
   getChatById,
+  getEnabledMCPConfigs,
+  getEnabledUserSkills,
   getServiceConfigs,
 } from "@/lib/db/queries/index";
 import { env } from "@/lib/env";
@@ -86,9 +88,22 @@ export async function POST(request: Request) {
       await saveUserMessage(id, message);
     }
 
-    // Fetch configs for service tools
-    const serviceConfigs = await getServiceConfigs({ userId: session.user.id });
+    // Fetch configs for service tools, MCP servers, and skills
+    const [serviceConfigs, mcpConfigs, userSkills] = await Promise.all([
+      getServiceConfigs({ userId: session.user.id }),
+      getEnabledMCPConfigs({ userId: session.user.id }),
+      getEnabledUserSkills({ userId: session.user.id }),
+    ]);
     const configsMap = configsToMap(serviceConfigs);
+
+    // Convert skills to InjectedSkill format
+    const skills = userSkills.map((skill) => ({
+      name: skill.name,
+      displayName: skill.displayName,
+      description: skill.description,
+      instructions: skill.instructions,
+      source: skill.source,
+    }));
 
     const stream = createChatStream({
       chatId: id,
@@ -96,6 +111,8 @@ export async function POST(request: Request) {
       selectedChatModel,
       uiMessages,
       configsMap,
+      mcpConfigs,
+      skills,
       requestHints,
       debugMode,
       mode,

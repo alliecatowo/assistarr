@@ -223,3 +223,80 @@ export const userAIConfig = pgTable(
 );
 
 export type UserAIConfig = InferSelectModel<typeof userAIConfig>;
+
+// Transport type for MCP servers
+export const mcpTransportEnum = pgEnum("mcp_transport", ["sse", "http"]);
+
+export type MCPTransportType = "sse" | "http";
+
+// MCP Server configurations (user-defined external tool servers)
+export const mcpServerConfig = pgTable(
+  "MCPServerConfig",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    name: varchar("name", { length: 100 }).notNull(), // User-friendly display name
+    url: text("url").notNull(), // MCP server URL (HTTP/SSE endpoint)
+    transport: mcpTransportEnum("transport").notNull().default("sse"),
+    apiKey: text("apiKey"), // Optional auth token (encrypted)
+    headers: json("headers").$type<Record<string, string>>(), // Optional custom headers
+    isEnabled: boolean("isEnabled").notNull().default(true),
+    lastHealthCheck: timestamp("lastHealthCheck"),
+    availableTools: json("availableTools").$type<MCPToolInfo[]>(), // Cached tool list
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("mcp_server_config_user_idx").on(table.userId),
+    userNameIdx: index("mcp_server_config_user_name_idx").on(
+      table.userId,
+      table.name
+    ),
+  })
+);
+
+// Type for cached MCP tool information
+export interface MCPToolInfo {
+  name: string;
+  description: string;
+  inputSchema?: object;
+}
+
+export type MCPServerConfig = InferSelectModel<typeof mcpServerConfig>;
+
+// Skill source type
+export const skillSourceEnum = pgEnum("skill_source", [
+  "user",
+  "plugin",
+  "builtin",
+]);
+
+export type SkillSourceType = "user" | "plugin" | "builtin";
+
+// User Skills (AI instruction sets following Agent Skills spec)
+export const userSkill = pgTable(
+  "UserSkill",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    name: varchar("name", { length: 100 }).notNull(), // Skill identifier (from SKILL.md frontmatter)
+    displayName: varchar("displayName", { length: 200 }).notNull(),
+    description: text("description").notNull(), // When to use this skill
+    instructions: text("instructions").notNull(), // Full markdown instructions
+    isEnabled: boolean("isEnabled").notNull().default(true),
+    source: skillSourceEnum("source").notNull().default("user"),
+    pluginName: varchar("pluginName", { length: 50 }), // If source='plugin', which plugin
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("user_skill_user_idx").on(table.userId),
+    userNameIdx: index("user_skill_user_name_idx").on(table.userId, table.name),
+  })
+);
+
+export type UserSkill = InferSelectModel<typeof userSkill>;

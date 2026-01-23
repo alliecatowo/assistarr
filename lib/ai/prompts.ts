@@ -1,5 +1,6 @@
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact/artifact";
+import type { InjectedSkill } from "@/lib/skills";
 import { generateSystemPrompt as generateFromEngine } from "./prompt-engine";
 
 export const artifactsPrompt = `
@@ -52,11 +53,13 @@ export const systemPrompt = ({
   requestHints,
   debugMode,
   mode,
+  skills,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
   debugMode?: boolean;
   mode?: "chat" | "discover";
+  skills?: InjectedSkill[];
 }) => {
   // Reasoning models or discover mode don't need artifacts prompt
   const isReasoning =
@@ -70,6 +73,7 @@ export const systemPrompt = ({
     debugMode,
     requestHints,
     artifactsPrompt: shouldIncludeArtifacts ? artifactsPrompt : undefined,
+    skills,
   });
 };
 

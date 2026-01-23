@@ -97,12 +97,45 @@ export type ToolCategory =
   | "management"
   | "system";
 
+// ============================================================================
+// BUNDLED CAPABILITIES (MCP Servers & Skills)
+// ============================================================================
+
+// Bundled MCP server definition
+export interface BundledMCPServer {
+  name: string;
+  description: string;
+  defaultUrl: string;
+  transport: "sse" | "http";
+}
+
+// Bundled skill definition
+export interface BundledSkill {
+  name: string;
+  displayName: string;
+  description: string;
+  instructions: string;
+}
+
+// Service plugin categories for settings UI organization
+export type PluginCategory =
+  | "media-server"
+  | "arr-app"
+  | "downloader"
+  | "request-manager"
+  | "other";
+
+// ============================================================================
+// SERVICE PLUGIN INTERFACE
+// ============================================================================
+
 export interface ServicePlugin {
   // Metadata
   name: string;
   displayName: string;
   description: string;
   iconId: string; // Used for UI icons (e.g., 'radarr', 'sonarr')
+  category?: PluginCategory; // For settings UI organization
 
   // Capabilities
   tools: Record<string, ToolDefinition>;
@@ -112,4 +145,8 @@ export interface ServicePlugin {
   validateConfig?(
     config: ServiceConfig
   ): Promise<{ valid: boolean; error?: string }>;
+
+  // Bundled capabilities (optional)
+  bundledMCPServers?: BundledMCPServer[];
+  bundledSkills?: BundledSkill[];
 }
