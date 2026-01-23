@@ -28,7 +28,11 @@ export function ExpandedCard({
     item.tmdbId,
     item.mediaType
   );
-  const { pitch, isPitchLoading } = useMediaPitch(item.tmdbId, item.mediaType);
+  const { pitch, isPitchLoading } = useMediaPitch(
+    item.tmdbId,
+    item.mediaType,
+    item.pitch // Use pre-existing pitch from top picks to avoid regenerating
+  );
   const [showFullOverview, setShowFullOverview] = useState(false);
   const { isRequesting, handleRequest } = useMediaRequest(item, onStatusChange);
 

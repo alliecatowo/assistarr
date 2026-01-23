@@ -4,21 +4,39 @@ import {
   createUIMessageStream,
   stepCountIs,
   streamText,
+  type Tool,
 } from "ai";
 import type { Session } from "next-auth";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import {
+  findSimilarUsers,
+  presentSimilarUsersRecommendations,
+} from "@/lib/ai/tools/find-similar-users";
 import { recommendMedia } from "@/lib/ai/tools/recommend-media";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import { updateChatTitleById } from "@/lib/db/queries/index";
-import type { ServiceConfig, UserAIConfig } from "@/lib/db/schema";
+import type {
+  MCPServerConfig,
+  ServiceConfig,
+  UserAIConfig,
+} from "@/lib/db/schema";
+import { createLogger } from "@/lib/logger";
+import {
+  createMCPClientWrapper,
+  type MCPClientWrapper,
+  mergeMCPToolsWithBase,
+} from "@/lib/mcp";
 import { pluginManager } from "@/lib/plugins/registry";
+import type { InjectedSkill } from "@/lib/skills";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
 import { type PersistContext, persistMessages } from "./message-persistence";
+
+const log = createLogger("chat:stream-handler");
 
 export type StreamConfig = {
   chatId: string;
@@ -26,6 +44,8 @@ export type StreamConfig = {
   selectedChatModel: string;
   uiMessages: ChatMessage[];
   configsMap: Map<string, ServiceConfig>;
+  mcpConfigs?: MCPServerConfig[];
+  skills?: InjectedSkill[];
   requestHints: RequestHints;
   debugMode: boolean;
   mode: "chat" | "discover";
@@ -70,6 +90,8 @@ export function createChatStream(config: StreamConfig) {
     selectedChatModel,
     uiMessages,
     configsMap,
+    mcpConfigs = [],
+    skills = [],
     requestHints,
     debugMode,
     mode,
@@ -82,6 +104,9 @@ export function createChatStream(config: StreamConfig) {
     selectedChatModel.includes("reasoning") ||
     selectedChatModel.includes("thinking");
 
+  // Track MCP clients for cleanup
+  const mcpClients: MCPClientWrapper[] = [];
+
   return createUIMessageStream({
     originalMessages: isToolApprovalFlow ? uiMessages : undefined,
     execute: async ({ writer: dataStream }) => {
@@ -90,7 +115,10 @@ export function createChatStream(config: StreamConfig) {
         createDocument: createDocument({ session, dataStream }),
         updateDocument: updateDocument({ session, dataStream }),
         requestSuggestions: requestSuggestions({ session, dataStream }),
-        recommendMedia: recommendMedia(),
+        recommendMedia: recommendMedia(session.user.id),
+        findSimilarUsers: findSimilarUsers(),
+        presentSimilarUsersRecommendations:
+          presentSimilarUsersRecommendations(),
       };
 
       // Dynamically load service tools based on config
@@ -100,10 +128,56 @@ export function createChatStream(config: StreamConfig) {
         mode
       );
 
-      const effectiveTools = {
+      // biome-ignore lint/suspicious/noExplicitAny: Tools have varying generic types
+      let effectiveTools: Record<string, Tool<any, any>> = {
         ...baseTools,
         ...serviceTools,
       };
+
+      // Initialize MCP clients and merge their tools
+      if (mcpConfigs.length > 0) {
+        log.debug(
+          { mcpServerCount: mcpConfigs.length },
+          "Initializing MCP clients"
+        );
+
+        const mcpWrappers: Array<{
+          wrapper: MCPClientWrapper;
+          displayName: string;
+        }> = [];
+
+        for (const mcpConfig of mcpConfigs) {
+          try {
+            const wrapper = await createMCPClientWrapper({
+              url: mcpConfig.url,
+              transport: mcpConfig.transport,
+              apiKey: mcpConfig.apiKey,
+              headers: mcpConfig.headers ?? undefined,
+            });
+            mcpClients.push(wrapper);
+            mcpWrappers.push({ wrapper, displayName: mcpConfig.name });
+            log.debug(
+              { serverName: mcpConfig.name, url: mcpConfig.url },
+              "MCP client initialized"
+            );
+          } catch (error) {
+            log.error(
+              { error, serverName: mcpConfig.name },
+              "Failed to initialize MCP client"
+            );
+          }
+        }
+
+        if (mcpWrappers.length > 0) {
+          const { tools: mergedTools, mcpToolCount } =
+            await mergeMCPToolsWithBase(effectiveTools, mcpWrappers);
+          effectiveTools = mergedTools;
+          log.info(
+            { mcpToolCount, totalToolCount: Object.keys(mergedTools).length },
+            "Merged MCP tools"
+          );
+        }
+      }
 
       const modelMessages = await convertToModelMessages(uiMessages);
 
@@ -120,6 +194,7 @@ export function createChatStream(config: StreamConfig) {
           requestHints,
           debugMode,
           mode,
+          skills,
         }),
         messages: modelMessages,
         stopWhen: stepCountIs(8),
@@ -169,6 +244,15 @@ export function createChatStream(config: StreamConfig) {
     },
     generateId: generateUUID,
     onFinish: async ({ messages: finishedMessages }) => {
+      // Clean up MCP clients
+      for (const client of mcpClients) {
+        try {
+          await client.close();
+        } catch (error) {
+          log.error({ error }, "Failed to close MCP client");
+        }
+      }
+
       const persistContext: PersistContext = {
         chatId,
         isToolApprovalFlow,

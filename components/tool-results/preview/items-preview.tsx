@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ExternalImage } from "@/components/ui/external-image";
 import { cn } from "@/lib/utils";
 import { TMDB_POSTER_W185 } from "../types";
 
@@ -70,7 +70,7 @@ export function ItemsPreview({
               title={item.title}
             >
               {posterUrl ? (
-                <Image
+                <ExternalImage
                   alt=""
                   className="object-cover"
                   fill

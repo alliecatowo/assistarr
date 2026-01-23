@@ -86,7 +86,7 @@ export const Register: Story = () => (
     <Button type="submit">Create Account</Button>
     <p className="text-center text-xs text-muted-foreground">
       Already have an account?{" "}
-      <a href="#" className="text-primary hover:underline">
+      <a className="text-primary hover:underline" href="/login">
         Sign in
       </a>
     </p>

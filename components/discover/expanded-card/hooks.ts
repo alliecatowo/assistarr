@@ -4,6 +4,81 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { DiscoverItem } from "../discover-context";
 
+// =============================================================================
+// Pitch Cache - Store generated pitches to avoid regenerating
+// =============================================================================
+
+const PITCH_CACHE_KEY = "assistarr_pitch_cache";
+const PITCH_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+interface PitchCacheEntry {
+  pitch: string;
+  hasProfile: boolean;
+  timestamp: number;
+}
+
+interface PitchCache {
+  [key: string]: PitchCacheEntry;
+}
+
+function getPitchCacheKey(tmdbId: number, mediaType: string): string {
+  return `${mediaType}_${tmdbId}`;
+}
+
+function getCachedPitch(
+  tmdbId: number,
+  mediaType: string
+): PitchCacheEntry | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const cached = sessionStorage.getItem(PITCH_CACHE_KEY);
+    if (!cached) {
+      return null;
+    }
+    const cache: PitchCache = JSON.parse(cached);
+    const key = getPitchCacheKey(tmdbId, mediaType);
+    const entry = cache[key];
+    if (!entry) {
+      return null;
+    }
+    if (Date.now() - entry.timestamp > PITCH_CACHE_TTL_MS) {
+      // Expired - remove entry
+      delete cache[key];
+      sessionStorage.setItem(PITCH_CACHE_KEY, JSON.stringify(cache));
+      return null;
+    }
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedPitch(
+  tmdbId: number,
+  mediaType: string,
+  pitch: string,
+  hasProfile: boolean
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    const cached = sessionStorage.getItem(PITCH_CACHE_KEY);
+    const cache: PitchCache = cached ? JSON.parse(cached) : {};
+    const key = getPitchCacheKey(tmdbId, mediaType);
+    cache[key] = { pitch, hasProfile, timestamp: Date.now() };
+    sessionStorage.setItem(PITCH_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Storage quota exceeded or other error - ignore
+  }
+}
+
+// =============================================================================
+// Types
+// =============================================================================
+
 interface MediaDetails {
   id: number;
   title: string;
@@ -96,13 +171,35 @@ export function useMediaDetails(
 
 export function useMediaPitch(
   tmdbId: number | undefined,
-  mediaType: "movie" | "tv"
+  mediaType: "movie" | "tv",
+  /** Pre-existing pitch from top picks - avoids regenerating */
+  existingPitch?: string
 ) {
-  const [pitch, setPitch] = useState<PitchData | null>(null);
+  // Initialize from existing pitch or cache
+  const [pitch, setPitch] = useState<PitchData | null>(() => {
+    if (existingPitch) {
+      return { pitch: existingPitch, hasProfile: true };
+    }
+    if (tmdbId) {
+      const cached = getCachedPitch(tmdbId, mediaType);
+      if (cached) {
+        return { pitch: cached.pitch, hasProfile: cached.hasProfile };
+      }
+    }
+    return null;
+  });
   const [isPitchLoading, setIsPitchLoading] = useState(false);
 
   useEffect(() => {
-    if (!tmdbId) {
+    // Skip fetching if we already have a pitch from top picks or cache
+    if (existingPitch || !tmdbId) {
+      return;
+    }
+
+    // Check cache first
+    const cached = getCachedPitch(tmdbId, mediaType);
+    if (cached) {
+      setPitch({ pitch: cached.pitch, hasProfile: cached.hasProfile });
       return;
     }
 
@@ -120,6 +217,8 @@ export function useMediaPitch(
         }
         const data = await response.json();
         setPitch(data);
+        // Cache the pitch for future use
+        setCachedPitch(tmdbId, mediaType, data.pitch, data.hasProfile);
       } catch (error) {
         if (isAbortError(error)) {
           return;
@@ -137,7 +236,7 @@ export function useMediaPitch(
     return () => {
       abortController.abort();
     };
-  }, [tmdbId, mediaType]);
+  }, [tmdbId, mediaType, existingPitch]);
 
   return { pitch, isPitchLoading };
 }

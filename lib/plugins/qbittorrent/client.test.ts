@@ -11,7 +11,9 @@ describe("QBittorrentClient", () => {
     userId: "user",
     serviceName: "qbittorrent",
     baseUrl: "http://qbit:8080",
-    apiKey: "dummy-key", // qBit uses cookie auth but we pass something
+    apiKey: "dummy-key",
+    username: "admin",
+    password: "testpass",
     isEnabled: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -21,25 +23,43 @@ describe("QBittorrentClient", () => {
     fetchMock.mockReset();
   });
 
-  it("should make request with default headers", async () => {
-    // Mock the actual request success
-    const mockResponse: any[] = [];
+  it("should authenticate and make request with session cookie", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse,
-      text: async () => JSON.stringify(mockResponse),
+      text: async () => "Ok.",
+      headers: new Headers([["set-cookie", "SID=abc123; Path=/; HttpOnly"]]),
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => "v5.0.0",
     });
 
     const client = new QBittorrentClient(mockConfig);
-    await client.get("/test");
+    const version = await client.getAppVersion();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://qbit:8080/test",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "X-Api-Key": "dummy-key",
-        }),
-      })
-    );
+    expect(version).toBe("v5.0.0");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("should get torrents with session cookie", async () => {
+    const mockTorrents = [{ id: 1, name: "test.torrent" }];
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => "Ok.",
+      headers: new Headers([["set-cookie", "SID=abc123; Path=/; HttpOnly"]]),
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify(mockTorrents),
+      json: async () => mockTorrents,
+    });
+
+    const client = new QBittorrentClient(mockConfig);
+    const torrents = await client.getTorrents();
+
+    expect(torrents).toEqual(mockTorrents);
   });
 });

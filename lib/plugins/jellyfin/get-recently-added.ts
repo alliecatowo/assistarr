@@ -34,7 +34,7 @@ export const getRecentlyAdded = ({
           includeItemTypes = "Episode";
         }
 
-        const jellyfinUserId = await getUserId(client);
+        const jellyfinUserId = await client.getUserId();
 
         const params = new URLSearchParams({
           Limit: limit.toString(),
@@ -66,19 +66,6 @@ export const getRecentlyAdded = ({
   });
 };
 
-async function getUserId(client: JellyfinClient): Promise<string> {
-  try {
-    const userResponse = await client.get<{ Id: string }>("/Users/Me");
-    return userResponse.Id;
-  } catch {
-    const usersResponse = await client.get<Array<{ Id: string }>>("/Users");
-    if (usersResponse.length === 0) {
-      throw new Error("No users found in Jellyfin server");
-    }
-    return usersResponse[0].Id;
-  }
-}
-
 function mapItem(item: MediaItem, baseUrl: string) {
   const base = {
     id: item.Id,
@@ -92,7 +79,7 @@ function mapItem(item: MediaItem, baseUrl: string) {
     rating: item.CommunityRating,
     genres: item.Genres?.slice(0, 3),
     duration: item.RunTimeTicks ? formatDuration(item.RunTimeTicks) : null,
-    imageUrl: getImageUrl(baseUrl, item.Id, item.ImageTags?.Primary),
+    imageUrl: getImageUrl(baseUrl, item.Id, "Primary"),
   };
 
   if (item.Type === "Episode" && item.SeriesName) {

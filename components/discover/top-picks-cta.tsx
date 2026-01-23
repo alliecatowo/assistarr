@@ -1,8 +1,9 @@
-/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
   CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   LoaderIcon,
   PlayIcon,
   PlusIcon,
@@ -10,12 +11,18 @@ import {
   SparklesIcon,
   StarIcon,
 } from "lucide-react";
-import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ExternalImage } from "@/components/ui/external-image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFIFOCache } from "@/hooks/use-fifo-cache";
 import { cn, getBackdropUrl, getPosterUrl } from "@/lib/utils";
 import { useDiscover } from "./discover-context";
+
+// Cache configuration
+const CACHE_KEY = "assistarr_top_picks_fifo";
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+const ITEMS_TO_FETCH = 6; // Fetch 6 items for carousel
 
 // =============================================================================
 // Type Definitions
@@ -31,7 +38,8 @@ interface TopPickItem {
   mediaType: "movie" | "tv";
   tmdbId: number;
   status: "available" | "requested" | "pending" | "unavailable";
-  pitch: string; // Personalized "why you'll love it" pitch
+  pitch: string;
+  overview?: string;
   genres?: string[];
 }
 
@@ -44,17 +52,35 @@ interface TopPicksResponse {
 // Loading Skeleton
 // =============================================================================
 
+// Card width for carousel calculations
+const CARD_WIDTH = 350; // px
+const CARD_GAP = 16; // px (gap-4)
+
 function TopPickCardSkeleton() {
   return (
-    <div className="relative overflow-hidden rounded-xl border bg-card shadow-lg">
-      <Skeleton className="aspect-[2/3] w-full" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-        <Skeleton className="h-5 w-full" />
-        <Skeleton className="h-3.5 w-2/3" />
-        <div className="flex gap-2 pt-1">
-          <Skeleton className="h-8 flex-1" />
-          <Skeleton className="h-8 w-8" />
+    <div
+      className="overflow-hidden rounded-xl border bg-card shadow-lg h-[420px] flex flex-col shrink-0"
+      style={{ width: CARD_WIDTH }}
+    >
+      {/* Image skeleton */}
+      <Skeleton className="aspect-[16/9] w-full shrink-0" />
+      {/* Content skeleton */}
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="space-y-1.5 min-h-[60px]">
+          <div className="flex items-start justify-between gap-2">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+          <Skeleton className="h-3.5 w-1/2" />
+        </div>
+        <div className="space-y-1.5 mt-3 flex-1 min-h-[100px] max-h-[120px]">
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-2/3" />
+        </div>
+        <div className="flex gap-2 pt-3 mt-auto">
+          <Skeleton className="h-9 flex-1" />
         </div>
       </div>
     </div>
@@ -84,129 +110,184 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleCardClick();
+    }
+  };
+
+  const handleRequestClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    pick.tmdbId && onRequest(pick.tmdbId, pick.mediaType);
+  };
+
+  const renderActionButtons = () => {
+    if (canRequest) {
+      return (
+        <Button
+          className="flex-1 h-9 text-sm font-medium"
+          disabled={isRequesting}
+          onClick={handleRequestClick}
+          size="sm"
+        >
+          {isRequesting ? (
+            <LoaderIcon className="size-3.5 animate-spin" />
+          ) : (
+            <>
+              <PlusIcon className="size-3.5 mr-1.5" />
+              Request
+            </>
+          )}
+        </Button>
+      );
+    }
+    if (pick.status === "available") {
+      return (
+        <Button
+          className="flex-1 h-9 text-sm font-medium"
+          onClick={(e) => e.stopPropagation()}
+          size="sm"
+          variant="secondary"
+        >
+          <PlayIcon className="size-3.5 mr-1.5" />
+          Watch
+        </Button>
+      );
+    }
+    if (pick.status === "requested") {
+      return (
+        <div className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30 text-sm font-medium">
+          <CheckCircleIcon className="size-3.5" />
+          <span>Requested</span>
+        </div>
+      );
+    }
+    if (pick.status === "pending") {
+      return (
+        <div className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-md bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-sm font-medium">
+          <LoaderIcon className="size-3.5" />
+          <span>Pending</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <button
+    // biome-ignore lint/a11y/useSemanticElements: Cannot use button element due to nested Button components inside
+    <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card shadow-lg text-left cursor-pointer",
-        "transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-primary/50"
+        "group overflow-hidden rounded-xl border bg-card shadow-lg text-left cursor-pointer shrink-0",
+        "transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-primary/50",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "h-[420px] flex flex-col"
       )}
       onClick={handleCardClick}
-      type="button"
+      onKeyDown={handleKeyDown}
+      role="button"
+      style={{ width: CARD_WIDTH }}
+      tabIndex={0}
     >
-      {/* Poster Image */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
-        {posterUrl || backdropUrl ? (
-          <Image
-            alt={pick.title}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            fill
-            priority
-            sizes="(max-width: 768px) 50vw, 33vw"
-            src={posterUrl || backdropUrl || ""}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            No Image
-          </div>
-        )}
+      {/* Image section with hover darkening */}
+      <CardImage
+        backdropUrl={backdropUrl}
+        posterUrl={posterUrl}
+        title={pick.title}
+      />
+      {/* Content section below image */}
+      <CardContent pick={pick}>{renderActionButtons()}</CardContent>
+    </div>
+  );
+}
 
-        {/* Gradient Overlay - stronger at bottom for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
-      </div>
+interface CardImageProps {
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  title: string;
+}
 
-      {/* Content Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-        {/* Title - more prominent */}
-        <h3 className="text-lg font-bold text-white line-clamp-2 leading-tight">
-          {pick.title}
-          {pick.year && (
-            <span className="text-sm font-normal text-white/80 ml-1">
-              ({pick.year})
-            </span>
-          )}
-        </h3>
+function CardImage({ posterUrl, backdropUrl, title }: CardImageProps) {
+  // Prefer backdrop for the split card layout (wider aspect ratio)
+  const imageUrl = backdropUrl || posterUrl;
 
-        {/* Rating & Type - condensed */}
-        <div className="flex items-center gap-2 text-xs text-white/90">
+  return (
+    <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+      {imageUrl ? (
+        <ExternalImage
+          alt={title}
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          src={imageUrl}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+          No Image
+        </div>
+      )}
+      {/* Hover overlay to darken image for better contrast */}
+      <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/30" />
+    </div>
+  );
+}
+
+interface CardContentProps {
+  pick: TopPickItem;
+  children: React.ReactNode;
+}
+
+function CardContent({ pick, children }: CardContentProps) {
+  return (
+    <div className="p-4 flex-1 flex flex-col">
+      {/* Title and meta row */}
+      <div className="space-y-1.5 min-h-[60px]">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-bold line-clamp-2 leading-tight">
+            {pick.title}
+            {pick.year && (
+              <span className="text-sm font-normal text-muted-foreground ml-1">
+                ({pick.year})
+              </span>
+            )}
+          </h3>
           {pick.rating && pick.rating > 0 && (
-            <div className="flex items-center gap-1">
-              <StarIcon className="size-3 fill-yellow-500 text-yellow-500" />
-              <span className="font-medium">{pick.rating.toFixed(1)}</span>
+            <div className="flex items-center gap-1 shrink-0">
+              <StarIcon className="size-3.5 fill-yellow-500 text-yellow-500" />
+              <span className="text-sm font-medium">
+                {pick.rating.toFixed(1)}
+              </span>
             </div>
           )}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="capitalize">
-            {pick.mediaType === "tv" ? "TV" : "Movie"}
+            {pick.mediaType === "tv" ? "TV Series" : "Movie"}
           </span>
           {pick.genres && pick.genres.length > 0 && (
-            <span className="text-white/60 truncate">
-              • {pick.genres.slice(0, 2).join(", ")}
+            <span className="truncate">
+              {pick.genres.slice(0, 2).join(", ")}
             </span>
           )}
         </div>
+      </div>
 
-        {/* Personalized Pitch - more subtle */}
-        <p className="text-xs text-white/80 line-clamp-2 leading-snug">
-          {pick.pitch}
-        </p>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-1">
-          {canRequest && (
-            <Button
-              className="flex-1 h-8 text-sm font-medium"
-              disabled={isRequesting}
-              onClick={(e) => {
-                e.stopPropagation();
-                pick.tmdbId && onRequest(pick.tmdbId, pick.mediaType);
-              }}
-              size="sm"
-            >
-              {isRequesting ? (
-                <LoaderIcon className="size-3.5 animate-spin" />
-              ) : (
-                <>
-                  <PlusIcon className="size-3.5 mr-1.5" />
-                  Request
-                </>
-              )}
-            </Button>
-          )}
-          {pick.status === "available" && (
-            <Button
-              className="flex-1 h-8 text-sm font-medium"
-              onClick={(e) => e.stopPropagation()}
-              size="sm"
-              variant="secondary"
-            >
-              <PlayIcon className="size-3.5 mr-1.5" />
-              Watch
-            </Button>
-          )}
-          {pick.status === "requested" && (
-            <div className="flex-1 h-8 flex items-center justify-center gap-1.5 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-medium">
-              <CheckCircleIcon className="size-3" />
-              <span>Requested</span>
-            </div>
-          )}
-          {pick.status === "pending" && (
-            <div className="flex-1 h-8 flex items-center justify-center gap-1.5 rounded-md bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-xs font-medium">
-              <LoaderIcon className="size-3" />
-              <span>Pending</span>
-            </div>
-          )}
-
-          {/* More Info Button (always shown) */}
-          <Button
-            className="h-8 px-3"
-            onClick={handleCardClick}
-            size="sm"
-            variant="outline"
-          >
-            <span className="text-xs">Info</span>
-          </Button>
+      {/* AI Pitch - the main attraction with constrained height */}
+      <div className="flex gap-2 mt-3 flex-1 min-h-[100px] max-h-[120px] overflow-hidden">
+        <SparklesIcon className="size-4 shrink-0 mt-0.5 text-primary" />
+        <div className="relative flex-1">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-5">
+            {pick.pitch}
+          </p>
+          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-card to-transparent" />
         </div>
       </div>
-    </button>
+
+      {/* Action buttons - anchored to bottom */}
+      <div className="flex gap-2 pt-3 mt-auto">{children}</div>
+    </div>
   );
 }
 
@@ -214,41 +295,117 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
 // Main Component
 // =============================================================================
 
+// Fetch function for cache
+async function fetchTopPicksData(): Promise<TopPickItem[]> {
+  const response = await fetch(
+    `/api/discover/top-picks?count=${ITEMS_TO_FETCH}`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch top picks");
+  }
+  const data: TopPicksResponse = await response.json();
+  return data.picks;
+}
+
 export function TopPicksCta() {
-  const [picks, setPicks] = useState<TopPickItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScroll, setCanScroll] = useState(false);
   const [requestingId, setRequestingId] = useState<number | null>(null);
   const { updateItemStatus } = useDiscover();
 
-  const fetchTopPicks = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    setError(null);
+  // Use deduplicated cache for top picks (6 unique items)
+  const {
+    items: picks,
+    isLoading,
+    error,
+    refresh,
+  } = useFIFOCache<TopPickItem>(CACHE_KEY, fetchTopPicksData, {
+    ttlMs: CACHE_TTL_MS,
+    maxItems: 6,
+    progressiveLoad: false, // Fetch all 6 at once
+    autoRefresh: true,
+  });
 
-    try {
-      const response = await fetch("/api/discover/top-picks");
-      if (!response.ok) {
-        throw new Error("Failed to fetch top picks");
-      }
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-      const data: TopPicksResponse = await response.json();
-      setPicks(data.picks);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+  // Create infinite loop by tripling items (prev + current + next)
+  const loopedPicks = useMemo(() => {
+    if (picks.length < 4) {
+      return picks;
     }
+    return [...picks, ...picks, ...picks];
+  }, [picks]);
+
+  // Check if carousel is scrollable
+  const checkScrollability = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+    setCanScroll(el.scrollWidth > el.clientWidth);
   }, []);
 
+  // Set initial scroll position to middle set and handle infinite loop
   useEffect(() => {
-    fetchTopPicks();
-  }, [fetchTopPicks]);
+    const el = scrollRef.current;
+    if (!el || picks.length < 4) {
+      return;
+    }
+
+    // Start at the middle set
+    const cardFullWidth = CARD_WIDTH + CARD_GAP;
+    const middleStart = cardFullWidth * picks.length;
+    el.scrollLeft = middleStart;
+
+    checkScrollability();
+    window.addEventListener("resize", checkScrollability);
+
+    // Handle scroll end to create seamless loop
+    const handleScrollEnd = () => {
+      const setWidth = cardFullWidth * picks.length;
+      const currentScroll = el.scrollLeft;
+
+      // If scrolled to first set, jump to middle
+      if (currentScroll < setWidth * 0.5) {
+        el.scrollLeft = currentScroll + setWidth;
+      }
+      // If scrolled to third set, jump to middle
+      else if (currentScroll > setWidth * 2.5) {
+        el.scrollLeft = currentScroll - setWidth;
+      }
+    };
+
+    el.addEventListener("scrollend", handleScrollEnd);
+
+    return () => {
+      window.removeEventListener("resize", checkScrollability);
+      el.removeEventListener("scrollend", handleScrollEnd);
+    };
+  }, [checkScrollability, picks.length]);
+
+  const scroll = useCallback((direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+
+    // Scroll by approximately 3 cards
+    const scrollAmount = (CARD_WIDTH + CARD_GAP) * 3;
+
+    el.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleRequest = async (tmdbId: number, mediaType: "movie" | "tv") => {
     setRequestingId(tmdbId);
@@ -272,15 +429,15 @@ export function TopPicksCta() {
     }
   };
 
-  // Loading state
-  if (isLoading) {
+  // Loading state (only show on initial load, not during refresh)
+  if (isLoading && picks.length === 0) {
     return (
       <section className="mb-8">
         <div className="mb-4 flex items-center gap-2">
           <SparklesIcon className="size-5 text-primary" />
           <h2 className="text-xl font-bold">Top Picks For You</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex gap-4 overflow-hidden">
           <TopPickCardSkeleton />
           <TopPickCardSkeleton />
           <TopPickCardSkeleton />
@@ -290,7 +447,7 @@ export function TopPicksCta() {
   }
 
   // Error state
-  if (error) {
+  if (error && picks.length === 0) {
     return null; // Silently fail - not critical
   }
 
@@ -298,6 +455,9 @@ export function TopPicksCta() {
   if (picks.length === 0) {
     return null; // Don't show section if no picks
   }
+
+  // Use looped items for infinite scroll, or original if too few
+  const displayPicks = picks.length >= 4 ? loopedPicks : picks;
 
   return (
     <section className="mb-8">
@@ -312,7 +472,7 @@ export function TopPicksCta() {
         </div>
         <Button
           disabled={isRefreshing}
-          onClick={() => fetchTopPicks(true)}
+          onClick={handleRefresh}
           size="sm"
           variant="ghost"
         >
@@ -323,16 +483,62 @@ export function TopPicksCta() {
         </Button>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {picks.map((pick) => (
-          <TopPickCard
-            isRequesting={requestingId === pick.tmdbId}
-            key={pick.id}
-            onRequest={handleRequest}
-            pick={pick}
-          />
-        ))}
+      {/* Carousel */}
+      <div className="group/carousel relative">
+        {/* Left arrow - always visible on hover for infinite carousel */}
+        {canScroll && (
+          <Button
+            aria-label="Scroll left"
+            className={cn(
+              "absolute left-2 top-1/2 z-10 -translate-y-1/2",
+              "size-10 rounded-full",
+              "bg-background/80 backdrop-blur-sm shadow-lg border",
+              "opacity-0 transition-all duration-200",
+              "group-hover/carousel:opacity-100",
+              "hover:bg-background/95"
+            )}
+            onClick={() => scroll("left")}
+            size="icon"
+            variant="ghost"
+          >
+            <ChevronLeftIcon className="size-5" />
+          </Button>
+        )}
+
+        {/* Scrollable container */}
+        <div
+          className="flex gap-4 overflow-x-auto pb-2 scrollbar-none"
+          ref={scrollRef}
+        >
+          {displayPicks.map((pick, index) => (
+            <TopPickCard
+              isRequesting={requestingId === pick.tmdbId}
+              key={`${pick.id}-${index}`}
+              onRequest={handleRequest}
+              pick={pick}
+            />
+          ))}
+        </div>
+
+        {/* Right arrow - always visible on hover for infinite carousel */}
+        {canScroll && (
+          <Button
+            aria-label="Scroll right"
+            className={cn(
+              "absolute right-2 top-1/2 z-10 -translate-y-1/2",
+              "size-10 rounded-full",
+              "bg-background/80 backdrop-blur-sm shadow-lg border",
+              "opacity-0 transition-all duration-200",
+              "group-hover/carousel:opacity-100",
+              "hover:bg-background/95"
+            )}
+            onClick={() => scroll("right")}
+            size="icon"
+            variant="ghost"
+          >
+            <ChevronRightIcon className="size-5" />
+          </Button>
+        )}
       </div>
     </section>
   );

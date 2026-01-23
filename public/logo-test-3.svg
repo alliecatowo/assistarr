@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="assistarr-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer hexagon - thick and bold for small sizes -->
+  <path d="M128 8 L236 80 L236 176 L128 248 L20 176 L20 80 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="14" 
+        stroke-linejoin="round"
+        fill="none"/>
+  
+  <!-- Inner hexagon - medium thickness -->
+  <path d="M128 44 L204 88 L204 168 L128 212 L52 168 L52 88 Z" 
+        stroke="url(#assistarr-gradient)" 
+        stroke-width="8" 
+        stroke-linejoin="round"
+        fill="none"
+        opacity="0.8"/>
+  
+  <!-- Center play button - solid -->
+  <path d="M110 104 L162 128 L110 152 Z" 
+        fill="url(#assistarr-gradient)"/>
+  
+  <!-- Spark points emerging from hexagon vertices -->
+  <!-- Top -->
+  <path d="M128 44 L128 28" stroke="url(#assistarr-gradient)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Top-right -->
+  <path d="M204 88 L220 104" stroke="url(#assistarr-gradient)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Bottom-right -->
+  <path d="M204 168 L220 152" stroke="url(#assistarr-gradient)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Bottom -->
+  <path d="M128 212 L128 228" stroke="url(#assistarr-gradient)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Bottom-left -->
+  <path d="M52 168 L36 152" stroke="url(#assistarr-gradient)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Top-left -->
+  <path d="M52 88 L36 104" stroke="url(#assistarr-gradient)" stroke-width="8" stroke-linecap="round"/>
+</svg>

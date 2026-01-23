@@ -20,6 +20,17 @@ interface JellyseerrMediaDetails {
   numberOfSeasons?: number;
 }
 
+interface JellyseerrSearchResult {
+  id: number;
+  mediaType: "movie" | "tv";
+  title?: string;
+  name?: string;
+  releaseDate?: string;
+  firstAirDate?: string;
+  posterPath?: string;
+  voteAverage?: number;
+}
+
 interface LookupResult {
   title?: string;
   year?: number;
@@ -79,27 +90,31 @@ async function lookupRadarr(
     return null;
   }
 
-  const client = new RadarrClient(config);
-  const results = await client.get<RadarrMovie[]>(
-    `/movie/lookup/tmdb?tmdbId=${id}`
-  );
+  try {
+    const client = new RadarrClient(config);
+    const results = await client.get<RadarrMovie[]>(
+      `/movie/lookup/tmdb?tmdbId=${id}`
+    );
 
-  if (results.length === 0) {
+    if (results.length === 0) {
+      return null;
+    }
+
+    const movie = results[0];
+    const posterImage = movie.images?.find((img) => img.coverType === "poster");
+
+    return {
+      title: movie.title,
+      year: movie.year,
+      overview: movie.overview,
+      posterUrl: posterImage?.remoteUrl || null,
+      rating: movie.ratings?.imdb?.value || movie.ratings?.tmdb?.value,
+      genres: movie.genres,
+      runtime: movie.runtime,
+    };
+  } catch {
     return null;
   }
-
-  const movie = results[0];
-  const posterImage = movie.images?.find((img) => img.coverType === "poster");
-
-  return {
-    title: movie.title,
-    year: movie.year,
-    overview: movie.overview,
-    posterUrl: posterImage?.remoteUrl || null,
-    rating: movie.ratings?.imdb?.value || movie.ratings?.tmdb?.value,
-    genres: movie.genres,
-    runtime: movie.runtime,
-  };
 }
 
 async function lookupSonarr(
@@ -111,30 +126,158 @@ async function lookupSonarr(
     return null;
   }
 
-  const client = new SonarrClient(config);
-  const results = await client.get<SonarrSeries[]>(
-    `/series/lookup?term=tvdb:${id}`
-  );
+  try {
+    const client = new SonarrClient(config);
+    const results = await client.get<SonarrSeries[]>(
+      `/series/lookup?term=tvdb:${id}`
+    );
 
-  if (results.length === 0) {
+    if (results.length === 0) {
+      return null;
+    }
+
+    const series = results[0];
+    const posterImage = series.images?.find(
+      (img) => img.coverType === "poster"
+    );
+    const seasonCount =
+      series.seasons?.filter((s) => s.seasonNumber > 0).length ?? 0;
+
+    return {
+      title: series.title,
+      year: series.year,
+      overview: series.overview,
+      posterUrl: posterImage?.remoteUrl || null,
+      rating: series.ratings?.value,
+      genres: series.genres,
+      runtime: series.runtime,
+      seasonCount,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Search Jellyseerr by title and return the best match
+ */
+async function searchJellyseerrByTitle(
+  userId: string,
+  type: string,
+  title: string,
+  year?: number
+): Promise<LookupResult | null> {
+  const config = await getServiceConfig({ userId, serviceName: "jellyseerr" });
+  if (!config?.isEnabled) {
     return null;
   }
 
-  const series = results[0];
-  const posterImage = series.images?.find((img) => img.coverType === "poster");
-  const seasonCount =
-    series.seasons?.filter((s) => s.seasonNumber > 0).length ?? 0;
+  try {
+    const client = new JellyseerrClient(config);
+    const searchQuery = encodeURIComponent(title);
+    const response = await client.get<{ results: JellyseerrSearchResult[] }>(
+      `/search?query=${searchQuery}&page=1`
+    );
 
-  return {
-    title: series.title,
-    year: series.year,
-    overview: series.overview,
-    posterUrl: posterImage?.remoteUrl || null,
-    rating: series.ratings?.value,
-    genres: series.genres,
-    runtime: series.runtime,
-    seasonCount,
-  };
+    if (!response.results || response.results.length === 0) {
+      return null;
+    }
+
+    // Filter by type and find best match
+    const mediaTypeFilter = type === "movie" ? "movie" : "tv";
+    const matches = response.results.filter(
+      (r) => r.mediaType === mediaTypeFilter
+    );
+
+    if (matches.length === 0) {
+      return null;
+    }
+
+    // Try to match by year if provided
+    let bestMatch = matches[0];
+    if (year) {
+      const yearMatch = matches.find((r) => {
+        const resultYear = r.releaseDate
+          ? new Date(r.releaseDate).getFullYear()
+          : r.firstAirDate
+            ? new Date(r.firstAirDate).getFullYear()
+            : undefined;
+        return resultYear === year;
+      });
+      if (yearMatch) {
+        bestMatch = yearMatch;
+      }
+    }
+
+    const resultTitle = bestMatch.title || bestMatch.name;
+    const resultYear = bestMatch.releaseDate
+      ? new Date(bestMatch.releaseDate).getFullYear()
+      : bestMatch.firstAirDate
+        ? new Date(bestMatch.firstAirDate).getFullYear()
+        : undefined;
+
+    return {
+      title: resultTitle,
+      year: resultYear,
+      posterUrl: bestMatch.posterPath
+        ? `https://image.tmdb.org/t/p/w500${bestMatch.posterPath}`
+        : null,
+      rating: bestMatch.voteAverage,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Search Radarr by title and return the best match
+ */
+async function searchRadarrByTitle(
+  userId: string,
+  title: string,
+  year?: number
+): Promise<LookupResult | null> {
+  const config = await getServiceConfig({ userId, serviceName: "radarr" });
+  if (!config?.isEnabled) {
+    return null;
+  }
+
+  try {
+    const client = new RadarrClient(config);
+    const searchQuery = encodeURIComponent(title);
+    const results = await client.get<RadarrMovie[]>(
+      `/movie/lookup?term=${searchQuery}`
+    );
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    // Try to match by year if provided
+    let bestMatch = results[0];
+    if (year) {
+      const yearMatch = results.find((r) => r.year === year);
+      if (yearMatch) {
+        bestMatch = yearMatch;
+      }
+    }
+
+    const posterImage = bestMatch.images?.find(
+      (img) => img.coverType === "poster"
+    );
+
+    return {
+      title: bestMatch.title,
+      year: bestMatch.year,
+      overview: bestMatch.overview,
+      posterUrl: posterImage?.remoteUrl || null,
+      rating: bestMatch.ratings?.imdb?.value || bestMatch.ratings?.tmdb?.value,
+      genres: bestMatch.genres,
+      runtime: bestMatch.runtime,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function performLookup(
@@ -156,6 +299,34 @@ async function performLookup(
 
   if (type === "series") {
     return await lookupSonarr(userId, id);
+  }
+
+  return null;
+}
+
+/**
+ * Search by title when no ID is available or ID lookup fails
+ */
+async function _performTitleSearch(
+  userId: string,
+  type: string,
+  title: string,
+  year?: number
+): Promise<LookupResult | null> {
+  // Try Jellyseerr first (has TMDB data)
+  const jellyseerrResult = await searchJellyseerrByTitle(
+    userId,
+    type,
+    title,
+    year
+  );
+  if (jellyseerrResult) {
+    return jellyseerrResult;
+  }
+
+  // Fall back to Radarr for movies
+  if (type === "movie") {
+    return await searchRadarrByTitle(userId, title, year);
   }
 
   return null;

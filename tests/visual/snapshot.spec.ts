@@ -5,14 +5,17 @@ import fetch from "sync-fetch";
 const LADLE_URL = process.env.LADLE_URL || "http://localhost:61000";
 
 // Fetch Ladle's meta file containing all stories
-let stories: Record<string, { meta?: { skip?: boolean; desktopOnly?: boolean } }>;
+let stories: Record<
+  string,
+  { meta?: { skip?: boolean; desktopOnly?: boolean } }
+>;
 
 try {
   const response = fetch(`${LADLE_URL}/meta.json`);
   stories = response.json().stories;
 } catch {
   console.error(
-    `Failed to fetch meta.json from ${LADLE_URL}. Make sure Ladle is running.`,
+    `Failed to fetch meta.json from ${LADLE_URL}. Make sure Ladle is running.`
   );
   stories = {};
 }
@@ -23,6 +26,7 @@ const viewports = {
   mobile: { width: 375, height: 667 },
 };
 
+// biome-ignore lint/complexity/noForEach: forEach is appropriate for dynamic test generation
 Object.keys(stories).forEach((storyKey) => {
   const story = stories[storyKey];
 

@@ -65,11 +65,7 @@ export const searchMedia = ({
           duration: item.RunTimeTicks
             ? formatDuration(item.RunTimeTicks)
             : null,
-          imageUrl: getImageUrl(
-            config.baseUrl,
-            item.Id,
-            item.ImageTags?.Primary
-          ),
+          imageUrl: getImageUrl(config.baseUrl, item.Id, "Primary"),
           isWatched: item.UserData?.Played ?? false,
           isFavorite: item.UserData?.IsFavorite ?? false,
         }));
@@ -93,13 +89,13 @@ export const searchMedia = ({
 
 async function getUserId(client: JellyfinClient): Promise<string> {
   try {
-    const userResponse = await client.get<{ Id: string }>("/Users/Me");
-    return userResponse.Id;
-  } catch {
     const usersResponse = await client.get<Array<{ Id: string }>>("/Users");
-    if (usersResponse.length === 0) {
-      throw new Error("No users found in Jellyfin server");
+    if (usersResponse.length > 0) {
+      return usersResponse[0].Id;
     }
-    return usersResponse[0].Id;
+  } catch {
+    // Ignore errors and try /Users/Me
   }
+  const userResponse = await client.get<{ Id: string }>("/Users/Me");
+  return userResponse.Id;
 }

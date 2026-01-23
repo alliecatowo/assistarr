@@ -31,7 +31,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: 0,
   /* Limit workers to prevent browser crashes */
-  workers: process.env.CI ? 2 : 2,
+  workers: process.env.CI ? 2 : undefined, // undefined = half of CPU cores locally
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -56,6 +56,7 @@ export default defineConfig({
       testMatch: /e2e\/.*.test.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        channel: "chrome", // Use system Chrome
       },
     },
 
@@ -64,8 +65,9 @@ export default defineConfig({
       testMatch: /visual\/.*.spec.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        channel: "chrome", // Use system Chrome
       },
-      timeout: 30000,
+      timeout: 30_000,
     },
 
     // {

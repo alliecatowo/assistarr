@@ -422,7 +422,7 @@ function buildPitchPrompt(
   const creators = tvDetails.createdBy?.map((c) => c.name).join(", ");
   const networks = tvDetails.networks?.map((n) => n.name).join(", ");
 
-  return `You are a friend who knows the user's taste in ${mediaType === "movie" ? "movies" : "TV shows"} intimately. Your job is to write a compelling, personalized pitch for why THIS SPECIFIC USER would love this ${mediaType}.
+  return `You are a film critic and recommendation expert. Write a personalized pitch explaining why this specific user would appreciate this ${mediaType}.
 
 ## User's Taste Profile
 
@@ -448,16 +448,19 @@ ${networks ? `**Network:** ${networks}` : ""}
 
 Write a 2-3 sentence personalized pitch explaining why THIS USER specifically would love this ${mediaType}.
 
-Rules:
+Instructions:
 1. Reference their ACTUAL preferences from the taste profile (genres they love, directors/actors they follow, decades they prefer)
 2. Make specific connections between their taste and this ${mediaType}'s qualities
-3. Don't be generic - make it feel like a friend who knows them well is recommending it
-4. Be enthusiastic but not over-the-top
-5. If there's overlap with their favorites (same director, actor, genre, decade), highlight it!
-6. Keep it conversational and compelling
-7. Do NOT use phrases like "based on your taste" or "your profile shows" - just make the recommendation naturally
+3. Sound enthusiastic but professional - NOT overly casual or slang-filled
+4. If there's overlap with their favorites (same director, actor, genre, decade), highlight it!
+5. Focus on what makes it a great match for THEM specifically
+6. Use phrases like "This dramatic journey...", "Perfect for fans of...", "The [quality] brings..."
+7. Do NOT use casual greetings like "Dude", "Hey", "Yo" or overly casual language
+8. Do NOT use phrases like "based on your taste" or "your profile shows" - just make the recommendation naturally
 
-Example tone: "The sharp dialogue and ensemble cast give this the same energy you loved in [movie they have]. Plus, [director] brings that slow-burn tension you can't resist."
+Good example tone: "This dramatic journey of self-discovery in Tokyo, featuring quirky character studies, is perfect for fans of subtle comedy. The director brings the same contemplative pacing you enjoyed in similar films."
+
+Bad example (DO NOT DO THIS): "Dude, I just saw this and immediately thought of you! You're gonna love it!"
 
 Now write the pitch:`;
 }

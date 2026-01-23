@@ -102,10 +102,10 @@ export const PublicSelected: Story = () => (
 // In header context
 export const InHeaderContext: Story = () => (
   <header className="flex items-center gap-2 bg-background px-2 py-1.5 border-b">
-    <Button variant="ghost" size="sm">
+    <Button size="sm" variant="ghost">
       Toggle Sidebar
     </Button>
-    <Button variant="outline" className="ml-auto h-8">
+    <Button className="ml-auto h-8" variant="outline">
       New Chat
     </Button>
     <DropdownMenu>

@@ -77,7 +77,7 @@ export const WithDisabled: Story = () => (
     <Action tooltip="Copy">
       <CopyIcon />
     </Action>
-    <Action tooltip="Already upvoted" disabled>
+    <Action disabled tooltip="Already upvoted">
       <ThumbUpIcon />
     </Action>
     <Action tooltip="Downvote Response">

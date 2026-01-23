@@ -2,6 +2,7 @@
 
 import {
   BarChart3Icon,
+  MessageSquareIcon,
   PlusIcon,
   SettingsIcon,
   SparklesIcon,
@@ -30,12 +31,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -60,7 +66,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       success: () => {
         mutate(unstable_serialize(getChatHistoryPaginationKey));
         setShowDeleteAllDialog(false);
-        router.replace("/");
+        router.replace("/chat/new");
         router.refresh();
         return "All chats deleted successfully";
       },
@@ -70,96 +76,107 @@ export function AppSidebar({ user }: { user: User | undefined }) {
 
   return (
     <>
-      <Sidebar className="group-data-[side=left]:border-r-0">
+      <Sidebar className="group-data-[side=left]:border-r-0" collapsible="icon">
         <SidebarHeader>
           <SidebarMenu>
-            <div className="flex flex-row items-center justify-between">
-              <Link
-                className="flex flex-row items-center gap-3"
-                href="/"
-                onClick={() => {
-                  setOpenMobile(false);
-                }}
-              >
-                <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Assistarr
-                </span>
-              </Link>
-              <div className="flex flex-row gap-1">
-                {user && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-8 p-1 md:h-fit md:p-2"
-                        onClick={() => setShowDeleteAllDialog(true)}
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Trash2Icon size={16} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent align="end" className="hidden md:block">
-                      Delete All Chats
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className="h-8 p-1 md:h-fit md:p-2"
-                      onClick={() => {
-                        setOpenMobile(false);
-                        router.push("/");
-                        router.refresh();
-                      }}
-                      type="button"
-                      variant="ghost"
-                    >
-                      <PlusIcon size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent align="end" className="hidden md:block">
-                    New Chat
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild size="lg" tooltip="Home">
+                <Link
+                  href="/home"
+                  onClick={() => {
+                    setOpenMobile(false);
+                  }}
+                >
+                  <Logo size={32} />
+                  <span className="font-semibold text-lg">Assistarr</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarHistory user={user} />
+          {/* Main navigation at top */}
+          {user && (
+            <SidebarGroup>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="New Chat">
+                    <Link
+                      href="/chat/new"
+                      onClick={() => {
+                        setOpenMobile(false);
+                        router.refresh();
+                      }}
+                    >
+                      <PlusIcon />
+                      <span>New Chat</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Chat">
+                    <Link href="/chat/new" onClick={() => setOpenMobile(false)}>
+                      <MessageSquareIcon />
+                      <span>Chat</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
+          {/* Chat history - hidden when collapsed */}
+          <div className="group-data-[collapsible=icon]:hidden">
+            <SidebarHistory user={user} />
+          </div>
         </SidebarContent>
         <SidebarFooter>
           {user && (
-            <div className="flex flex-col gap-2">
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-                href="/discover"
-                onClick={() => setOpenMobile(false)}
-              >
-                <SparklesIcon size={16} />
-                <span>Discover</span>
-              </Link>
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-                href="/monitor"
-                onClick={() => setOpenMobile(false)}
-              >
-                <BarChart3Icon size={16} />
-                <span>Monitor</span>
-              </Link>
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-                href="/settings"
-                onClick={() => setOpenMobile(false)}
-              >
-                <SettingsIcon size={16} />
-                <span>Settings</span>
-              </Link>
+            <SidebarMenu>
+              <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="w-full justify-start gap-2"
+                      onClick={() => setShowDeleteAllDialog(true)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Trash2Icon size={16} />
+                      <span>Delete All Chats</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Delete All Chats</TooltipContent>
+                </Tooltip>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Discover">
+                  <Link href="/discover" onClick={() => setOpenMobile(false)}>
+                    <SparklesIcon />
+                    <span>Discover</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Monitor">
+                  <Link href="/monitor" onClick={() => setOpenMobile(false)}>
+                    <BarChart3Icon />
+                    <span>Monitor</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings">
+                  <Link href="/settings" onClick={() => setOpenMobile(false)}>
+                    <SettingsIcon />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarUserNav user={user} />
-            </div>
+            </SidebarMenu>
           )}
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
 
       <AlertDialog

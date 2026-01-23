@@ -8,6 +8,7 @@ import {
   ServiceStatusCard,
   StalledItemsWidget,
 } from "@/components/monitor";
+import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 
 function RefreshIcon({ className }: { className?: string }) {
@@ -75,6 +76,7 @@ export default function MonitorPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6">
+        <SidebarToggle />
         <div className="flex flex-1 items-center gap-4">
           <h1 className="text-lg font-semibold">Monitor</h1>
           {lastUpdated && (

@@ -70,9 +70,9 @@ export const InChatContext: Story = () => (
   <div className="max-w-lg space-y-3">
     <div className="p-4 border rounded-lg">
       <input
-        type="text"
-        placeholder="Ask me anything about your media library..."
         className="w-full px-3 py-2 border rounded-md text-sm mb-3"
+        placeholder="Ask me anything about your media library..."
+        type="text"
       />
       <Suggestions>
         <Suggestion suggestion="What's downloading?" />
@@ -116,7 +116,7 @@ export const LongSuggestions: Story = () => (
 // Disabled suggestions
 export const Disabled: Story = () => (
   <Suggestions>
-    <Suggestion suggestion="Loading..." disabled />
-    <Suggestion suggestion="Please wait..." disabled />
+    <Suggestion disabled suggestion="Loading..." />
+    <Suggestion disabled suggestion="Please wait..." />
   </Suggestions>
 );

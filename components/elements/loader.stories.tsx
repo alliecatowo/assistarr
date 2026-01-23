@@ -45,9 +45,9 @@ export const WithText: Story = () => (
 // In button
 export const InButton: Story = () => (
   <button
-    type="button"
     className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
     disabled
+    type="button"
   >
     <Loader size={16} />
     Processing
@@ -57,11 +57,11 @@ export const InButton: Story = () => (
 // Colored loaders
 export const Colored: Story = () => (
   <div className="flex items-center gap-6">
-    <Loader size={24} className="text-blue-500" />
-    <Loader size={24} className="text-green-500" />
-    <Loader size={24} className="text-red-500" />
-    <Loader size={24} className="text-yellow-500" />
-    <Loader size={24} className="text-purple-500" />
+    <Loader className="text-blue-500" size={24} />
+    <Loader className="text-green-500" size={24} />
+    <Loader className="text-red-500" size={24} />
+    <Loader className="text-yellow-500" size={24} />
+    <Loader className="text-purple-500" size={24} />
   </div>
 );
 

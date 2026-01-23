@@ -1,11 +1,15 @@
 "use client";
 
 import { RefreshCwIcon, SparklesIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DiscoverItem } from "./discover-context";
 import { DiscoverRow } from "./discover-row";
+
+// Cache configuration
+const CACHE_KEY = "assistarr_for_you";
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 interface TasteProfile {
   topGenres: { genre: string; count: number }[];
@@ -19,13 +23,73 @@ interface ForYouResponse {
   message: string;
 }
 
+interface CachedData {
+  recommendations: DiscoverItem[];
+  profile: TasteProfile | null;
+  timestamp: number;
+}
+
+function getCachedForYou(): {
+  recommendations: DiscoverItem[];
+  profile: TasteProfile | null;
+} | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (!cached) {
+      return null;
+    }
+    const data: CachedData = JSON.parse(cached);
+    if (Date.now() - data.timestamp > CACHE_TTL_MS) {
+      sessionStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return { recommendations: data.recommendations, profile: data.profile };
+  } catch {
+    return null;
+  }
+}
+
+function setCachedForYou(
+  recommendations: DiscoverItem[],
+  profile: TasteProfile | null
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    const data: CachedData = {
+      recommendations,
+      profile,
+      timestamp: Date.now(),
+    };
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // Storage quota exceeded or other error - ignore
+  }
+}
+
 export function ForYouSection() {
   const [recommendations, setRecommendations] = useState<DiscoverItem[]>([]);
   const [profile, setProfile] = useState<TasteProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
-  const fetchRecommendations = useCallback(async () => {
+  const fetchRecommendations = useCallback(async (isRefresh = false) => {
+    // Check cache first (unless refreshing)
+    if (!isRefresh) {
+      const cached = getCachedForYou();
+      if (cached && cached.recommendations.length > 0) {
+        setRecommendations(cached.recommendations);
+        setProfile(cached.profile);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -38,6 +102,7 @@ export function ForYouSection() {
       const data: ForYouResponse = await response.json();
       setRecommendations(data.recommendations);
       setProfile(data.profile);
+      setCachedForYou(data.recommendations, data.profile);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -46,6 +111,10 @@ export function ForYouSection() {
   }, []);
 
   useEffect(() => {
+    if (hasFetched.current) {
+      return;
+    }
+    hasFetched.current = true;
     fetchRecommendations();
   }, [fetchRecommendations]);
 
@@ -56,7 +125,7 @@ export function ForYouSection() {
           <SparklesIcon className="size-4 text-primary" />
           <Skeleton className="h-5 w-28" />
         </div>
-        <div className="flex gap-3 overflow-hidden">
+        <div className="flex gap-3 overflow-hidden justify-center">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div className="shrink-0 space-y-2" key={i}>
               <Skeleton className="h-52 w-36 rounded-lg" />
@@ -80,7 +149,7 @@ export function ForYouSection() {
           <p className="text-xs text-muted-foreground">{error}</p>
           <Button
             className="mt-2 h-7 text-xs"
-            onClick={fetchRecommendations}
+            onClick={() => fetchRecommendations(true)}
             size="sm"
             variant="outline"
           >
@@ -128,7 +197,7 @@ export function ForYouSection() {
         </div>
         <Button
           className="h-7 px-2 text-xs"
-          onClick={fetchRecommendations}
+          onClick={() => fetchRecommendations(true)}
           size="sm"
           variant="ghost"
         >

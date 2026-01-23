@@ -1,8 +1,8 @@
 "use client";
 
 import { CheckCircleIcon, Loader2Icon } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import { ExternalImage } from "@/components/ui/external-image";
 import type { SuccessConfirmationShape } from "./types";
 
 interface MediaMetadata {
@@ -117,7 +117,7 @@ export function SuccessCard({ output, toolName }: SuccessCardProps) {
           </div>
         ) : metadata?.posterUrl ? (
           <div className="relative h-28 w-[75px] shrink-0 overflow-hidden rounded bg-muted">
-            <Image
+            <ExternalImage
               alt={`${metadata.title || title} poster`}
               className="object-cover"
               fill

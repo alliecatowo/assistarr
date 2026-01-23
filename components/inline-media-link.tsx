@@ -8,8 +8,8 @@ import {
   StarIcon,
   TvIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useState } from "react";
+import { ExternalImage } from "@/components/ui/external-image";
 import {
   HoverCard,
   HoverCardContent,
@@ -143,7 +143,7 @@ export function InlineMediaLink({
             {/* Poster */}
             <div className="relative h-[120px] w-[80px] flex-shrink-0 overflow-hidden rounded-md bg-muted">
               {media.posterUrl ? (
-                <Image
+                <ExternalImage
                   alt={`${media.title} poster`}
                   className="object-cover"
                   fill

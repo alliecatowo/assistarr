@@ -12,7 +12,7 @@ import {
   TrendingUpIcon,
   UserIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -25,6 +25,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DiscoverItem } from "./discover-context";
 import { DiscoverRow } from "./discover-row";
+
+// Cache configuration
+const CACHE_KEY = "assistarr_personalized";
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 // =============================================================================
 // Type Definitions
@@ -71,6 +75,50 @@ interface PersonalizedResponse {
   sections: PersonalizedSection[];
   profile: TasteProfileSummary | null;
   message: string;
+}
+
+interface CachedData {
+  sections: PersonalizedSection[];
+  profile: TasteProfileSummary | null;
+  timestamp: number;
+}
+
+function getCachedPersonalized(): {
+  sections: PersonalizedSection[];
+  profile: TasteProfileSummary | null;
+} | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (!cached) {
+      return null;
+    }
+    const data: CachedData = JSON.parse(cached);
+    if (Date.now() - data.timestamp > CACHE_TTL_MS) {
+      sessionStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return { sections: data.sections, profile: data.profile };
+  } catch {
+    return null;
+  }
+}
+
+function setCachedPersonalized(
+  sections: PersonalizedSection[],
+  profile: TasteProfileSummary | null
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    const data: CachedData = { sections, profile, timestamp: Date.now() };
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // Storage quota exceeded or other error - ignore
+  }
 }
 
 // =============================================================================
@@ -141,7 +189,7 @@ function PersonalizedSectionSkeleton() {
         <Skeleton className="h-6 w-48" />
       </div>
       <Skeleton className="mb-3 h-4 w-64" />
-      <div className="flex gap-3 overflow-hidden">
+      <div className="flex gap-3 overflow-hidden justify-center">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div className="shrink-0 space-y-2" key={i}>
             <Skeleton className="h-56 w-40 rounded-lg" />
@@ -486,8 +534,20 @@ export function PersonalizedSections() {
   const [profile, setProfile] = useState<TasteProfileSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
-  const fetchPersonalized = useCallback(async () => {
+  const fetchPersonalized = useCallback(async (isRefresh = false) => {
+    // Check cache first (unless refreshing)
+    if (!isRefresh) {
+      const cached = getCachedPersonalized();
+      if (cached && cached.sections.length > 0) {
+        setSections(cached.sections);
+        setProfile(cached.profile);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -500,6 +560,7 @@ export function PersonalizedSections() {
       const data: PersonalizedResponse = await response.json();
       setSections(data.sections);
       setProfile(data.profile);
+      setCachedPersonalized(data.sections, data.profile);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -508,6 +569,10 @@ export function PersonalizedSections() {
   }, []);
 
   useEffect(() => {
+    if (hasFetched.current) {
+      return;
+    }
+    hasFetched.current = true;
     fetchPersonalized();
   }, [fetchPersonalized]);
 
@@ -535,7 +600,7 @@ export function PersonalizedSections() {
           <p className="text-sm text-muted-foreground">{error}</p>
           <Button
             className="mt-2"
-            onClick={fetchPersonalized}
+            onClick={() => fetchPersonalized(true)}
             size="sm"
             variant="outline"
           >
@@ -565,7 +630,7 @@ export function PersonalizedSections() {
         </div>
         <Button
           className="h-7 px-2 text-xs"
-          onClick={fetchPersonalized}
+          onClick={() => fetchPersonalized(true)}
           size="sm"
           variant="ghost"
         >

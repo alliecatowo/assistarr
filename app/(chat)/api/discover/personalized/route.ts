@@ -8,10 +8,6 @@ import type { RadarrMovie } from "@/lib/plugins/radarr/types";
 import { SonarrClient } from "@/lib/plugins/sonarr/client";
 import type { SonarrSeries } from "@/lib/plugins/sonarr/types";
 
-// =============================================================================
-// Type Definitions
-// =============================================================================
-
 interface PersonCount {
   id: number;
   name: string;
@@ -143,10 +139,6 @@ type PersonalizedSectionType =
   | "studio"
   | "network";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const GENRE_TO_ID: Record<string, number> = {
   action: 28,
   adventure: 12,
@@ -168,10 +160,6 @@ const GENRE_TO_ID: Record<string, number> = {
   war: 10_752,
   western: 37,
 };
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
 
 function getDecade(year: number): string {
   const decade = Math.floor(year / 10) * 10;
@@ -469,11 +457,8 @@ async function fetchMovieCreditsBatches(
       }
     });
 
-    // Use Promise.allSettled for better error tolerance - individual movie
-    // detail fetches can fail without breaking the entire batch
     const settledDetails = await Promise.allSettled(detailsPromises);
 
-    // Extract fulfilled results (nulls are already handled in the promise)
     const details = settledDetails
       .filter(
         (
@@ -588,10 +573,6 @@ function buildYearResults(
     .slice(0, 10);
 }
 
-// =============================================================================
-// Deep Library Analysis
-// =============================================================================
-
 async function analyzeLibraryDeeply(
   userId: string,
   jellyseerrClient: JellyseerrClient
@@ -636,10 +617,6 @@ async function analyzeLibraryDeeply(
     topYears: buildYearResults(metrics.yearCounts),
   };
 }
-
-// =============================================================================
-// Personalized Section Generators
-// =============================================================================
 
 async function getDirectorSection(
   client: JellyseerrClient,
@@ -982,10 +959,6 @@ async function getUnderratedPicksSection(
   }
 }
 
-// =============================================================================
-// Main API Handler
-// =============================================================================
-
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -1084,8 +1057,6 @@ export async function GET() {
       getUnderratedPicksSection(client, profile.topGenres, existingTmdbIds)
     );
 
-    // Use Promise.allSettled for better error tolerance - individual section
-    // fetches can fail without breaking the entire recommendation engine
     const settledSections = await Promise.allSettled(sectionPromises);
 
     const sections = settledSections

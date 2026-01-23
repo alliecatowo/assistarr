@@ -8,8 +8,8 @@ import {
   PlayIcon,
   PlusIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { ExternalImage } from "@/components/ui/external-image";
 import { cn, getPosterUrl } from "@/lib/utils";
 import { type DiscoverItem, useDiscover } from "./discover-context";
 
@@ -85,7 +85,7 @@ export function DiscoverCard({
         tabIndex={0}
       >
         {posterUrl ? (
-          <Image
+          <ExternalImage
             alt={item.title}
             className="object-cover transition-transform duration-200 group-hover:scale-105"
             fill
@@ -120,17 +120,38 @@ export function DiscoverCard({
               )}
             </Button>
           )}
-          {item.status === "available" && (
-            <Button
-              className="w-full"
-              onClick={(e) => e.stopPropagation()}
-              size="sm"
-              variant="secondary"
-            >
-              <PlayIcon className="size-4 mr-1" />
-              Watch
-            </Button>
-          )}
+          {item.status === "available" &&
+            item.jellyfinId &&
+            item.jellyfinBaseUrl && (
+              <Button
+                asChild
+                className="w-full"
+                onClick={(e) => e.stopPropagation()}
+                size="sm"
+                variant="secondary"
+              >
+                <a
+                  href={`${item.jellyfinBaseUrl}/web/index.html#!/details?id=${item.jellyfinId}`}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <PlayIcon className="size-4 mr-1" />
+                  Watch
+                </a>
+              </Button>
+            )}
+          {item.status === "available" &&
+            (!item.jellyfinId || !item.jellyfinBaseUrl) && (
+              <Button
+                className="w-full"
+                onClick={(e) => e.stopPropagation()}
+                size="sm"
+                variant="secondary"
+              >
+                <PlayIcon className="size-4 mr-1" />
+                Watch
+              </Button>
+            )}
         </div>
       </div>
       {/* Info section */}
