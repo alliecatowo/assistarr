@@ -1,0 +1,86 @@
+name: Visual Regression Tests
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "components/**"
+      - ".ladle/**"
+      - "app/globals.css"
+      - "tests/visual/**"
+
+jobs:
+  visual-test:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build Ladle
+        run: pnpm ladle:build
+
+      - name: Start Ladle Preview
+        run: |
+          pnpm ladle:preview &
+          npx wait-on http://localhost:61000 --timeout 60000
+
+      - name: Run Visual Tests
+        run: pnpm test:visual --project=visual
+
+      - name: Upload snapshot diffs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-test-diffs
+          path: |
+            tests/visual/snapshot.spec.ts-snapshots/
+            test-results/
+          retention-days: 7
+
+      - name: Upload Ladle build
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ladle-build
+          path: build-ladle/
+          retention-days: 7

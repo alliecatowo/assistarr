@@ -1,0 +1,24 @@
+[debug] [2026-01-23T00:14:10.557Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:14:10.561Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:14:11.449Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:14:11.450Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:14:11.450Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:14:11.450Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:14:11.452Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:14:11.453Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:14:11.453Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:14:11.453Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.273Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.275Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.275Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.275Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.289Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.289Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.362Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.362Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.363Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.363Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.365Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.365Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)
+[debug] [2026-01-23T00:19:22.365Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-23T00:19:22.365Z] > authorizing via signed-in user (allisonemilycoleman@gmail.com)

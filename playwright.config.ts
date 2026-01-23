@@ -59,6 +59,15 @@ export default defineConfig({
       },
     },
 
+    {
+      name: "visual",
+      testMatch: /visual\/.*.spec.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+      timeout: 30000,
+    },
+
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },
