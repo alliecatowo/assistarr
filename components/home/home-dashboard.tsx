@@ -226,7 +226,7 @@ function HeroSection({
       <div className="relative flex flex-col gap-4">
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground">
           <SparklesIcon className="h-4 w-4 text-primary" />
-          Assistarr Home
+          Home
         </div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">

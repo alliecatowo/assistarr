@@ -2,6 +2,8 @@
 
 import {
   BarChart3Icon,
+  HomeIcon,
+  MessageSquareIcon,
   PlusIcon,
   SettingsIcon,
   SparklesIcon,
@@ -80,7 +82,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                 {open && !isMobile && <SidebarToggle />}
                 <Link
                   className="flex flex-row items-center gap-3"
-                  href="/"
+                  href="/home"
                   onClick={() => {
                     setOpenMobile(false);
                   }}
@@ -132,6 +134,28 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
+          {/* Main navigation at top */}
+          {user && (
+            <div className="flex flex-col gap-1 px-2 pb-4">
+              <Link
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+                href="/home"
+                onClick={() => setOpenMobile(false)}
+              >
+                <HomeIcon size={16} />
+                <span>Home</span>
+              </Link>
+              <Link
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+                href="/chat/new"
+                onClick={() => setOpenMobile(false)}
+              >
+                <MessageSquareIcon size={16} />
+                <span>New Chat</span>
+              </Link>
+            </div>
+          )}
+          {/* Chat history */}
           <SidebarHistory user={user} />
         </SidebarContent>
         <SidebarFooter>
