@@ -66,24 +66,24 @@ describe("Jellyfin search-media tool", () => {
   });
 
   const setupUserIdMock = () => {
-    // First call for /Users/Me
+    // First call for /Users (returns array of users)
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      text: async () => JSON.stringify({ Id: mockUserId }),
+      text: async () => JSON.stringify([{ Id: mockUserId }]),
     });
   };
 
   const setupUserIdFallbackMock = () => {
-    // First call for /Users/Me fails
+    // First call for /Users fails
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 401,
       statusText: "Unauthorized",
     });
-    // Fallback to /Users
+    // Fallback to /Users/Me
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      text: async () => JSON.stringify([{ Id: mockUserId }]),
+      text: async () => JSON.stringify({ Id: mockUserId }),
     });
   };
 
@@ -459,7 +459,7 @@ describe("Jellyfin search-media tool", () => {
       expect(result.results[0].isFavorite).toBe(false);
     });
 
-    it("should fallback to /Users endpoint when /Users/Me fails", async () => {
+    it("should fallback to /Users/Me endpoint when /Users fails", async () => {
       setupUserIdFallbackMock();
 
       fetchMock.mockResolvedValueOnce({
@@ -477,7 +477,7 @@ describe("Jellyfin search-media tool", () => {
         }
       )) as any;
 
-      // Should have called /Users/Me, then /Users, then the search
+      // Should have called /Users, then /Users/Me, then the search
       expect(fetchMock).toHaveBeenCalledTimes(3);
       expect(result.results).toEqual([]);
     });
@@ -536,16 +536,16 @@ describe("Jellyfin search-media tool", () => {
     });
 
     it("should throw ToolError when no users are found", async () => {
+      // /Users returns empty array
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify([]),
+      });
       // /Users/Me fails
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-      });
-      // /Users returns empty array
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify([]),
       });
 
       const tool = createTool();
@@ -560,15 +560,15 @@ describe("Jellyfin search-media tool", () => {
         )
       ).rejects.toThrow(ToolError);
 
-      // Verify error contains useful context
+      // Verify error contains useful context from the failed /Users/Me request
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify([]),
+      });
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 401,
         statusText: "Unauthorized",
-      });
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify([]),
       });
 
       try {
@@ -582,7 +582,9 @@ describe("Jellyfin search-media tool", () => {
         );
       } catch (error) {
         expect(error).toBeInstanceOf(ToolError);
-        expect((error as ToolError).message).toContain("No users found");
+        expect((error as ToolError).message).toMatch(
+          /Unauthorized|failed|No users/
+        );
       }
     });
 

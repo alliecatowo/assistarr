@@ -43,7 +43,7 @@ Look for:
 - Welcome greeting
 - "Everything now in one adaptive canvas" heading
 - Three action buttons: "Start a chat", "Discover", "Monitor"
-- Four stat cards: Services online, Library footprint, Active downloads, AI signals
+- Four stat cards: Services online, Library footprint, Active downloads, Recommendations
 
 **Step 3: Test "Start a chat" navigation**
 

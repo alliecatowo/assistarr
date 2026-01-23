@@ -18,6 +18,16 @@ export class JellyfinClient extends ApiClient {
     });
   }
 
+  // Get user ID for API operations
+  // With API key auth, /Users/Me returns 400, so we use /Users and take the first one
+  async getUserId(): Promise<string> {
+    const usersResponse = await this.get<Array<{ Id: string }>>("/Users");
+    if (usersResponse.length === 0) {
+      throw new Error("No users found in Jellyfin");
+    }
+    return usersResponse[0].Id;
+  }
+
   // Helper for health check
   async getStatus(): Promise<boolean> {
     try {

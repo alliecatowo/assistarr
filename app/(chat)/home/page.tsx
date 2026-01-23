@@ -7,7 +7,10 @@ import {
   type ForYouData,
   HomeDashboard,
 } from "@/components/home/home-dashboard";
-import { getServiceConfig } from "@/lib/db/queries/service-config";
+import {
+  getServiceConfig,
+  getServiceConfigs,
+} from "@/lib/db/queries/service-config";
 import { fetchDiscoverySections } from "@/lib/discover/fetch-discovery-sections";
 import {
   calculateProgressPercentage,
@@ -16,6 +19,11 @@ import {
   ticksToMinutes,
 } from "@/lib/plugins/jellyfin/client";
 import type { ItemsResponse, MediaItem } from "@/lib/plugins/jellyfin/types";
+import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
+import { QBittorrentClient } from "@/lib/plugins/qbittorrent/client";
+import { RadarrClient } from "@/lib/plugins/radarr/client";
+import { SonarrClient } from "@/lib/plugins/sonarr/client";
+import { guestRegex } from "@/lib/shared-constants";
 
 export default function Page() {
   return (
@@ -33,13 +41,18 @@ async function HomePage() {
 
   const userId = session.user.id;
 
-  const [status, discoverSections, personalized, continueWatching] =
-    await Promise.all([
-      getMonitorStatus(),
-      fetchDiscoverySections(userId),
-      getForYouData(),
-      getContinueWatching(userId),
-    ]);
+  const [discoverSections, personalized, continueWatching] = await Promise.all([
+    fetchDiscoverySections(userId),
+    getForYouData(),
+    getContinueWatching(userId),
+  ]);
+
+  const status = await getMonitorStatus(userId);
+
+  const isGuest = guestRegex.test(session.user.email ?? "");
+  const userName = isGuest
+    ? undefined
+    : (session.user.name ?? session.user.email ?? undefined);
 
   return (
     <HomeDashboard
@@ -47,32 +60,127 @@ async function HomePage() {
       discoverSections={discoverSections}
       personalized={personalized}
       status={status}
-      userName={session.user.name ?? session.user.email ?? undefined}
+      userName={userName}
     />
   );
 }
 
-async function getMonitorStatus(): Promise<MonitorStatus | null> {
+async function getMonitorStatus(userId: string): Promise<MonitorStatus> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const statusUrl = baseUrl ? `${baseUrl}/api/status` : "/api/status";
+
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/status`,
-      {
-        cache: "no-store",
-      }
-    );
-    if (!res.ok) return null;
+    const res = await fetch(statusUrl, {
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return buildLocalStatus(userId);
+    }
     return (await res.json()) as MonitorStatus;
   } catch (_error) {
-    return null;
+    return buildLocalStatus(userId);
+  }
+}
+
+async function buildLocalStatus(userId: string): Promise<MonitorStatus> {
+  const allServices = [
+    "radarr",
+    "sonarr",
+    "jellyseerr",
+    "jellyfin",
+    "qbittorrent",
+  ] as const;
+  const serviceConfigs = await getServiceConfigs({ userId });
+
+  const configuredMap = new Map<string, (typeof serviceConfigs)[number]>(
+    serviceConfigs.map((c) => [c.serviceName, c])
+  );
+
+  const services: MonitorStatus["services"] = {
+    radarr: { configured: false, enabled: false, online: false },
+    sonarr: { configured: false, enabled: false, online: false },
+    jellyseerr: { configured: false, enabled: false, online: false },
+    jellyfin: { configured: false, enabled: false, online: false },
+    qbittorrent: { configured: false, enabled: false, online: false },
+  };
+
+  for (const serviceName of allServices) {
+    const config = configuredMap.get(serviceName);
+    if (config) {
+      const online = await checkServiceOnline(serviceName, config);
+      services[serviceName] = {
+        configured: true,
+        enabled: config.isEnabled,
+        online,
+      };
+    }
+  }
+
+  return {
+    services,
+    queues: { radarr: [], sonarr: [] },
+    torrents: [],
+    requests: { pending: [] },
+    errors: { failed: [], stalled: [] },
+    stats: {
+      activeStreams: 0,
+      pendingRequests: 0,
+      totalDownloads: 0,
+    },
+  };
+}
+
+async function checkServiceOnline(
+  serviceName: string,
+  config: NonNullable<Awaited<ReturnType<typeof getServiceConfig>>>
+): Promise<boolean> {
+  if (!config.isEnabled) {
+    return false;
+  }
+
+  try {
+    switch (serviceName) {
+      case "radarr": {
+        const client = new RadarrClient(config);
+        await client.getQueue();
+        return true;
+      }
+      case "sonarr": {
+        const client = new SonarrClient(config);
+        await client.getQueue();
+        return true;
+      }
+      case "jellyseerr": {
+        const client = new JellyseerrClient(config);
+        await client.getStatus();
+        return true;
+      }
+      case "jellyfin": {
+        const client = new JellyfinClient(config);
+        await client.getSystemInfo();
+        return true;
+      }
+      case "qbittorrent": {
+        const client = new QBittorrentClient(config);
+        await client.getTorrents();
+        return true;
+      }
+      default:
+        return false;
+    }
+  } catch {
+    return false;
   }
 }
 
 async function getForYouData(): Promise<ForYouData | null> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const forYouUrl = baseUrl
+    ? `${baseUrl}/api/discover/for-you`
+    : "/api/discover/for-you";
+
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/discover/for-you`,
-      { cache: "no-store" }
-    );
+    const res = await fetch(forYouUrl, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as ForYouData;
   } catch (_error) {
@@ -118,16 +226,16 @@ async function getContinueWatching(
 
 async function resolveJellyfinUserId(client: JellyfinClient): Promise<string> {
   try {
-    const userResponse = await client.get<{ Id: string }>("/Users/Me");
-    return userResponse.Id;
-  } catch {
     const usersResponse = await client.get<Array<{ Id: string }>>("/Users");
     const firstUser = usersResponse[0]?.Id;
-    if (!firstUser) {
-      throw new Error("No users found in Jellyfin");
+    if (firstUser) {
+      return firstUser;
     }
-    return firstUser;
+  } catch {
+    // Ignore errors and try /Users/Me
   }
+  const userResponse = await client.get<{ Id: string }>("/Users/Me");
+  return userResponse.Id;
 }
 
 function mapContinueWatchingItem(

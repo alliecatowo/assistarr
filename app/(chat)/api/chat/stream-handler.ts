@@ -10,6 +10,10 @@ import type { Session } from "next-auth";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import {
+  findSimilarUsers,
+  presentSimilarUsersRecommendations,
+} from "@/lib/ai/tools/find-similar-users";
 import { recommendMedia } from "@/lib/ai/tools/recommend-media";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -112,6 +116,9 @@ export function createChatStream(config: StreamConfig) {
         updateDocument: updateDocument({ session, dataStream }),
         requestSuggestions: requestSuggestions({ session, dataStream }),
         recommendMedia: recommendMedia(),
+        findSimilarUsers: findSimilarUsers(),
+        presentSimilarUsersRecommendations:
+          presentSimilarUsersRecommendations(),
       };
 
       // Dynamically load service tools based on config

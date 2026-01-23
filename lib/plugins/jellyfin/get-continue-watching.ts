@@ -67,15 +67,15 @@ export const getContinueWatching = ({
 
 async function getUserId(client: JellyfinClient): Promise<string> {
   try {
-    const userResponse = await client.get<{ Id: string }>("/Users/Me");
-    return userResponse.Id;
-  } catch {
     const usersResponse = await client.get<Array<{ Id: string }>>("/Users");
-    if (usersResponse.length === 0) {
-      throw new Error("No users found in Jellyfin server");
+    if (usersResponse.length > 0) {
+      return usersResponse[0].Id;
     }
-    return usersResponse[0].Id;
+  } catch {
+    // Ignore errors and try /Users/Me
   }
+  const userResponse = await client.get<{ Id: string }>("/Users/Me");
+  return userResponse.Id;
 }
 
 function mapItem(item: MediaItem, baseUrl: string) {

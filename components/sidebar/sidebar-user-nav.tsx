@@ -16,14 +16,14 @@ import {
 import { LoaderIcon } from "@/components/ui/icons";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
-import { guestRegex } from "@/lib/shared-constants";
 
 export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
-  const { data, status } = useSession();
+  const { status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
 
-  const isGuest = guestRegex.test(data?.user?.email ?? "");
+  const isGuest =
+    (user as User & { type?: "guest" | "regular" })?.type === "guest";
 
   return (
     <SidebarMenuItem>

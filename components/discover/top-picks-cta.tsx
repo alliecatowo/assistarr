@@ -1,4 +1,3 @@
-/* eslint-disable a11y/useSemanticElements */
 "use client";
 
 import {
@@ -84,13 +83,22 @@ function TopPickCard({ pick, onRequest, isRequesting }: TopPickCardProps) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleCardClick();
+    }
+  };
+
   return (
     <button
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card shadow-lg text-left cursor-pointer",
-        "transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-primary/50"
+        "group relative overflow-hidden rounded-xl border bg-card shadow-lg text-left cursor-pointer w-full p-0",
+        "transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:border-primary/50",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       )}
       onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
       type="button"
     >
       {/* Poster Image */}
