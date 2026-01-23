@@ -8,8 +8,8 @@ import {
   PlayIcon,
   PlusIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { ExternalImage } from "@/components/ui/external-image";
 import { cn, getPosterUrl } from "@/lib/utils";
 import { type DiscoverItem, useDiscover } from "./discover-context";
 
@@ -85,7 +85,7 @@ export function DiscoverCard({
         tabIndex={0}
       >
         {posterUrl ? (
-          <Image
+          <ExternalImage
             alt={item.title}
             className="object-cover transition-transform duration-200 group-hover:scale-105"
             fill

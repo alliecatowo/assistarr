@@ -101,7 +101,7 @@ function mapItem(item: MediaItem, baseUrl: string) {
     lastWatched: item.UserData?.LastPlayedDate
       ? new Date(item.UserData.LastPlayedDate).toLocaleDateString()
       : null,
-    imageUrl: getImageUrl(baseUrl, item.Id, item.ImageTags?.Primary),
+    imageUrl: getImageUrl(baseUrl, item.Id, "Primary"),
   };
 
   if (item.Type === "Episode" && item.SeriesName) {

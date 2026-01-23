@@ -568,14 +568,50 @@ export async function GET() {
   }
 
   try {
-    const tasteProfile = await analyzeLibrary(session.user.id);
+    // Check service configurations
+    const [radarrConfig, sonarrConfig, jellyseerrConfig] = await Promise.all([
+      getServiceConfig({ userId: session.user.id, serviceName: "radarr" }),
+      getServiceConfig({ userId: session.user.id, serviceName: "sonarr" }),
+      getServiceConfig({ userId: session.user.id, serviceName: "jellyseerr" }),
+    ]);
 
-    if (!tasteProfile) {
+    const status = {
+      radarrConfigured: !!radarrConfig?.isEnabled,
+      sonarrConfigured: !!sonarrConfig?.isEnabled,
+      jellyseerrConfigured: !!jellyseerrConfig?.isEnabled,
+      libraryEmpty: false,
+      analysisError: undefined as string | undefined,
+    };
+
+    // If Jellyseerr is not configured, we can't provide recommendations
+    if (!status.jellyseerrConfigured) {
       return NextResponse.json({
         recommendations: [],
         profile: null,
-        message:
-          "Add some content to your library to get personalized recommendations",
+        status,
+        message: "Configure Jellyseerr in settings to unlock AI recommendations.",
+      });
+    }
+
+    // If neither library service is configured, we can't analyze taste
+    if (!status.radarrConfigured && !status.sonarrConfigured) {
+      return NextResponse.json({
+        recommendations: [],
+        profile: null,
+        status,
+        message: "Connect Radarr or Sonarr to analyze your library.",
+      });
+    }
+
+    const tasteProfile = await analyzeLibrary(session.user.id);
+
+    if (!tasteProfile) {
+      status.libraryEmpty = true;
+      return NextResponse.json({
+        recommendations: [],
+        profile: null,
+        status,
+        message: "Add media to your library to get personalized recommendations.",
       });
     }
 
@@ -597,15 +633,25 @@ export async function GET() {
         averageRating: Math.round(tasteProfile.averageRating * 10) / 10,
         genreDiversityScore: tasteProfile.genreDiversityScore,
       },
+      status,
       message:
         recommendations.length > 0
           ? `Based on your ${tasteProfile.totalItems} items`
           : "No new recommendations found",
     });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to generate recommendations" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const status = {
+      radarrConfigured: false,
+      sonarrConfigured: false,
+      jellyseerrConfigured: false,
+      libraryEmpty: false,
+      analysisError: error instanceof Error ? error.message : "Unknown error",
+    };
+    return NextResponse.json({
+      recommendations: [],
+      profile: null,
+      status,
+      error: "Failed to generate recommendations",
+    });
   }
 }

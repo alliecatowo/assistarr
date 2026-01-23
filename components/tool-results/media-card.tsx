@@ -9,8 +9,8 @@ import {
   PlusIcon,
   StarIcon,
 } from "lucide-react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { ExternalImage } from "@/components/ui/external-image";
 import { cn } from "@/lib/utils";
 import { TMDB_POSTER_W342 } from "./types";
 
@@ -110,7 +110,7 @@ export function MediaCard({
       {/* Poster */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
         {fullPosterUrl ? (
-          <Image
+          <ExternalImage
             alt={`${title} poster`}
             className="object-cover transition-transform duration-200 group-hover:scale-105"
             fill

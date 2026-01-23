@@ -170,9 +170,9 @@ describe("Jellyfin search-media tool", () => {
       expect(movie.duration).toBe("2h 28m");
       expect(movie.isWatched).toBe(true);
       expect(movie.isFavorite).toBe(true);
-      // getImageUrl uses the imageTag value as the path parameter
+      // getImageUrl uses "Primary" as the image type
       expect(movie.imageUrl).toContain(
-        "http://jellyfin:8096/Items/movie-1/Images/inception-tag"
+        "http://jellyfin:8096/Items/movie-1/Images/Primary"
       );
     });
 

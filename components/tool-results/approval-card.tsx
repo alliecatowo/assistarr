@@ -2,9 +2,9 @@
 
 import type { ToolUIPart } from "ai";
 import { CheckIcon, Loader2Icon, XIcon } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ExternalImage } from "@/components/ui/external-image";
 import type { DisplayableMedia } from "@/lib/plugins/base";
 
 interface MediaMetadata {
@@ -176,7 +176,7 @@ export function ApprovalCard({
           </div>
         ) : metadata?.posterUrl ? (
           <div className="relative h-36 w-24 shrink-0 overflow-hidden rounded bg-muted">
-            <Image
+            <ExternalImage
               alt={`${metadata?.title || "Media"} poster`}
               className="object-cover"
               fill

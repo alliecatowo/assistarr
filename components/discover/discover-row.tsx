@@ -121,33 +121,6 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
     });
   }, []);
 
-  // Handle mouse wheel horizontal scroll (native event for passive: false)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) {
-      return;
-    }
-
-    const handleWheel = (e: WheelEvent) => {
-      // If scrolling horizontally already, let it pass through
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        return;
-      }
-
-      // Convert vertical scroll to horizontal
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        el.scrollBy({ left: e.deltaY * 2, behavior: "auto" });
-      }
-    };
-
-    el.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      el.removeEventListener("wheel", handleWheel);
-    };
-  }, []);
-
   if (items.length === 0) {
     return null;
   }
@@ -161,14 +134,18 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
         <Button
           aria-label="Scroll left"
           className={cn(
-            "absolute left-0 top-1/2 z-10 -translate-y-1/2 h-full rounded-none bg-gradient-to-r from-background/80 to-transparent px-2 opacity-0 transition-opacity",
-            "group-hover/row:opacity-100 hover:bg-gradient-to-r hover:from-background hover:to-transparent"
+            "absolute left-2 top-1/2 z-10 -translate-y-1/2",
+            "size-9 rounded-full",
+            "bg-background/70 backdrop-blur-sm shadow-lg border",
+            "opacity-0 transition-all duration-200",
+            "group-hover/row:opacity-100",
+            "hover:bg-background/90"
           )}
           onClick={() => scroll("left")}
           size="icon"
           variant="ghost"
         >
-          <ChevronLeftIcon className="size-8" />
+          <ChevronLeftIcon className="size-5" />
         </Button>
       )}
 
@@ -194,14 +171,18 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
         <Button
           aria-label="Scroll right"
           className={cn(
-            "absolute right-0 top-1/2 z-10 -translate-y-1/2 h-full rounded-none bg-gradient-to-l from-background/80 to-transparent px-2 opacity-0 transition-opacity",
-            "group-hover/row:opacity-100 hover:bg-gradient-to-l hover:from-background hover:to-transparent"
+            "absolute right-2 top-1/2 z-10 -translate-y-1/2",
+            "size-9 rounded-full",
+            "bg-background/70 backdrop-blur-sm shadow-lg border",
+            "opacity-0 transition-all duration-200",
+            "group-hover/row:opacity-100",
+            "hover:bg-background/90"
           )}
           onClick={() => scroll("right")}
           size="icon"
           variant="ghost"
         >
-          <ChevronRightIcon className="size-8" />
+          <ChevronRightIcon className="size-5" />
         </Button>
       )}
     </div>

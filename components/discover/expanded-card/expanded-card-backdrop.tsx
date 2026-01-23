@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ExternalImage } from "@/components/ui/external-image";
 
 interface ExpandedCardBackdropProps {
   backdropUrl: string | null;
@@ -13,7 +13,7 @@ export function ExpandedCardBackdrop({
 
   return (
     <div className="absolute inset-0 h-48 overflow-hidden">
-      <Image
+      <ExternalImage
         alt=""
         className="object-cover opacity-30"
         fill

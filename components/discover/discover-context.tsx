@@ -25,6 +25,8 @@ export interface DiscoverItem {
   reason?: string;
   jellyfinId?: string;
   jellyfinBaseUrl?: string;
+  /** Pre-generated AI pitch from top picks - avoids regenerating */
+  pitch?: string;
 }
 
 /**

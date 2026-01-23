@@ -6,13 +6,17 @@ import {
   ArrowUpRightIcon,
   BadgeCheckIcon,
   BookOpenIcon,
+  CheckIcon,
+  ClockIcon,
   FlameIcon,
   GaugeIcon,
   LibraryIcon,
+  LoaderIcon,
   MoonStarIcon,
   PanelTopIcon,
   PlayIcon,
   PlugZapIcon,
+  PlusIcon,
   RocketIcon,
   ScanLineIcon,
   SparklesIcon,
@@ -57,9 +61,18 @@ export type ForYouProfile = {
   genreDiversityScore: number;
 };
 
+export type ForYouStatus = {
+  radarrConfigured: boolean;
+  sonarrConfigured: boolean;
+  jellyseerrConfigured: boolean;
+  libraryEmpty: boolean;
+  analysisError?: string;
+};
+
 export type ForYouData = {
   recommendations: Array<DiscoverItem & { reason?: string }>;
   profile: ForYouProfile | null;
+  status?: ForYouStatus;
   message?: string;
   error?: string;
 };
@@ -343,6 +356,7 @@ export function HomeDashboard({
 
   const profile = personalized?.profile ?? null;
   const recommendations = personalized?.recommendations ?? [];
+  const forYouStatus = personalized?.status;
 
   const heroStats = useMemo(
     () =>
@@ -384,7 +398,7 @@ export function HomeDashboard({
           )}
 
           {isEnabled("downloads") && (
-            <DownloadsWidget queueItems={queueItems} />
+            <DownloadsWidget queueItems={queueItems} status={status} />
           )}
 
           {isEnabled("signals") && (
@@ -399,6 +413,7 @@ export function HomeDashboard({
             <RecommendationsWidget
               profile={profile}
               recommendations={recommendations}
+              status={forYouStatus}
             />
           )}
 
@@ -583,6 +598,36 @@ function QueueRow({
 }
 
 function DiscoverTile({ item }: { item: DiscoverItem }) {
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const canRequest = item.status === "unavailable" && item.tmdbId;
+
+  const handleRequest = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!item.tmdbId || isRequesting) {
+      return;
+    }
+
+    setIsRequesting(true);
+    try {
+      const response = await fetch("/api/media/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tmdbId: item.tmdbId,
+          mediaType: item.mediaType,
+        }),
+      });
+      if (response.ok) {
+        window.location.reload();
+      }
+    } catch {
+      // Request failed silently
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
   return (
     <div className="relative overflow-hidden rounded-xl border bg-muted/50">
       <div className="relative h-32 w-full overflow-hidden">
@@ -617,6 +662,34 @@ function DiscoverTile({ item }: { item: DiscoverItem }) {
             </span>
           )}
         </div>
+        {canRequest && (
+          <Button
+            className="w-full h-6 text-[10px]"
+            disabled={isRequesting}
+            onClick={handleRequest}
+            size="sm"
+            variant="outline"
+          >
+            {isRequesting ? (
+              <LoaderIcon className="size-3 animate-spin" />
+            ) : (
+              <>
+                <PlusIcon className="size-3 mr-1" />
+                Request
+              </>
+            )}
+          </Button>
+        )}
+        {(item.status === "requested" || item.status === "pending") && (
+          <div className="flex items-center justify-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px]">
+            {item.status === "requested" ? (
+              <ClockIcon className="size-3" />
+            ) : (
+              <CheckIcon className="size-3" />
+            )}
+            <span className="capitalize">{item.status}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -772,8 +845,71 @@ function ContinueWatchingWidget({
   );
 }
 
+function StatusBadge({
+  label,
+  configured,
+  online,
+}: {
+  label: string;
+  configured: boolean;
+  online: boolean;
+}) {
+  if (!configured) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]",
+        online
+          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          online ? "bg-emerald-500" : "bg-amber-500"
+        )}
+      />
+      {label}
+    </span>
+  );
+}
+
+function getQueueEmptyMessage(status: MonitorStatus | null): string {
+  if (!status) {
+    return "Loading service status...";
+  }
+
+  const { radarr, sonarr, qbittorrent } = status.services;
+
+  const hasDownloadClient = qbittorrent.configured;
+  const hasArrService = radarr.configured || sonarr.configured;
+
+  if (!hasDownloadClient && !hasArrService) {
+    return "No services configured. Add Radarr, Sonarr, or qBittorrent in settings.";
+  }
+
+  if (!hasDownloadClient) {
+    return "No download clients connected.";
+  }
+
+  if (!hasArrService) {
+    return "Connect Radarr or Sonarr to see queued downloads.";
+  }
+
+  return "Queue is empty. All downloads complete.";
+}
+
 function DownloadsWidget({
   queueItems,
+  status,
 }: {
   queueItems: Array<{
     id: string;
@@ -782,7 +918,21 @@ function DownloadsWidget({
     progress: number;
     badge?: string;
   }>;
+  status: MonitorStatus | null;
 }) {
+  const radarrStatus = status?.services.radarr ?? {
+    configured: false,
+    online: false,
+  };
+  const sonarrStatus = status?.services.sonarr ?? {
+    configured: false,
+    online: false,
+  };
+  const qbitStatus = status?.services.qbittorrent ?? {
+    configured: false,
+    online: false,
+  };
+
   return (
     <div className="col-span-1 row-span-2 rounded-2xl border bg-card p-4 shadow-sm sm:col-span-2 lg:col-span-2 xl:col-span-2">
       <SectionHeader
@@ -791,11 +941,28 @@ function DownloadsWidget({
         icon={ScanLineIcon}
         title="Queue"
       />
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <StatusBadge
+          configured={radarrStatus.configured}
+          label="Radarr"
+          online={radarrStatus.online}
+        />
+        <StatusBadge
+          configured={sonarrStatus.configured}
+          label="Sonarr"
+          online={sonarrStatus.online}
+        />
+        <StatusBadge
+          configured={qbitStatus.configured}
+          label="qBittorrent"
+          online={qbitStatus.online}
+        />
+      </div>
       <div className="mt-3 space-y-2">
         {queueItems.length ? (
           queueItems.map((item) => <QueueRow item={item} key={item.id} />)
         ) : (
-          <MutedBlock message="Nothing queued." />
+          <MutedBlock message={getQueueEmptyMessage(status)} />
         )}
       </div>
       {queueItems.length > 0 && (
@@ -830,12 +997,33 @@ function DiscoverWidget({ highlights }: { highlights: DiscoverItem[] }) {
   );
 }
 
+function getRecommendationsEmptyMessage(status?: ForYouStatus): string {
+  if (!status) {
+    return "Add a library to unlock recommendations.";
+  }
+  if (!status.jellyseerrConfigured) {
+    return "Configure Jellyseerr in settings to unlock AI recommendations.";
+  }
+  if (!status.radarrConfigured && !status.sonarrConfigured) {
+    return "Connect Radarr or Sonarr to analyze your library.";
+  }
+  if (status.libraryEmpty) {
+    return "Add media to your library to get personalized recommendations.";
+  }
+  if (status.analysisError) {
+    return "Failed to analyze your library. Check service connections.";
+  }
+  return "Add a library to unlock recommendations.";
+}
+
 function RecommendationsWidget({
   profile,
   recommendations,
+  status,
 }: {
   profile: ForYouProfile | null;
   recommendations: Array<DiscoverItem & { reason?: string }>;
+  status?: ForYouStatus;
 }) {
   return (
     <div className="col-span-1 row-span-2 rounded-2xl border bg-card p-4 shadow-sm sm:col-span-2 lg:col-span-2 xl:col-span-2">
@@ -855,7 +1043,7 @@ function RecommendationsWidget({
           </div>
         </div>
       ) : (
-        <MutedBlock message="Add a library to unlock recommendations." />
+        <MutedBlock message={getRecommendationsEmptyMessage(status)} />
       )}
     </div>
   );

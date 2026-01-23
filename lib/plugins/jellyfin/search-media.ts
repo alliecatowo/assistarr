@@ -65,11 +65,7 @@ export const searchMedia = ({
           duration: item.RunTimeTicks
             ? formatDuration(item.RunTimeTicks)
             : null,
-          imageUrl: getImageUrl(
-            config.baseUrl,
-            item.Id,
-            item.ImageTags?.Primary
-          ),
+          imageUrl: getImageUrl(config.baseUrl, item.Id, "Primary"),
           isWatched: item.UserData?.Played ?? false,
           isFavorite: item.UserData?.IsFavorite ?? false,
         }));

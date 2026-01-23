@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ExternalImage } from "@/components/ui/external-image";
 import { getPosterUrl } from "@/lib/utils";
 
 interface ExpandedCardPosterProps {
@@ -15,7 +15,7 @@ export function ExpandedCardPoster({
   return (
     <div className="shrink-0">
       {fullPosterUrl ? (
-        <Image
+        <ExternalImage
           alt={title}
           className="rounded-lg shadow-md"
           height={192}

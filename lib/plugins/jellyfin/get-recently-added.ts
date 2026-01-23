@@ -79,7 +79,7 @@ function mapItem(item: MediaItem, baseUrl: string) {
     rating: item.CommunityRating,
     genres: item.Genres?.slice(0, 3),
     duration: item.RunTimeTicks ? formatDuration(item.RunTimeTicks) : null,
-    imageUrl: getImageUrl(baseUrl, item.Id, item.ImageTags?.Primary),
+    imageUrl: getImageUrl(baseUrl, item.Id, "Primary"),
   };
 
   if (item.Type === "Episode" && item.SeriesName) {

@@ -1,11 +1,11 @@
 "use client";
 
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExternalImage } from "@/components/ui/external-image";
 import { cn } from "@/lib/utils";
 import type {
   RecommendationItem,
@@ -127,7 +127,7 @@ function RecommendationCard({
       {/* Poster thumbnail */}
       <div className="relative flex-shrink-0 w-[80px] aspect-[2/3] rounded overflow-hidden bg-muted">
         {fullPosterUrl ? (
-          <Image
+          <ExternalImage
             alt={`${title} poster`}
             className="object-cover"
             fill

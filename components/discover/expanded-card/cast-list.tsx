@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ExternalImage } from "@/components/ui/external-image";
 import { getProfileUrl } from "@/lib/utils";
 
 interface CastMember {
@@ -30,7 +30,7 @@ export function CastList({ cast }: CastListProps) {
               key={`${person.name}-${i}`}
             >
               {profileImage ? (
-                <Image
+                <ExternalImage
                   alt={person.name}
                   className="rounded-full mx-auto object-cover"
                   height={48}

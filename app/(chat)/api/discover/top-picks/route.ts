@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
@@ -11,6 +12,13 @@ import { RadarrClient } from "@/lib/plugins/radarr/client";
 import type { RadarrMovie } from "@/lib/plugins/radarr/types";
 import { SonarrClient } from "@/lib/plugins/sonarr/client";
 import type { SonarrSeries } from "@/lib/plugins/sonarr/types";
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const DEFAULT_COUNT = 3;
+const MAX_COUNT = 10;
 
 // =============================================================================
 // Type Definitions
@@ -498,7 +506,7 @@ User's Library Profile:
     )
     .join("\n\n");
 
-  const prompt = `You are a film critic and recommendation expert. Based on the user's library profile, write a personalized 1-sentence pitch for each of the following titles that explains WHY they will love it based on their taste.
+  const prompt = `You are a film critic and recommendation expert. Based on the user's library profile, write a personalized 2-3 sentence pitch for each of the following titles that explains WHY they will love it based on their taste.
 
 ${profileSummary}
 
@@ -506,17 +514,22 @@ Titles to pitch:
 ${candidatesList}
 
 Instructions:
-- Write exactly ONE sentence per title (max 120 characters)
+- Write 2-3 sentences per title (150-250 characters total)
+- Format: Hook sentence + compelling detail about the content + specific appeal to this user's taste
 - Be specific and connect to their actual preferences (genres, directors, actors, recent additions)
-- Sound enthusiastic but not over-the-top
+- Sound professional and knowledgeable, like a trusted film critic
 - Focus on what makes it a great match for THEM specifically
-- Use phrases like "Based on your love of...", "Perfect for fans of...", "Since you enjoyed..."
+- Highlight any overlap with their favorites (same director, actor, genre patterns)
+- Do NOT use casual greetings or overly casual language
+- Do NOT use phrases like "based on your taste" - make recommendations naturally
+
+Good example: "A gripping psychological thriller that masterfully builds tension through unreliable narration. The director's signature visual style and dark character study will resonate with fans of cerebral drama."
 
 Format your response as a JSON array of objects with "title" and "pitch" fields. Example:
 [
   {
     "title": "The Movie Title",
-    "pitch": "Based on your love of sci-fi, this delivers mind-bending twists like Inception with stunning visuals."
+    "pitch": "A visually stunning sci-fi epic that explores themes of identity and memory. The intricate plot and practical effects bring a grounded realism that elevates the genre."
   }
 ]
 
@@ -556,11 +569,24 @@ Return ONLY the JSON array, no other text.`;
 // Main API Handler
 // =============================================================================
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Parse count parameter from URL
+  const searchParams = request.nextUrl.searchParams;
+  const countParam = searchParams.get("count");
+  const count = Math.min(
+    Math.max(
+      1,
+      countParam
+        ? Number.parseInt(countParam, 10) || DEFAULT_COUNT
+        : DEFAULT_COUNT
+    ),
+    MAX_COUNT
+  );
 
   try {
     const jellyseerrConfig = await getServiceConfig({
@@ -607,9 +633,9 @@ export async function GET() {
       });
     }
 
-    // Step 3: Fetch full details for top 3 candidates
+    // Step 3: Fetch full details for top candidates based on count parameter
     // Use Promise.allSettled for better error tolerance
-    const topCandidates = candidates.slice(0, 3);
+    const topCandidates = candidates.slice(0, count);
     const settledDetails = await Promise.allSettled(
       topCandidates.map(async (candidate) => {
         try {
