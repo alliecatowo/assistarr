@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -662,6 +663,7 @@ export default function SettingsPage() {
   return (
     <div className="flex h-dvh w-full flex-col">
       <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <SidebarToggle />
         <h1 className="font-semibold text-lg">Media Service Settings</h1>
       </header>
       <main className="flex-1 overflow-auto p-4">

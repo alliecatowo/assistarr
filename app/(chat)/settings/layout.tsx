@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { cn } from "@/lib/utils";
 
 const SETTINGS_TABS = [
@@ -51,7 +52,8 @@ export default function SettingsLayout({
   return (
     <div className="flex h-dvh w-full flex-col">
       <header className="sticky top-0 z-10 border-b bg-background">
-        <div className="flex h-14 items-center px-4">
+        <div className="flex h-14 items-center gap-2 px-4">
+          <SidebarToggle />
           <h1 className="font-semibold text-lg">Settings</h1>
         </div>
         <nav className="flex gap-1 px-4 pb-2 overflow-x-auto">

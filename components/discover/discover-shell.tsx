@@ -3,20 +3,14 @@
 import {
   ChevronRightIcon,
   LoaderIcon,
-  PanelLeftIcon,
   SparklesIcon,
   XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { DiscoverChatBar } from "./discover-chat-bar";
 import { useDiscover } from "./discover-context";
@@ -47,7 +41,7 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
     updateItemStatus,
   } = useDiscover();
 
-  const { open, setOpen, toggleSidebar } = useSidebar();
+  const { open, setOpen } = useSidebar();
 
   // Auto-collapse sidebar when entering discover page
   useEffect(() => {
@@ -60,22 +54,7 @@ export function DiscoverShell({ userId }: DiscoverShellProps) {
     <div className="flex h-full flex-col">
       {/* Header */}
       <header className="flex h-14 shrink-0 items-center border-b px-4 gap-3 bg-background transition-all duration-200">
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label="Toggle sidebar"
-                className="h-8 w-8 transition-colors hover:bg-accent"
-                onClick={toggleSidebar}
-                size="icon"
-                variant="ghost"
-              >
-                <PanelLeftIcon className="size-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Toggle sidebar</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <SidebarToggle />
         <h1 className="text-lg font-semibold">Discover</h1>
       </header>
 

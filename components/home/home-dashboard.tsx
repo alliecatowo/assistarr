@@ -25,6 +25,7 @@ import type {
   DiscoverItem,
   DiscoverSection,
 } from "@/components/discover/discover-context";
+import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -338,7 +339,11 @@ export function HomeDashboard({
         <div className="absolute bottom-10 left-1/3 h-40 w-40 rounded-full bg-amber-500/20" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6">
+      <header className="sticky top-0 z-10 flex items-center gap-2 bg-background/80 px-4 py-2 backdrop-blur-sm sm:px-6">
+        <SidebarToggle />
+      </header>
+
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-16 sm:px-6">
         <div className="grid auto-rows-[minmax(180px,auto)] grid-cols-1 gap-4 sm:grid-cols-6 xl:grid-cols-12">
           {/* Hero */}
           <HeroSection stats={heroStats} userName={userName} />

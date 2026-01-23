@@ -20,7 +20,6 @@ import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/sidebar/sidebar-history";
-import { SidebarToggle } from "@/components/sidebar/sidebar-toggle";
 import { SidebarUserNav } from "@/components/sidebar/sidebar-user-nav";
 import {
   AlertDialog,
@@ -37,8 +36,12 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -49,7 +52,7 @@ import {
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
-  const { setOpenMobile, open, isMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
@@ -73,122 +76,109 @@ export function AppSidebar({ user }: { user: User | undefined }) {
 
   return (
     <>
-      <Sidebar className="group-data-[side=left]:border-r-0">
+      <Sidebar className="group-data-[side=left]:border-r-0" collapsible="icon">
         <SidebarHeader>
           <SidebarMenu>
-            <div className="flex flex-row items-center justify-between">
-              <div className="flex flex-row items-center gap-2">
-                {/* Show toggle inside sidebar when open on desktop */}
-                {open && !isMobile && <SidebarToggle />}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild size="lg" tooltip="Home">
                 <Link
-                  className="flex flex-row items-center gap-3"
                   href="/home"
                   onClick={() => {
                     setOpenMobile(false);
                   }}
                 >
-                  <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                    Assistarr
-                  </span>
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <HomeIcon className="size-4" />
+                  </div>
+                  <span className="font-semibold text-lg">Assistarr</span>
                 </Link>
-              </div>
-              <div className="flex flex-row gap-1">
-                {user && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-8 p-1 md:h-fit md:p-2"
-                        onClick={() => setShowDeleteAllDialog(true)}
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Trash2Icon size={16} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent align="end" className="hidden md:block">
-                      Delete All Chats
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className="h-8 p-1 md:h-fit md:p-2"
-                      onClick={() => {
-                        setOpenMobile(false);
-                        router.push("/chat/new");
-                        router.refresh();
-                      }}
-                      type="button"
-                      variant="ghost"
-                    >
-                      <PlusIcon size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent align="end" className="hidden md:block">
-                    New Chat
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
           {/* Main navigation at top */}
           {user && (
-            <div className="flex flex-col gap-1 px-2 pb-4">
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-                href="/home"
-                onClick={() => setOpenMobile(false)}
-              >
-                <HomeIcon size={16} />
-                <span>Home</span>
-              </Link>
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-                href="/chat/new"
-                onClick={() => setOpenMobile(false)}
-              >
-                <MessageSquareIcon size={16} />
-                <span>New Chat</span>
-              </Link>
-            </div>
+            <SidebarGroup>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="New Chat">
+                    <Link
+                      href="/chat/new"
+                      onClick={() => {
+                        setOpenMobile(false);
+                        router.refresh();
+                      }}
+                    >
+                      <PlusIcon />
+                      <span>New Chat</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Chat">
+                    <Link href="/chat/new" onClick={() => setOpenMobile(false)}>
+                      <MessageSquareIcon />
+                      <span>Chat</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
           )}
-          {/* Chat history */}
-          <SidebarHistory user={user} />
+          {/* Chat history - hidden when collapsed */}
+          <div className="group-data-[collapsible=icon]:hidden">
+            <SidebarHistory user={user} />
+          </div>
         </SidebarContent>
         <SidebarFooter>
           {user && (
-            <div className="flex flex-col gap-2">
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-                href="/discover"
-                onClick={() => setOpenMobile(false)}
-              >
-                <SparklesIcon size={16} />
-                <span>Discover</span>
-              </Link>
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-                href="/monitor"
-                onClick={() => setOpenMobile(false)}
-              >
-                <BarChart3Icon size={16} />
-                <span>Monitor</span>
-              </Link>
-              <Link
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
-                href="/settings"
-                onClick={() => setOpenMobile(false)}
-              >
-                <SettingsIcon size={16} />
-                <span>Settings</span>
-              </Link>
+            <SidebarMenu>
+              <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="w-full justify-start gap-2"
+                      onClick={() => setShowDeleteAllDialog(true)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Trash2Icon size={16} />
+                      <span>Delete All Chats</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Delete All Chats</TooltipContent>
+                </Tooltip>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Discover">
+                  <Link href="/discover" onClick={() => setOpenMobile(false)}>
+                    <SparklesIcon />
+                    <span>Discover</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Monitor">
+                  <Link href="/monitor" onClick={() => setOpenMobile(false)}>
+                    <BarChart3Icon />
+                    <span>Monitor</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Settings">
+                  <Link href="/settings" onClick={() => setOpenMobile(false)}>
+                    <SettingsIcon />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarUserNav user={user} />
-            </div>
+            </SidebarMenu>
           )}
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
 
       <AlertDialog
