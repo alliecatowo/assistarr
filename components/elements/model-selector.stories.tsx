@@ -69,7 +69,7 @@ export const Default: Story = () => (
 export const WithSelection: Story = () => (
   <ModelSelector>
     <ModelSelectorTrigger asChild>
-      <Button variant="outline" className="justify-between min-w-[200px]">
+      <Button className="justify-between min-w-[200px]" variant="outline">
         <span>Claude 3.5 Sonnet</span>
         <CheckIcon className="h-4 w-4 opacity-50" />
       </Button>
@@ -99,7 +99,7 @@ export const WithSelection: Story = () => (
 export const CompactTrigger: Story = () => (
   <ModelSelector>
     <ModelSelectorTrigger asChild>
-      <Button variant="ghost" size="sm" className="h-7 text-xs">
+      <Button className="h-7 text-xs" size="sm" variant="ghost">
         GPT-4o
       </Button>
     </ModelSelectorTrigger>
@@ -128,7 +128,7 @@ export const InChatHeader: Story = () => (
     <span className="text-sm font-medium">Chat with</span>
     <ModelSelector>
       <ModelSelectorTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8">
+        <Button className="h-8" size="sm" variant="outline">
           Claude 3.5 Sonnet
         </Button>
       </ModelSelectorTrigger>

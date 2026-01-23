@@ -1,4 +1,4 @@
-import type { MCPServerConfig as DBMCPServerConfig, MCPToolInfo } from "../db/schema";
+import type { MCPToolInfo } from "../db/schema";
 
 // Re-export database types
 export type { MCPServerConfig, MCPToolInfo } from "../db/schema";

@@ -1,6 +1,6 @@
 import { getEnabledUserSkills } from "../db/queries/user-skill";
 import { createLogger } from "../logger";
-import type { InjectedSkill, UserSkill } from "./types";
+import type { InjectedSkill } from "./types";
 
 const log = createLogger("skills:manager");
 
@@ -25,7 +25,7 @@ export class SkillManager {
    */
   async getSkillsForSession(
     userId: string,
-    mode: string = "chat"
+    mode = "chat"
   ): Promise<InjectedSkill[]> {
     try {
       const userSkills = await getEnabledUserSkills({ userId });
@@ -86,11 +86,7 @@ export class SkillManager {
       return "";
     }
 
-    const lines: string[] = [
-      "",
-      "## Available Skills",
-      "",
-    ];
+    const lines: string[] = ["", "## Available Skills", ""];
 
     for (const skill of skills) {
       lines.push(`- **${skill.displayName}**: ${skill.description}`);

@@ -36,19 +36,39 @@ export const Default: Story = () => (
 // Disabled state
 export const Disabled: Story = () => (
   <div className="flex flex-wrap justify-center gap-1.5">
-    <Button className="h-7 gap-1 px-2.5 text-xs" size="sm" variant="outline" disabled>
+    <Button
+      className="h-7 gap-1 px-2.5 text-xs"
+      disabled
+      size="sm"
+      variant="outline"
+    >
       <SparklesIcon className="size-3" />
       Surprise me
     </Button>
-    <Button className="h-7 gap-1 px-2.5 text-xs" size="sm" variant="outline" disabled>
+    <Button
+      className="h-7 gap-1 px-2.5 text-xs"
+      disabled
+      size="sm"
+      variant="outline"
+    >
       <FlameIcon className="size-3" />
       Trending
     </Button>
-    <Button className="h-7 gap-1 px-2.5 text-xs" size="sm" variant="outline" disabled>
+    <Button
+      className="h-7 gap-1 px-2.5 text-xs"
+      disabled
+      size="sm"
+      variant="outline"
+    >
       <CalendarIcon className="size-3" />
       Coming soon
     </Button>
-    <Button className="h-7 gap-1 px-2.5 text-xs" size="sm" variant="outline" disabled>
+    <Button
+      className="h-7 gap-1 px-2.5 text-xs"
+      disabled
+      size="sm"
+      variant="outline"
+    >
       <TrendingUpIcon className="size-3" />
       Hidden gems
     </Button>

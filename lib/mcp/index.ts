@@ -1,11 +1,11 @@
 // MCP Client Management
 export {
+  checkMCPHealth,
   createMCPClientWrapper,
   discoverMCPTools,
-  checkMCPHealth,
   getMCPTools,
-  sanitizeName,
   namespaceMCPTool,
+  sanitizeName,
 } from "./client-manager";
 
 // Tool Adaptation

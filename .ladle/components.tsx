@@ -13,9 +13,9 @@ export const Provider: GlobalProvider = ({ children, globalState }) => {
     <ThemeProvider
       attribute="class"
       defaultTheme={theme}
-      forcedTheme={theme}
       disableTransitionOnChange
       enableSystem={false}
+      forcedTheme={theme}
     >
       <div
         className={`min-h-screen bg-background text-foreground antialiased ${theme === "dark" ? "dark" : ""}`}

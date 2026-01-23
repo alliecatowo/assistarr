@@ -1,5 +1,3 @@
-import type { UserSkill } from "../db/schema";
-
 // Re-export the database type
 export type { UserSkill } from "../db/schema";
 

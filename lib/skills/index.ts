@@ -1,12 +1,12 @@
 // Parser
-export {
-  parseSkillContent,
-  validateSkillContent,
-  generateDisplayName,
-} from "./parser";
 
 // Manager
 export { SkillManager, skillManager } from "./manager";
+export {
+  generateDisplayName,
+  parseSkillContent,
+  validateSkillContent,
+} from "./parser";
 
 // Types
 export type {

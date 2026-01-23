@@ -56,6 +56,7 @@ export default defineConfig({
       testMatch: /e2e\/.*.test.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        channel: "chrome", // Use system Chrome
       },
     },
 
@@ -64,8 +65,9 @@ export default defineConfig({
       testMatch: /visual\/.*.spec.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        channel: "chrome", // Use system Chrome
       },
-      timeout: 30000,
+      timeout: 30_000,
     },
 
     // {

@@ -1,10 +1,10 @@
 import type { Geo } from "@vercel/functions";
 import {
-  type Tool,
   convertToModelMessages,
   createUIMessageStream,
   stepCountIs,
   streamText,
+  type Tool,
 } from "ai";
 import type { Session } from "next-auth";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
@@ -14,12 +14,16 @@ import { recommendMedia } from "@/lib/ai/tools/recommend-media";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
-import { getEnabledMCPConfigs, updateChatTitleById } from "@/lib/db/queries/index";
-import type { MCPServerConfig, ServiceConfig, UserAIConfig } from "@/lib/db/schema";
+import { updateChatTitleById } from "@/lib/db/queries/index";
+import type {
+  MCPServerConfig,
+  ServiceConfig,
+  UserAIConfig,
+} from "@/lib/db/schema";
 import { createLogger } from "@/lib/logger";
 import {
-  type MCPClientWrapper,
   createMCPClientWrapper,
+  type MCPClientWrapper,
   mergeMCPToolsWithBase,
 } from "@/lib/mcp";
 import { pluginManager } from "@/lib/plugins/registry";

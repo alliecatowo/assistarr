@@ -495,6 +495,7 @@ function ContinueCard({ item }: { item: ContinueWatchingItem }) {
             fill
             sizes="240px"
             src={item.imageUrl}
+            unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted">
@@ -583,6 +584,7 @@ function DiscoverTile({ item }: { item: DiscoverItem }) {
             fill
             sizes="180px"
             src={item.posterUrl}
+            unoptimized
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-muted">

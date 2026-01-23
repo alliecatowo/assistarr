@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import {
   BrainCircuitIcon,
   PlugIcon,
   ServerIcon,
   SparklesIcon,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const SETTINGS_TABS = [
   {
@@ -57,7 +57,8 @@ export default function SettingsLayout({
         <nav className="flex gap-1 px-4 pb-2 overflow-x-auto">
           {SETTINGS_TABS.map((tab) => {
             const isActive =
-              pathname === tab.href || (isRootSettings && tab.href === "/settings/plugins");
+              pathname === tab.href ||
+              (isRootSettings && tab.href === "/settings/plugins");
             const Icon = tab.icon;
 
             return (

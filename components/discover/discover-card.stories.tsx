@@ -102,7 +102,9 @@ const MockDiscoverCard = ({
           {rating !== undefined && rating > 0 && (
             <span className="text-yellow-500">★ {rating.toFixed(1)}</span>
           )}
-          <span className="capitalize">{mediaType === "tv" ? "TV" : "Movie"}</span>
+          <span className="capitalize">
+            {mediaType === "tv" ? "TV" : "Movie"}
+          </span>
         </div>
 
         {config.label && config.icon && (
@@ -142,68 +144,68 @@ const MockDiscoverCard = ({
 // Available movie
 export const Available: Story = () => (
   <MockDiscoverCard
+    mediaType="movie"
+    rating={8.7}
+    status="available"
     title="The Matrix"
     year={1999}
-    rating={8.7}
-    mediaType="movie"
-    status="available"
   />
 );
 
 // Requested movie
 export const Requested: Story = () => (
   <MockDiscoverCard
+    mediaType="movie"
+    rating={8.8}
+    status="requested"
     title="Inception"
     year={2010}
-    rating={8.8}
-    mediaType="movie"
-    status="requested"
   />
 );
 
 // Pending movie
 export const Pending: Story = () => (
   <MockDiscoverCard
+    mediaType="movie"
+    rating={8.7}
+    status="pending"
     title="Interstellar"
     year={2014}
-    rating={8.7}
-    mediaType="movie"
-    status="pending"
   />
 );
 
 // Unavailable (can request)
 export const Unavailable: Story = () => (
   <MockDiscoverCard
+    mediaType="movie"
+    rating={8.5}
+    status="unavailable"
     title="Dune: Part Two"
     year={2024}
-    rating={8.5}
-    mediaType="movie"
-    status="unavailable"
   />
 );
 
 // TV Show
 export const TVShow: Story = () => (
   <MockDiscoverCard
+    mediaType="tv"
+    rating={9.5}
+    status="available"
     title="Breaking Bad"
     year={2008}
-    rating={9.5}
-    mediaType="tv"
-    status="available"
   />
 );
 
 // With AI reason
 export const WithAIReason: Story = () => (
   <MockDiscoverCard
+    mediaType="movie"
+    rating={8.0}
+    reason="Based on your love for sci-fi visuals and thought-provoking narratives"
+    showReason
+    status="unavailable"
     title="Blade Runner 2049"
     year={2017}
-    rating={8.0}
-    mediaType="movie"
-    status="unavailable"
-    showReason
-    reason="Based on your love for sci-fi visuals and thought-provoking narratives"
   />
 );
 
@@ -211,32 +213,32 @@ export const WithAIReason: Story = () => (
 export const CardGrid: Story = () => (
   <div className="flex flex-wrap gap-4">
     <MockDiscoverCard
+      mediaType="movie"
+      rating={8.7}
+      status="available"
       title="The Matrix"
       year={1999}
-      rating={8.7}
-      mediaType="movie"
-      status="available"
     />
     <MockDiscoverCard
+      mediaType="movie"
+      rating={8.8}
+      status="requested"
       title="Inception"
       year={2010}
-      rating={8.8}
-      mediaType="movie"
-      status="requested"
     />
     <MockDiscoverCard
+      mediaType="tv"
+      rating={9.5}
+      status="available"
       title="Breaking Bad"
       year={2008}
-      rating={9.5}
-      mediaType="tv"
-      status="available"
     />
     <MockDiscoverCard
+      mediaType="movie"
+      rating={8.5}
+      status="unavailable"
       title="Dune: Part Two"
       year={2024}
-      rating={8.5}
-      mediaType="movie"
-      status="unavailable"
     />
   </div>
 );
@@ -245,12 +247,12 @@ export const CardGrid: Story = () => (
 export const FillContainer: Story = () => (
   <div className="w-48">
     <MockDiscoverCard
+      fillContainer
+      mediaType="movie"
+      rating={9.0}
+      status="available"
       title="The Dark Knight"
       year={2008}
-      rating={9.0}
-      mediaType="movie"
-      status="available"
-      fillContainer
     />
   </div>
 );

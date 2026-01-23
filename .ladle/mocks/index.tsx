@@ -1,27 +1,25 @@
 // Mock next/image for Ladle
 export const mockNextImage = {
-  default: ({
-    src,
-    alt,
-    ...props
-  }: {
-    src: string;
-    alt: string;
-    [key: string]: unknown;
-  }) => {
-    // biome-ignore lint/a11y/useAltText: Mock component
-    return <img src={src} alt={alt} {...props} />;
+  default: ({ src, alt }: { src: string; alt: string }) => {
+    // biome-ignore lint/performance/noImgElement: This mock intentionally uses img to avoid next/image dependency
+    return <img alt={alt} src={src} />;
   },
 };
 
 // Mock next/navigation
 export const mockNavigation = {
   useRouter: () => ({
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     push: () => {},
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     replace: () => {},
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     back: () => {},
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     forward: () => {},
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     refresh: () => {},
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     prefetch: () => {},
   }),
   usePathname: () => "/",
@@ -32,6 +30,7 @@ export const mockNavigation = {
 // Mock SWR
 export const mockSWR = {
   useSWRConfig: () => ({
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     mutate: () => {},
   }),
 };
@@ -56,7 +55,7 @@ export const mockMediaItem = {
   backdropUrl: "https://via.placeholder.com/1920x1080",
   rating: 8.5,
   mediaType: "movie" as const,
-  tmdbId: 12345,
+  tmdbId: 12_345,
   status: "available" as const,
   overview:
     "This is a test movie for visual testing purposes. It has a compelling plot and great characters.",

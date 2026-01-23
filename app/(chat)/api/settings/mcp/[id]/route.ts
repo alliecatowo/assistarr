@@ -6,6 +6,9 @@ import {
   getMCPConfig,
   updateMCPConfig,
 } from "@/lib/db/queries/mcp-config";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("api:settings:mcp");
 
 const updateMCPSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -49,7 +52,7 @@ export async function GET(
 
     return NextResponse.json(config);
   } catch (error) {
-    console.error("Failed to get MCP config:", error);
+    log.error({ error }, "Failed to get MCP config");
     return NextResponse.json(
       { error: "Failed to get MCP config" },
       { status: 500 }
@@ -96,7 +99,7 @@ export async function PATCH(
 
     const message =
       error instanceof Error ? error.message : "Failed to update MCP config";
-    console.error("Failed to update MCP config:", error);
+    log.error({ error }, "Failed to update MCP config");
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
@@ -124,7 +127,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete MCP config:", error);
+    log.error({ error }, "Failed to delete MCP config");
     return NextResponse.json(
       { error: "Failed to delete MCP config" },
       { status: 500 }

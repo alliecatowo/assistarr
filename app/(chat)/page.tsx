@@ -3,16 +3,16 @@ import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import type { MonitorStatus } from "@/app/(monitor)/api/status/route";
 import {
-  HomeDashboard,
   type ContinueWatchingItem,
   type ForYouData,
+  HomeDashboard,
 } from "@/components/home/home-dashboard";
-import { fetchDiscoverySections } from "@/lib/discover/fetch-discovery-sections";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
+import { fetchDiscoverySections } from "@/lib/discover/fetch-discovery-sections";
 import {
-  JellyfinClient,
   calculateProgressPercentage,
   getImageUrl,
+  JellyfinClient,
   ticksToMinutes,
 } from "@/lib/plugins/jellyfin/client";
 import type { ItemsResponse, MediaItem } from "@/lib/plugins/jellyfin/types";
@@ -54,9 +54,12 @@ async function HomePage() {
 
 async function getMonitorStatus(): Promise<MonitorStatus | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/status`, {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/status`,
+      {
+        cache: "no-store",
+      }
+    );
     if (!res.ok) return null;
     return (await res.json()) as MonitorStatus;
   } catch (_error) {

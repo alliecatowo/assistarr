@@ -146,9 +146,9 @@ export const InInputContext: Story = () => (
       </div>
     </div>
     <input
-      type="text"
-      placeholder="Type a message..."
       className="w-full px-3 py-2 border rounded-md text-sm"
+      placeholder="Type a message..."
+      type="text"
     />
   </div>
 );

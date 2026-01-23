@@ -52,7 +52,10 @@ const QueueItemRow = ({
             {title}
           </p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground truncate" title={subtitle}>
+            <p
+              className="text-xs text-muted-foreground truncate"
+              title={subtitle}
+            >
               {subtitle}
             </p>
           )}
@@ -60,7 +63,13 @@ const QueueItemRow = ({
         <div className="flex items-center gap-2 shrink-0">
           <Badge
             className="text-xs capitalize"
-            variant={getStatusColor(status) as "default" | "secondary" | "destructive" | "outline"}
+            variant={
+              getStatusColor(status) as
+                | "default"
+                | "secondary"
+                | "destructive"
+                | "outline"
+            }
           >
             {status}
           </Badge>
@@ -97,31 +106,31 @@ export const WithDownloads: Story = () => (
     <CardContent className="p-0">
       <ScrollArea className="h-[300px] px-6">
         <QueueItemRow
-          title="The Matrix (1999)"
-          status="downloading"
-          source="Radarr"
           progress={45}
           size="5.1 GB"
           sizeRemaining="2.3 GB"
+          source="Radarr"
+          status="downloading"
           timeLeft="23 minutes"
+          title="The Matrix (1999)"
         />
         <QueueItemRow
-          title="Breaking Bad"
-          subtitle="S01E01 - Pilot"
-          status="downloading"
-          source="Sonarr"
           progress={78}
           size="1.2 GB"
           sizeRemaining="264 MB"
+          source="Sonarr"
+          status="downloading"
+          subtitle="S01E01 - Pilot"
           timeLeft="5 minutes"
+          title="Breaking Bad"
         />
         <QueueItemRow
-          title="Inception (2010)"
-          status="queued"
-          source="Radarr"
           progress={0}
           size="4.8 GB"
           sizeRemaining="4.8 GB"
+          source="Radarr"
+          status="queued"
+          title="Inception (2010)"
         />
       </ScrollArea>
     </CardContent>
@@ -159,21 +168,21 @@ export const WithErrors: Story = () => (
     <CardContent className="p-0">
       <ScrollArea className="h-[300px] px-6">
         <QueueItemRow
-          title="The Matrix (1999)"
-          status="downloading"
-          source="Radarr"
           progress={45}
           size="5.1 GB"
           sizeRemaining="2.3 GB"
+          source="Radarr"
+          status="downloading"
           timeLeft="23 minutes"
+          title="The Matrix (1999)"
         />
         <QueueItemRow
-          title="Avatar (2009)"
-          status="failed"
-          source="Radarr"
           progress={12}
           size="8.2 GB"
           sizeRemaining="7.2 GB"
+          source="Radarr"
+          status="failed"
+          title="Avatar (2009)"
         />
       </ScrollArea>
     </CardContent>
@@ -192,21 +201,21 @@ export const Completed: Story = () => (
     <CardContent className="p-0">
       <ScrollArea className="h-[300px] px-6">
         <QueueItemRow
-          title="The Matrix (1999)"
-          status="completed"
-          source="Radarr"
           progress={100}
           size="5.1 GB"
           sizeRemaining="0 B"
+          source="Radarr"
+          status="completed"
+          title="The Matrix (1999)"
         />
         <QueueItemRow
-          title="Breaking Bad"
-          subtitle="S01E01 - Pilot"
-          status="imported"
-          source="Sonarr"
           progress={100}
           size="1.2 GB"
           sizeRemaining="0 B"
+          source="Sonarr"
+          status="imported"
+          subtitle="S01E01 - Pilot"
+          title="Breaking Bad"
         />
       </ScrollArea>
     </CardContent>
@@ -216,12 +225,12 @@ export const Completed: Story = () => (
 // Single item
 export const SingleItem: Story = () => (
   <QueueItemRow
-    title="Interstellar (2014)"
-    status="downloading"
-    source="Radarr"
     progress={65}
     size="6.2 GB"
     sizeRemaining="2.2 GB"
+    source="Radarr"
+    status="downloading"
     timeLeft="15 minutes"
+    title="Interstellar (2014)"
   />
 );
