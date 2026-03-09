@@ -513,6 +513,7 @@ export function TopPicksCta() {
           {displayPicks.map((pick, index) => (
             <TopPickCard
               isRequesting={requestingId === pick.tmdbId}
+              // biome-ignore lint/suspicious/noArrayIndexKey: index combined with pick id for stable key
               key={`${pick.id}-${index}`}
               onRequest={handleRequest}
               pick={pick}

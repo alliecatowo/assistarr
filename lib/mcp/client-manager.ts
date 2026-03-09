@@ -141,7 +141,6 @@ export async function checkMCPHealth(
  */
 export async function getMCPTools(
   wrapper: MCPClientWrapper
-  // biome-ignore lint/suspicious/noExplicitAny: MCP tools are dynamically typed
 ): Promise<Record<string, unknown>> {
   // biome-ignore lint/suspicious/noExplicitAny: MCP client type is dynamic
   const mcpClient = wrapper.client as any;

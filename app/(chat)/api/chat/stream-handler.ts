@@ -109,6 +109,7 @@ export function createChatStream(config: StreamConfig) {
 
   return createUIMessageStream({
     originalMessages: isToolApprovalFlow ? uiMessages : undefined,
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: streaming handler with many tool/approval branches
     execute: async ({ writer: dataStream }) => {
       // Initialize tools with dataStream
       const baseTools = {

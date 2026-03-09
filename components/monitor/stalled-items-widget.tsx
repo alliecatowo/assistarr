@@ -80,6 +80,7 @@ export function StalledItemsWidget({
               {failed.map((item, index) => (
                 <ItemRow
                   item={item}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: index combined with source/id for stable key
                   key={`failed-${item.source}-${item.id}-${index}`}
                   type="failed"
                 />
@@ -87,6 +88,7 @@ export function StalledItemsWidget({
               {stalled.map((item, index) => (
                 <ItemRow
                   item={item}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: index combined with source/id for stable key
                   key={`stalled-${item.source}-${item.id}-${index}`}
                   type="stalled"
                 />

@@ -155,6 +155,7 @@ export function DiscoverRow({ items, showReasons = false }: DiscoverRowProps) {
         ref={scrollRef}
       >
         {displayItems.map((item, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: index combined with item id for stable key
           <div className="shrink-0" key={`${item.id}-${index}`}>
             <DiscoverCard
               isRequesting={requestingIds.has(item.tmdbId ?? 0)}

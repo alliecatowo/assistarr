@@ -348,6 +348,7 @@ function ServiceCard({
     }
   };
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: save handler with many plugin type branches
   const handleSave = async () => {
     if (isQbittorrent) {
       if (!baseUrl.trim() || !username.trim() || !password.trim()) {

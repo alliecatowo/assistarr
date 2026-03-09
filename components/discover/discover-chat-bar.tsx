@@ -132,7 +132,8 @@ export function DiscoverChatBar({ userId: _userId }: DiscoverChatBarProps) {
       setLoading(false);
       toast({
         type: "error",
-        description: err.message || "Failed to get recommendations. Please try again.",
+        description:
+          err.message || "Failed to get recommendations. Please try again.",
       });
     },
   });
