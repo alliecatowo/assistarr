@@ -63,42 +63,66 @@
 git clone https://github.com/alliecatowo/assistarr.git
 cd assistarr
 
-# Install dependencies
+# One-step setup: copy .env.example → .env.local + install deps
+make setup
+
+# Edit .env.local with your values, then:
+make db-migrate   # Run database migrations
+make dev          # Start the development server
+```
+
+Or step by step with pnpm:
+
+```bash
 pnpm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your configuration
-
-# Run database migrations
+cp .env.example .env.local   # then fill in values
 pnpm db:migrate
-
-# Start the development server
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to access the application.
 
+### Docker Compose (recommended for self-hosting)
+
+See [SELF_HOSTING.md](./SELF_HOSTING.md) for the full guide. Quick start:
+
+```bash
+cp .env.example .env
+# Set POSTGRES_PASSWORD, AUTH_SECRET, and OPENROUTER_API_KEY
+docker compose up -d
+```
+
+For development with hot reload:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# or: make dev-docker
+```
+
 ## Configuration
 
 ### Environment Variables
 
-```env
-# Database (required)
-DATABASE_URL=postgresql://user:password@localhost:5432/assistarr
+Copy `.env.example` to `.env.local` (local dev) or `.env` (Docker) and fill in your values.
+See [`.env.example`](./.env.example) for full documentation of all variables.
 
-# Authentication (required)
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
+**Required:**
 
-# AI Providers (at least one required)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_GENERATIVE_AI_API_KEY=...
+| Variable | Description |
+|---|---|
+| `POSTGRES_URL` | PostgreSQL connection string |
+| `AUTH_SECRET` | Session encryption secret (`openssl rand -base64 32`) |
+| `OPENROUTER_API_KEY` **or** `AI_GATEWAY_API_KEY` | At least one AI provider key |
 
-# Optional
-REDIS_URL=redis://localhost:6379  # For resumable streams
-```
+**Optional:**
+
+| Variable | Description |
+|---|---|
+| `ENCRYPTION_KEY` | Encrypts service credentials in the DB (`openssl rand -base64 32`) |
+| `REDIS_URL` | Enables resumable AI streams |
+| `NEXTAUTH_URL` | Override if not running on `localhost:3000` |
+
+Run `make check-env` to verify your configuration before starting.
 
 ### Service Configuration
 
@@ -131,20 +155,37 @@ lib/
 
 ### Commands
 
+All commands available via `make` (run `make help` for full list) or `pnpm` directly:
+
 ```bash
-pnpm dev          # Start development server with Turbo
-pnpm build        # Build for production
-pnpm start        # Start production server
-pnpm lint         # Run linter
-pnpm format       # Format code
+# Dev
+make dev              # pnpm dev — start Next.js with Turbo
+make dev-docker       # docker compose with hot reload
+make setup            # first-time setup (copy .env.example + install)
+make check-env        # verify required env vars
+
+# Build
+make build            # pnpm build
+make start            # pnpm start
+
+# Code quality
+make lint             # biome linter
+make format           # biome formatter
 
 # Database
-pnpm db:generate  # Generate migrations
-pnpm db:migrate   # Run migrations
-pnpm db:studio    # Open Drizzle Studio
+make db-migrate       # pnpm db:migrate — run pending migrations
+make db-generate      # pnpm db:generate — generate from schema changes
+make db-studio        # pnpm db:studio — open Drizzle Studio GUI
+make db-push          # pnpm db:push — push schema (dev only)
 
 # Testing
-pnpm test         # Run Playwright tests
+make test             # run all tests
+make test-unit        # vitest unit tests
+make test-e2e         # playwright end-to-end tests
+make test-coverage    # tests with coverage report
+
+# Health
+make health           # curl /api/health (requires running server)
 ```
 
 ### Adding a New Service Integration
