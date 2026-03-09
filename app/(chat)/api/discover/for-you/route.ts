@@ -589,7 +589,8 @@ export async function GET() {
         recommendations: [],
         profile: null,
         status,
-        message: "Configure Jellyseerr in settings to unlock AI recommendations.",
+        message:
+          "Configure Jellyseerr in settings to unlock AI recommendations.",
       });
     }
 
@@ -611,7 +612,8 @@ export async function GET() {
         recommendations: [],
         profile: null,
         status,
-        message: "Add media to your library to get personalized recommendations.",
+        message:
+          "Add media to your library to get personalized recommendations.",
       });
     }
 

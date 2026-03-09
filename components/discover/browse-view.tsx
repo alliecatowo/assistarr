@@ -421,6 +421,7 @@ function BrowseContent({
               <BrowseCard
                 isRequesting={requestingIds.has(item.tmdbId ?? 0)}
                 item={item}
+                // biome-ignore lint/suspicious/noArrayIndexKey: index combined with item id for stable key
                 key={`${item.id}-${index}`}
                 onExpand={() => onExpand(item)}
                 onRequest={onRequest}

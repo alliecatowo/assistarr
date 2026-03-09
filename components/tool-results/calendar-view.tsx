@@ -214,6 +214,7 @@ function MovieCalendarDateSection({
         {items.map((item, idx) => (
           <MovieCalendarEntry
             item={item}
+            // biome-ignore lint/suspicious/noArrayIndexKey: index combined with tmdbId/title for stable key
             key={`${item.tmdbId || item.title}-${idx}`}
           />
         ))}
@@ -313,6 +314,7 @@ function EpisodeCalendarDateSection({
         {items.map((item, idx) => (
           <EpisodeCalendarEntry
             item={item}
+            // biome-ignore lint/suspicious/noArrayIndexKey: index combined with episode identifiers for stable key
             key={`${item.seriesTitle}-${item.seasonNumber}-${item.episodeNumber}-${idx}`}
           />
         ))}

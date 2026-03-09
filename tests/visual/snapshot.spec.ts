@@ -32,6 +32,7 @@ Object.keys(stories).forEach((storyKey) => {
 
   test.describe(storyKey, () => {
     // Skip stories marked with meta.skip
+    // biome-ignore lint/suspicious/noSkippedTests: conditional skip based on story meta.skip flag
     test.skip(story?.meta?.skip === true, "meta.skip is true");
 
     test("desktop snapshot", async ({ page }) => {

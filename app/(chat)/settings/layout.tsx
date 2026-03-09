@@ -46,7 +46,7 @@ export default function SettingsLayout({
   const pathname = usePathname();
 
   // Check if we're on a specific tab or the root settings page
-  const isOnTab = SETTINGS_TABS.some((tab) => pathname === tab.href);
+  const _isOnTab = SETTINGS_TABS.some((tab) => pathname === tab.href);
   const isRootSettings = pathname === "/settings";
 
   return (

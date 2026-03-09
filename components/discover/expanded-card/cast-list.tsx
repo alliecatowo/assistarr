@@ -27,6 +27,7 @@ export function CastList({ cast }: CastListProps) {
           return (
             <div
               className="shrink-0 text-center w-16"
+              // biome-ignore lint/suspicious/noArrayIndexKey: index combined with person name for stable key
               key={`${person.name}-${i}`}
             >
               {profileImage ? (

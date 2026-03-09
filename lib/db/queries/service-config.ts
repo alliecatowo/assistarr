@@ -126,6 +126,7 @@ export async function upsertServiceConfig({
     const encryptedApiKey = encryptField(apiKey) ?? "";
     const encryptedPassword = encryptField(password);
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: transaction handles many service config branches
     return await withTransaction(async (tx) => {
       const [existingConfig] = await tx
         .select({ id: serviceConfig.id })

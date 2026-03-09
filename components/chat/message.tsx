@@ -172,6 +172,7 @@ const PurePreviewMessage = ({
               index={index}
               isLoading={isLoading}
               isReadonly={isReadonly}
+              // biome-ignore lint/suspicious/noArrayIndexKey: index combined with message id for stable key
               key={`part-${message.id}-${index}`}
               message={message}
               mode={mode}

@@ -65,6 +65,7 @@ export function ItemsPreview({
                 "relative h-8 w-5 overflow-hidden rounded-sm border border-background bg-muted",
                 "shadow-sm ring-1 ring-border/50"
               )}
+              // biome-ignore lint/suspicious/noArrayIndexKey: index combined with title for stable key
               key={`${item.title}-${index}`}
               style={{ zIndex: maxItems - index }}
               title={item.title}

@@ -187,7 +187,9 @@ async function getForYouData(): Promise<ForYouData | null> {
 
   try {
     const res = await fetch(forYouUrl, { cache: "no-store" });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return null;
+    }
     return (await res.json()) as ForYouData;
   } catch (_error) {
     return null;
@@ -244,6 +246,7 @@ async function resolveJellyfinUserId(client: JellyfinClient): Promise<string> {
   return userResponse.Id;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: complex mapping function with many media type branches
 function mapContinueWatchingItem(
   item: MediaItem,
   baseUrl: string,
