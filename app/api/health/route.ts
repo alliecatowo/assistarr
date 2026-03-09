@@ -13,6 +13,20 @@ const AI_PROVIDER_ENV_VARS = [
   "AI_GATEWAY_API_KEY",
 ] as const;
 
+// Homelab services tracked in the health response
+const HOMELAB_SERVICES = [
+  "jellyfin",
+  "radarr",
+  "sonarr",
+  "jellyseerr",
+] as const;
+type HomelabService = (typeof HOMELAB_SERVICES)[number];
+
+interface ServiceStatus {
+  configured: boolean;
+  enabled?: boolean;
+}
+
 interface HealthStatus {
   status: "healthy" | "degraded" | "unhealthy";
   timestamp: string;
@@ -23,6 +37,7 @@ interface HealthStatus {
     database: CheckResult;
     redis?: CheckResult;
   };
+  services: Record<HomelabService, ServiceStatus | null>;
 }
 
 interface CheckResult {
@@ -44,7 +59,13 @@ interface CheckResult {
  *   "version": "3.1.0",
  *   "timestamp": "2026-03-09T00:00:00.000Z",
  *   "uptime": 1234.5,
- *   "checks": { "env": {...}, "database": {...}, "redis": {...} }
+ *   "checks": { "env": {...}, "database": {...} },
+ *   "services": {
+ *     "jellyfin": { "configured": true, "enabled": true },
+ *     "radarr": { "configured": false },
+ *     "sonarr": { "configured": false },
+ *     "jellyseerr": { "configured": false }
+ *   }
  * }
  */
 export async function GET() {
@@ -67,6 +88,11 @@ export async function GET() {
   if (process.env.REDIS_URL) {
     checks.redis = await checkRedis();
   }
+
+  // Check homelab services configuration from DB (best-effort)
+  const services = await checkHomelabServices(
+    checks.database.status === "pass"
+  );
 
   // Determine overall status:
   // - "unhealthy" if env or database fails (app cannot serve requests)
@@ -91,6 +117,7 @@ export async function GET() {
     version: VERSION,
     uptime: process.uptime(),
     checks,
+    services,
   };
 
   // 200 for healthy/degraded (app is serving), 503 for unhealthy
@@ -205,4 +232,74 @@ async function checkRedis(): Promise<CheckResult> {
         error instanceof Error ? error.message : "Redis connection failed",
     };
   }
+}
+
+/**
+ * Check which homelab services are configured in the database.
+ * Returns null for all services if the DB is not available.
+ * Does NOT ping the services — only checks if a baseUrl is stored in DB.
+ */
+async function checkHomelabServices(
+  dbAvailable: boolean
+): Promise<Record<HomelabService, ServiceStatus | null>> {
+  // Default: null means "unknown" (DB not available to check)
+  const result: Record<HomelabService, ServiceStatus | null> = {
+    jellyfin: null,
+    radarr: null,
+    sonarr: null,
+    jellyseerr: null,
+  };
+
+  if (!dbAvailable || !process.env.POSTGRES_URL) {
+    return result;
+  }
+
+  try {
+    const sql = postgres(process.env.POSTGRES_URL, {
+      max: 1,
+      idle_timeout: 5,
+    });
+
+    const rows = await sql<
+      {
+        serviceName: string;
+        baseUrl: string | null;
+        isEnabled: boolean | null;
+      }[]
+    >`
+      SELECT "serviceName", "baseUrl", "isEnabled"
+      FROM service_config
+      WHERE "serviceName" = ANY(${HOMELAB_SERVICES as unknown as string[]})
+    `;
+
+    await sql.end();
+
+    // Mark services that have a configured baseUrl
+    for (const row of rows) {
+      const name = row.serviceName as HomelabService;
+      if (HOMELAB_SERVICES.includes(name)) {
+        result[name] = {
+          configured: Boolean(row.baseUrl),
+          enabled: row.isEnabled ?? undefined,
+        };
+      }
+    }
+
+    // Services not in DB rows are explicitly not configured
+    for (const service of HOMELAB_SERVICES) {
+      if (result[service] === null) {
+        result[service] = { configured: false };
+      }
+    }
+  } catch {
+    // DB error while checking services — return nulls (unknown state)
+    return {
+      jellyfin: null,
+      radarr: null,
+      sonarr: null,
+      jellyseerr: null,
+    };
+  }
+
+  return result;
 }
