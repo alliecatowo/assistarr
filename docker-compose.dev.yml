@@ -1,0 +1,42 @@
+# Assistarr Docker Compose — Development Override
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This file:
+# - Mounts source code for hot reload
+# - Exposes postgres for local DB tools (TablePlus, Drizzle Studio)
+# - Enables Redis by default for dev
+# - Sets dev-friendly env vars
+
+services:
+  assistarr:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install && pnpm dev"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - DATABASE_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/${POSTGRES_DB:-assistarr}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "${ASSISTARR_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    # Expose postgres for local development tools
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-devpassword}
+
+  redis:
+    profiles: []  # Remove profile restriction in dev — always start redis
