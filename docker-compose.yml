@@ -1,50 +1,58 @@
-# Assistarr Docker Compose Configuration
-# Development and self-hosting setup
+# Assistarr Docker Compose — Self-Hosted Configuration
 #
-# Usage:
-#   docker compose up -d          # Start all services
-#   docker compose logs -f        # View logs
-#   docker compose down           # Stop all services
+# Quick start:
+#   cp .env.example .env
+#   # Edit .env with your values (AUTH_SECRET, OPENROUTER_API_KEY, etc.)
+#   docker compose up -d
+#
+# With pre-built image (no local build required):
+#   ASSISTARR_IMAGE=ghcr.io/alliecatowo/assistarr:latest docker compose up -d
+#
+# With Redis (resumable AI streams):
+#   docker compose --profile redis up -d
+#
+# Full media stack (Radarr + Sonarr network):
+#   docker compose --profile redis --profile media up -d
 
 services:
   # ==========================================
   # Assistarr Application
   # ==========================================
   assistarr:
+    image: ${ASSISTARR_IMAGE:-assistarr:local}
     build:
       context: .
       dockerfile: Dockerfile
     container_name: assistarr
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${ASSISTARR_PORT:-3000}:3000"
+    env_file:
+      - .env
     environment:
-      # Required
-      - POSTGRES_URL=postgres://assistarr:assistarr@postgres:5432/assistarr
-      - AUTH_SECRET=${AUTH_SECRET}
-
-      # AI Provider (at least one required)
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY:-}
-      - AI_PROVIDER=${AI_PROVIDER:-}
-
-      # Optional
-      - REDIS_URL=redis://redis:6379
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
+      # Injected at runtime — override individual vars in .env
+      - DATABASE_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-assistarr}
+      - REDIS_URL=${REDIS_ENABLED:-false} == "true" && echo "redis://redis:6379" || echo ""
       - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
-      - assistarr-network
+      - assistarr-internal
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
+    labels:
+      # Traefik reverse proxy labels (optional, enable if using Traefik)
+      - "traefik.enable=${TRAEFIK_ENABLED:-false}"
+      - "traefik.http.routers.assistarr.rule=Host(`${ASSISTARR_DOMAIN:-assistarr.local}`)"
+      - "traefik.http.routers.assistarr.entrypoints=websecure"
+      - "traefik.http.routers.assistarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.assistarr.loadbalancer.server.port=3000"
 
   # ==========================================
   # PostgreSQL Database
@@ -54,32 +62,39 @@ services:
     container_name: assistarr-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=assistarr
-      - POSTGRES_PASSWORD=assistarr
-      - POSTGRES_DB=assistarr
+      - POSTGRES_USER=${POSTGRES_USER:-assistarr}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — set it in .env}
+      - POSTGRES_DB=${POSTGRES_DB:-assistarr}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - assistarr-network
+      - assistarr-internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U assistarr -d assistarr"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-assistarr} -d ${POSTGRES_DB:-assistarr}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
+    # Do not expose postgres port by default (security)
+    # Uncomment if you need external DB access:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
 
   # ==========================================
-  # Redis (Optional - for resumable streams)
+  # Redis (Optional — for resumable AI streams)
+  # Enable with: docker compose --profile redis up -d
   # ==========================================
   redis:
     image: redis:7-alpine
     container_name: assistarr-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    profiles:
+      - redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     networks:
-      - assistarr-network
+      - assistarr-internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -91,12 +106,12 @@ services:
 # Networks
 # ==========================================
 networks:
-  assistarr-network:
+  assistarr-internal:
     driver: bridge
-    # To connect with your media stack (Radarr, Sonarr, etc.),
-    # uncomment and configure external network:
+    # Uncomment to connect to an existing media stack network
+    # (allows Assistarr to reach Radarr/Sonarr/Jellyfin by container name)
     # external:
-    #   name: media-network
+    #   name: ${MEDIA_NETWORK:-media-stack}
 
 # ==========================================
 # Volumes
