@@ -11,15 +11,20 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
-    open-pull-requests-limit: 10
+    # Cap to 3 open PRs to avoid PR sprawl
+    open-pull-requests-limit: 3
+    # Ignore major version bumps — they require manual migration PRs
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      # Group minor and patch updates for production dependencies
+      # Group all minor and patch production dependency updates
       production-dependencies:
         dependency-type: "production"
         update-types:
           - "minor"
           - "patch"
-      # Group all development dependency updates
+      # Group all development dependency updates (minor + patch)
       development-dependencies:
         dependency-type: "development"
         update-types:
@@ -36,4 +41,16 @@ updates:
       timezone: "UTC"
     commit-message:
       prefix: "chore(ci)"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 1
+    # Ignore major version bumps — actions major versions often don't exist yet
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Group all GitHub Actions minor/patch updates into one PR
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
