@@ -1,0 +1,12 @@
+assistarr
+Copyright 2026 Allison Coleman
+
+This project is a derivative work of the Vercel AI Chatbot template
+(https://github.com/vercel/ai-chatbot), Copyright 2024 Vercel, Inc.,
+licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Modifications made by Allison Coleman (2026) include adapting the chatbot
+into assistarr: new features, integrations, and changes throughout the
+codebase. Those modifications are also released under the Apache License,
+Version 2.0. The original copyright and license notices are retained in
+LICENSE.
