@@ -21,7 +21,7 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
-      - DATABASE_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/${POSTGRES_DB:-assistarr}
+      - POSTGRES_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/${POSTGRES_DB:-assistarr}
       - REDIS_URL=redis://redis:6379
     ports:
       - "${ASSISTARR_PORT:-3000}:3000"

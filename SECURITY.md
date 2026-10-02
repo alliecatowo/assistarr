@@ -73,7 +73,7 @@ When contributing to Assistarr:
 
 Sensitive configuration should be provided via environment variables:
 
-- `DATABASE_URL` - Database connection string
+- `POSTGRES_URL` - Database connection string
 - `NEXTAUTH_SECRET` - Authentication secret (generate with `openssl rand -base64 32`)
 - `*_API_KEY` - Service API keys
 

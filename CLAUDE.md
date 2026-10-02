@@ -109,7 +109,7 @@ Error display is handled in `components/message.tsx` in the generic tool handler
 
 ```env
 # Required
-DATABASE_URL=
+POSTGRES_URL=
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=
 

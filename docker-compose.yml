@@ -31,7 +31,7 @@ services:
       - .env
     environment:
       # Injected at runtime — override individual vars in .env
-      - DATABASE_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-assistarr}
+      - POSTGRES_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-assistarr}
       - REDIS_URL=${REDIS_ENABLED:-false} == "true" && echo "redis://redis:6379" || echo ""
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
