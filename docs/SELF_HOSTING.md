@@ -23,7 +23,7 @@ This guide covers deploying Assistarr on your own infrastructure using Docker.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/assistarr.git
+git clone https://github.com/alliecatowo/assistarr.git
 cd assistarr
 ```
 
