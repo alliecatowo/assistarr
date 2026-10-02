@@ -46,3 +46,12 @@ yarn-error.log*
 # Ladle
 build-ladle/
 .ladle/.cache/
+
+# logs, build caches, local tool config
+*.log
+firebase-debug.log
+*.tsbuildinfo
+biome_errors.txt
+.mcp.json
+.env*
+!.env.example
