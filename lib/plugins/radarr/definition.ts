@@ -164,6 +164,7 @@ export class RadarrPlugin extends BaseServicePlugin {
       displayName: "Rename Movie Files (Radarr)",
       category: "management",
       description: "Rename files to match naming convention",
+      requiresApproval: true,
       modes: ["chat"],
     }),
     deleteRadarrMovieFile: this.defineTool(deleteMovieFile, {
@@ -183,6 +184,7 @@ export class RadarrPlugin extends BaseServicePlugin {
       displayName: "Mark Failed (Radarr)",
       category: "management",
       description: "Mark a download as failed for retry",
+      requiresApproval: true,
       modes: ["chat"],
     }),
     getRadarrBlocklist: this.defineTool(getBlocklist, {
@@ -195,6 +197,7 @@ export class RadarrPlugin extends BaseServicePlugin {
       displayName: "Remove from Blocklist (Radarr)",
       category: "queue",
       description: "Remove items from the blocklist",
+      requiresApproval: true,
       modes: ["chat"],
     }),
     getRadarrCommandStatus: this.defineTool(getCommandStatus, {

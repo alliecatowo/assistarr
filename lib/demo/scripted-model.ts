@@ -21,6 +21,7 @@ const HELP = `This is the **Assistarr public demo**. It runs against a fake medi
 - "Show my movie library" / "Show my TV shows"
 - "Search for Safety Last" / "Find Duck Soup"
 - "What quality profiles do I have?"
+- "Delete a movie" (shows the approval prompt; nothing is ever applied)
 
 Install Assistarr yourself (see the GitHub repo) to connect your real Radarr, Sonarr, qBittorrent, Jellyfin and Jellyseerr and chat with a real model.`;
 
@@ -78,7 +79,11 @@ function plan(text: string, available: Set<string>): Call[] {
     }
   };
 
-  if (/queue|download|progress|torrent/.test(t)) {
+  if (/\b(delete|remove)\b.*\bmovie/.test(t)) {
+    // Destructive: the tool is gated by needsApproval, so this only ever
+    // produces an approval card in the demo; nothing is applied.
+    add("deleteRadarrMovie", { movieId: 1, deleteFiles: false });
+  } else if (/queue|download|progress|torrent/.test(t)) {
     add("getRadarrQueue");
     add("getSonarrQueue");
   } else if (/calendar|upcoming|coming|airing|schedule|release/.test(t)) {
