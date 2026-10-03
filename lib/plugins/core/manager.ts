@@ -5,6 +5,22 @@ import type { ServicePlugin, ToolDefinition } from "./types";
 
 const log = createLogger("plugin-manager");
 
+/**
+ * Enforce `requiresApproval` at the AI SDK level. Tools flagged in their
+ * definition always pause for explicit user approval before executing, so a
+ * prompt-injected tool call can never run a destructive action on its own.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Tools can be any type
+export function applyApprovalPolicy<T extends Record<string, any>>(
+  tool: T,
+  def: Pick<ToolDefinition, "requiresApproval">
+): T {
+  if (!def.requiresApproval) {
+    return tool;
+  }
+  return { ...tool, needsApproval: true };
+}
+
 export class PluginManager {
   private static instance: PluginManager;
   private readonly services: Map<string, ServicePlugin> = new Map();
@@ -86,10 +102,10 @@ export class PluginManager {
 
       for (const [toolName, toolDef] of Object.entries(plugin.tools)) {
         if (this.shouldIncludeTool(mode, toolDef)) {
-          tools[toolName] = toolDef.factory({
-            session,
-            config,
-          });
+          tools[toolName] = applyApprovalPolicy(
+            toolDef.factory({ session, config }),
+            toolDef
+          );
         }
       }
     }
