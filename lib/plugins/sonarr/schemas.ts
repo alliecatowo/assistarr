@@ -321,7 +321,7 @@ export const SonarrHistoryRecordSchema = z
       "episodeFileRenamed",
       "downloadIgnored",
     ]),
-    data: z.record(z.unknown()),
+    data: z.record(z.string(), z.unknown()),
   })
   .passthrough();
 
@@ -373,7 +373,7 @@ export const SonarrCommandSchema = z
     name: z.string(),
     commandName: z.string(),
     message: z.string().optional(),
-    body: z.record(z.unknown()),
+    body: z.record(z.string(), z.unknown()),
     priority: z.string(),
     status: z.enum(["queued", "started", "completed", "failed", "aborted"]),
     result: z.string(),

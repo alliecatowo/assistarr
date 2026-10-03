@@ -110,6 +110,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-1",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -158,6 +159,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-2",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -213,6 +215,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-3",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -236,6 +239,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-4",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -259,6 +263,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-5",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -282,6 +287,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-6",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -304,6 +310,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-7",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -334,6 +341,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-8",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -362,6 +370,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-9",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -395,6 +404,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-10",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -423,6 +433,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-11",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -454,6 +465,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-12",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -476,6 +488,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-13",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -501,6 +514,7 @@ describe("Jellyfin search-media tool", () => {
             messages: [],
             toolCallId: "test-call-14",
             abortSignal: new AbortController().signal,
+            context: {},
           }
         )
       ).rejects.toThrow(ToolError);
@@ -517,6 +531,7 @@ describe("Jellyfin search-media tool", () => {
             messages: [],
             toolCallId: "test-call-15",
             abortSignal: new AbortController().signal,
+            context: {},
           }
         )
       ).rejects.toThrow(ToolError);
@@ -528,6 +543,7 @@ describe("Jellyfin search-media tool", () => {
             messages: [],
             toolCallId: "test-call-15b",
             abortSignal: new AbortController().signal,
+            context: {},
           }
         );
       } catch (error) {
@@ -558,6 +574,7 @@ describe("Jellyfin search-media tool", () => {
             messages: [],
             toolCallId: "test-call-16",
             abortSignal: new AbortController().signal,
+            context: {},
           }
         )
       ).rejects.toThrow(ToolError);
@@ -580,6 +597,7 @@ describe("Jellyfin search-media tool", () => {
             messages: [],
             toolCallId: "test-call-16b",
             abortSignal: new AbortController().signal,
+            context: {},
           }
         );
       } catch (error) {
@@ -605,6 +623,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-17",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -634,6 +653,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-18",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -668,6 +688,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-19",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 
@@ -696,6 +717,7 @@ describe("Jellyfin search-media tool", () => {
           messages: [],
           toolCallId: "test-call-20",
           abortSignal: new AbortController().signal,
+          context: {},
         }
       )) as any;
 

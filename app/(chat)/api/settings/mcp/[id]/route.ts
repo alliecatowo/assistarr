@@ -15,7 +15,7 @@ const updateMCPSchema = z.object({
   url: z.string().url().optional(),
   transport: z.enum(["sse", "http"]).optional(),
   apiKey: z.string().nullable().optional(),
-  headers: z.record(z.string()).nullable().optional(),
+  headers: z.record(z.string(), z.string()).nullable().optional(),
   isEnabled: z.boolean().optional(),
   availableTools: z
     .array(
@@ -92,7 +92,7 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
+        { error: "Invalid input", details: error.issues },
         { status: 400 }
       );
     }

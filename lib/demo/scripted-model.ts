@@ -189,12 +189,16 @@ function textParts(text: string): AnyRecord[] {
     { type: "text-start", id: "t1" },
     ...chunks.map((delta) => ({ type: "text-delta", id: "t1", delta })),
     { type: "text-end", id: "t1" },
-    { type: "finish", finishReason: "stop", usage },
+    {
+      type: "finish",
+      finishReason: { unified: "stop", raw: undefined },
+      usage,
+    },
   ];
 }
 
 export const scriptedModel = {
-  specificationVersion: "v3",
+  specificationVersion: "v4",
   provider: "demo",
   modelId: "demo-scripted",
   supportedUrls: {},
@@ -203,7 +207,7 @@ export const scriptedModel = {
     // Used for chat titles: a short slice of the user's message.
     const text = lastUserText(prompt).replace(/\s+/g, " ").trim();
     return {
-      finishReason: "stop",
+      finishReason: { unified: "stop", raw: undefined },
       usage,
       content: [{ type: "text", text: text.slice(0, 48) || "Demo chat" }],
       warnings: [],
@@ -233,7 +237,11 @@ export const scriptedModel = {
         toolName: c.name,
         input: JSON.stringify(c.input),
       })),
-      { type: "finish", finishReason: "tool-calls", usage },
+      {
+        type: "finish",
+        finishReason: { unified: "tool-calls", raw: undefined },
+        usage,
+      },
     ]);
   },
 } as unknown as LanguageModel;

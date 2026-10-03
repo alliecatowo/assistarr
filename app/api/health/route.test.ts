@@ -64,7 +64,7 @@ describe("GET /api/health", () => {
 
     // Re-import to pick up env changes
     vi.resetModules();
-    vi.mock("postgres", () => ({
+    vi.doMock("postgres", () => ({
       default: vi.fn(() =>
         Object.assign(
           vi.fn(() => Promise.resolve([])),
