@@ -1,56 +1,32 @@
+# Weekly version updates. Minor and patch bumps are grouped into one PR and
+# auto-merged by .github/workflows/dependabot-automerge.yml once required CI is
+# green; major bumps arrive as separate PRs labelled `major-update`.
 version: 2
 updates:
-  # npm ecosystem for package.json dependencies
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(deps-dev)"
-    # Cap to 3 open PRs to avoid PR sprawl
-    open-pull-requests-limit: 3
-    # Ignore major version bumps — they require manual migration PRs
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      # Group all minor and patch production dependency updates
-      production-dependencies:
-        dependency-type: "production"
-        update-types:
-          - "minor"
-          - "patch"
-      # Group all development dependency updates (minor + patch)
-      development-dependencies:
-        dependency-type: "development"
-        update-types:
-          - "minor"
-          - "patch"
-
-  # GitHub Actions ecosystem
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    commit-message:
-      prefix: "chore(ci)"
-    open-pull-requests-limit: 1
-    # Ignore major version bumps — actions major versions often don't exist yet
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      # Group all GitHub Actions minor/patch updates into one PR
-      github-actions:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+  groups:
+    minor-and-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: npm
+  directory: /
+  schedule:
+    interval: weekly
+  groups:
+    minor-and-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: docker
+  directory: /
+  schedule:
+    interval: weekly
+  groups:
+    minor-and-patch:
+      update-types:
+      - minor
+      - patch
