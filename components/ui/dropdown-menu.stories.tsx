@@ -2,7 +2,7 @@ import type { Story, StoryDefault } from "@ladle/react";
 import {
   Cloud,
   CreditCard,
-  Github,
+  GitBranch,
   Keyboard,
   LifeBuoy,
   LogOut,
@@ -164,7 +164,7 @@ export const WithSubmenus: Story = () => (
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuItem>
-        <Github className="mr-2 h-4 w-4" />
+        <GitBranch className="mr-2 h-4 w-4" />
         <span>GitHub</span>
       </DropdownMenuItem>
       <DropdownMenuItem>
