@@ -9,6 +9,9 @@ hero:
       text: Get started
       link: /guide/getting-started
     - theme: alt
+      text: Try the demo
+      link: https://assistarr.vercel.app
+    - theme: alt
       text: Self-hosting
       link: /guide/self-hosting
 features:
@@ -24,11 +27,9 @@ features:
 
 <div class="landing">
 
-## See it
+## Try it
 
-![The Assistarr chat window with suggested prompts such as what is in my download queue](/screens/chat.png)
-
-A capture of the running app. Ask in plain language, and Assistarr calls the Radarr, Sonarr, Jellyfin, Jellyseerr or qBittorrent tool that fits. Anything that changes state shows an approval step first. A hosted live demo is not available, because Assistarr needs your own services and database.
+[Try the live demo](https://assistarr.vercel.app). It opens straight into the chat as a guest, against a made-up library and a scripted assistant, so no media server or account is needed. Ask what is downloading, what is coming up on the calendar, or to search for a title, and Assistarr calls the same Radarr and Sonarr tools it uses on a real server. The demo is read-only: nothing you do is saved, and settings are locked. To use it with your own services and a real model, install it yourself below.
 
 ## Install
 
