@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { signIn } from "@/app/(auth)/auth";
 import { isDevelopmentEnvironment } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { guestCreationAllowed } from "@/lib/guest-limit";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -16,6 +17,13 @@ export async function GET(request: Request) {
 
   if (token) {
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!(await guestCreationAllowed())) {
+    return NextResponse.json(
+      { error: "Too many new sessions from this address. Try again later." },
+      { status: 429 }
+    );
   }
 
   return signIn("guest", { redirect: true, redirectTo: redirectUrl });

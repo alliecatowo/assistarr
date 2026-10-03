@@ -4,6 +4,7 @@ import type { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { TIMING_SAFE_HASH } from "@/lib/constants";
 import { createGuestUser, getUser } from "@/lib/db/queries/index";
+import { allowGuestCreation } from "@/lib/guest-limit";
 import { authConfig } from "./auth.config";
 
 export type UserType = "guest" | "regular";
@@ -69,6 +70,9 @@ export const {
       id: "guest",
       credentials: {},
       async authorize() {
+        if (!(await allowGuestCreation())) {
+          return null;
+        }
         const [guestUser] = await createGuestUser();
         return { ...guestUser, type: "guest" };
       },

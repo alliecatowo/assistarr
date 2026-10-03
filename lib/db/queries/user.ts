@@ -1,6 +1,6 @@
+import { randomInt } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { ChatSDKError } from "../../errors";
-import { generateUUID } from "../../utils";
 import { db } from "../db";
 import { type User, user } from "../schema";
 import { generateHashedPassword } from "../utils";
@@ -26,9 +26,17 @@ export async function createUser(email: string, password: string) {
   }
 }
 
+const UNUSABLE_PASSWORD = "!guest-no-password";
+
 export async function createGuestUser() {
-  const email = `guest-${Date.now()}`;
-  const password = generateHashedPassword(generateUUID());
+  // Digits only (matches guestRegex). Random suffix avoids same-millisecond
+  // collisions.
+  const email = `guest-${Date.now()}${randomInt(0, 1_000_000)
+    .toString()
+    .padStart(6, "0")}`;
+  // Guests never sign in with a password; store an unusable (non-bcrypt) value
+  // instead of burning ~100 ms of synchronous bcrypt per guest.
+  const password = UNUSABLE_PASSWORD;
 
   try {
     return await db.insert(user).values({ email, password }).returning({

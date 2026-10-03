@@ -65,7 +65,8 @@ export async function POST(request: Request) {
       "Chat request received"
     );
 
-    const { session, userAIConfig } = await validateSessionAndRateLimit();
+    const { session, userAIConfig } =
+      await validateSessionAndRateLimit(selectedChatModel);
     // A request is a tool-approval continuation only when it carries `messages`
     // and no stand-alone `message`. The history itself always comes from the DB.
     const isToolApprovalFlow = Boolean(messages) && !message;
