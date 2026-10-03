@@ -382,9 +382,7 @@ export class ApiClient {
         "Failed to parse JSON response"
       );
       throw new Error(
-        `Failed to parse JSON response: ${preview}${
-          text.length > 200 ? "..." : ""
-        }`
+        "Failed to parse JSON response (unexpected content type from service)"
       );
     }
 

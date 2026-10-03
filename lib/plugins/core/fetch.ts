@@ -1,5 +1,6 @@
 import { DEMO_BASE_URL, isDemoMode } from "@/lib/demo/mode";
 import { demoFetch } from "@/lib/demo/servarr";
+import { safeFetch } from "@/lib/net/ssrf";
 
 /**
  * fetch() for calls to user-configured services. In demo mode, URLs under the
@@ -18,5 +19,5 @@ export function servarrFetch(
     }
     return Promise.resolve(demoFetch(url, init));
   }
-  return fetch(url, init);
+  return safeFetch(url, init);
 }

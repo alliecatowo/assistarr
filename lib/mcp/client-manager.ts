@@ -1,3 +1,4 @@
+import { assertSafeServiceUrl } from "@/lib/net/ssrf";
 import { createLogger } from "../logger";
 import type {
   MCPClientOptions,
@@ -32,6 +33,7 @@ async function getMCPClientModule() {
 export async function createMCPClientWrapper(
   options: MCPClientOptions
 ): Promise<MCPClientWrapper> {
+  await assertSafeServiceUrl(options.url);
   const { createMCPClient } = await getMCPClientModule();
 
   const headers: Record<string, string> = {
