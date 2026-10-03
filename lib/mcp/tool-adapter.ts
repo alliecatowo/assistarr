@@ -3,6 +3,13 @@ import { createLogger } from "../logger";
 import { getMCPTools, namespaceMCPTool } from "./client-manager";
 import type { MCPClientWrapper, NamespacedMCPTool } from "./types";
 
+// biome-ignore lint/suspicious/noExplicitAny: MCP Tool types are dynamically typed
+type AnyTool = Tool<any, any>;
+
+function approvalRequired(tool: Record<string, unknown>): AnyTool {
+  return { ...tool, needsApproval: true } as unknown as AnyTool;
+}
+
 const log = createLogger("mcp:tool-adapter");
 
 /**
@@ -26,10 +33,11 @@ export async function adaptMCPTools(
       "Adapting MCP tool"
     );
 
-    // The MCP tools from AI SDK should already be in the correct format
-    // We just need to rename them with namespacing
-    // biome-ignore lint/suspicious/noExplicitAny: MCP Tool types are dynamically typed
-    adaptedTools[namespacedName] = mcpTool as Tool<any, any>;
+    // Rename with namespacing. External MCP tools are untrusted, so they
+    // always require explicit user approval before running.
+    adaptedTools[namespacedName] = approvalRequired(
+      mcpTool as Record<string, unknown>
+    );
   }
 
   return adaptedTools;
