@@ -1,3 +1,5 @@
+"use server";
+
 import { isDemoMode } from "@/lib/demo/mode";
 
 ("use server");
