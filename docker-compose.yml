@@ -29,7 +29,8 @@ services:
     environment:
       # Injected at runtime — override individual vars in .env
       - POSTGRES_URL=postgres://${POSTGRES_USER:-assistarr}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-assistarr}
-      - REDIS_URL=${REDIS_ENABLED:-false} == "true" && echo "redis://redis:6379" || echo ""
+      # Set REDIS_URL=redis://redis:6379 in .env when running with --profile redis
+      - REDIS_URL=${REDIS_URL:-}
       # Self-hosted: arr services live on the LAN / compose network. Link-local and
       # cloud-metadata addresses stay blocked regardless. Set false for multi-tenant use.
       - ALLOW_PRIVATE_SERVICE_URLS=${ALLOW_PRIVATE_SERVICE_URLS:-true}

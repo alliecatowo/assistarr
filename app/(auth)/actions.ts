@@ -1,8 +1,8 @@
 "use server";
 
 import { z } from "zod";
-
 import { createUser, getUser } from "@/lib/db/queries/index";
+import { isDemoMode } from "@/lib/demo/mode";
 
 import { signIn } from "./auth";
 
@@ -55,6 +55,9 @@ export const register = async (
   _: RegisterActionState,
   formData: FormData
 ): Promise<RegisterActionState> => {
+  if (isDemoMode()) {
+    return { status: "failed" };
+  }
   try {
     const validatedData = authFormSchema.parse({
       email: formData.get("email"),

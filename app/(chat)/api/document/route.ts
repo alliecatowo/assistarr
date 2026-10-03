@@ -1,11 +1,18 @@
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
-import type { ArtifactKind } from "@/components/artifact/artifact";
 import {
   deleteDocumentsByIdAfterTimestamp,
   getDocumentsById,
   saveDocument,
 } from "@/lib/db/queries/index";
+import { demoWriteBlockedResponse } from "@/lib/demo/mode";
 import { ChatSDKError } from "@/lib/errors";
+
+const documentBodySchema = z.object({
+  content: z.string().max(200_000),
+  title: z.string().min(1).max(200),
+  kind: z.enum(["text", "code", "sheet"]),
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -40,6 +47,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
@@ -56,12 +68,16 @@ export async function POST(request: Request) {
     return new ChatSDKError("not_found:document").toResponse();
   }
 
-  const {
-    content,
-    title,
-    kind,
-  }: { content: string; title: string; kind: ArtifactKind } =
-    await request.json();
+  const parsedBody = documentBodySchema.safeParse(
+    await request.json().catch(() => null)
+  );
+  if (!parsedBody.success) {
+    return new ChatSDKError(
+      "bad_request:api",
+      "Invalid document payload."
+    ).toResponse();
+  }
+  const { content, title, kind } = parsedBody.data;
 
   const documents = await getDocumentsById({ id });
 
@@ -85,6 +101,11 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const timestamp = searchParams.get("timestamp");

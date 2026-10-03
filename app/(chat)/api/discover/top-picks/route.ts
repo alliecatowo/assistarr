@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import { getLanguageModel, getLanguageModelForTier } from "@/lib/ai/providers";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
 import { getActiveUserAIConfig } from "@/lib/db/queries/user-ai-config";
+import { limitLlmRoute } from "@/lib/llm-route-limit";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { MediaStatus } from "@/lib/plugins/jellyseerr/types";
 import { RadarrClient } from "@/lib/plugins/radarr/client";
@@ -573,6 +574,11 @@ export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limited = await limitLlmRoute(session.user.id, "top-picks");
+  if (limited) {
+    return limited;
   }
 
   // Parse count parameter from URL

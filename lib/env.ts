@@ -36,7 +36,13 @@ const baseEnvSchema = z.object({
   // Authentication (required in production, optional in test)
   AUTH_SECRET: isTestEnv
     ? z.string().default("test-secret-at-least-32-characters-long")
-    : z.string().min(1, "AUTH_SECRET is required"),
+    : z
+        .string()
+        .min(1, "AUTH_SECRET is required")
+        .refine(
+          (v) => !v.startsWith("change-me"),
+          "AUTH_SECRET is still the .env.example placeholder; generate one with: openssl rand -base64 32"
+        ),
 
   // AI Providers (at least one required - validated below)
   OPENROUTER_API_KEY: z.string().optional(),
