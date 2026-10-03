@@ -1,4 +1,4 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -54,6 +54,6 @@ export default sentryEnabled
       },
 
       // Automatically tree-shake Sentry logger statements to reduce bundle size
-      disableLogger: true,
+      webpack: { treeshake: { removeDebugLogging: true } },
     })
   : nextConfig;
