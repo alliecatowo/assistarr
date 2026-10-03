@@ -8,6 +8,8 @@ on:
       - ".ladle/**"
       - "app/globals.css"
       - "tests/visual/**"
+      - "playwright.config.ts"
+      - ".github/workflows/visual-tests.yml"
 
 jobs:
   visual-test:
