@@ -112,8 +112,8 @@ export function decodeCursor(cursor: string): PaginationCursor | null {
     return null;
   }
 
-  const timestampStr = cursor.substring(0, separatorIndex);
-  const id = cursor.substring(separatorIndex + 1);
+  const timestampStr = cursor.slice(0, separatorIndex);
+  const id = cursor.slice(separatorIndex + 1);
 
   const timestamp = new Date(timestampStr);
   if (Number.isNaN(timestamp.getTime())) {

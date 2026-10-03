@@ -60,7 +60,7 @@ export function useArtifactLogic() {
 
           const currentDocument = currentDocuments.at(-1);
 
-          if (!currentDocument || !currentDocument.content) {
+          if (!currentDocument?.content) {
             setIsContentDirty(false);
             return currentDocuments;
           }

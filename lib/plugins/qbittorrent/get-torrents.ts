@@ -74,7 +74,7 @@ export const getTorrents = ({
         return {
           torrents: formattedTorrents,
           summary,
-          message: `Found ${torrents.length} torrent${torrents.length === 1 ? "" : "s"}${filter !== "all" ? ` (filtered by: ${filter})` : ""}.`,
+          message: `Found ${torrents.length} torrent${torrents.length === 1 ? "" : "s"}${filter === "all" ? "" : ` (filtered by: ${filter})`}.`,
         };
       } catch (error) {
         return {

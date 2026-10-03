@@ -76,7 +76,7 @@ function PureArtifactActions({
                 try {
                   // biome-ignore lint/suspicious/noExplicitAny: Generic matching impossible
                   await Promise.resolve(action.onClick(actionContext as any));
-                } catch (_error) {
+                } catch {
                   toast.error("Failed to execute action");
                 } finally {
                   setIsLoading(false);

@@ -29,7 +29,7 @@ export const maxDuration = 60;
 function getStreamContext() {
   try {
     return createResumableStreamContext({ waitUntil: after });
-  } catch (_) {
+  } catch {
     return null;
   }
 }

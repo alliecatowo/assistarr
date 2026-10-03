@@ -120,7 +120,7 @@ export function decrypt(encryptedData: string): string {
     ]);
 
     return plaintext.toString("utf8");
-  } catch (_error) {
+  } catch {
     // GCM authentication failure or other decryption error
     throw new Error(
       "Decryption failed: data may be corrupted or encrypted with a different key"

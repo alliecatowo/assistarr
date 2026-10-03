@@ -246,7 +246,7 @@ async function analyzeTasteProfile(
       for (const movie of sortedMovies.slice(0, 5)) {
         recentAdditions.push(movie.title);
       }
-    } catch (_e) {
+    } catch {
       // Failed to fetch endpoint
     }
   }
@@ -283,7 +283,7 @@ async function analyzeTasteProfile(
       for (const show of sortedSeries.slice(0, 5)) {
         recentAdditions.push(show.title);
       }
-    } catch (_e) {
+    } catch {
       // Sonarr not available
     }
   }
@@ -333,7 +333,7 @@ async function analyzeTasteProfile(
         }
         actorCounts[key].count++;
       }
-    } catch (_e) {
+    } catch {
       // Skip failed fetches
     }
   }
@@ -409,7 +409,7 @@ async function findTopCandidates(
           candidates.push(result);
         }
       }
-    } catch (_e) {
+    } catch {
       // Failed to fetch endpoint
     }
   }
@@ -555,7 +555,7 @@ Return ONLY the JSON array, no other text.`;
     const parsed = JSON.parse(jsonText);
     const pitches = pitchGenerationArraySchema.parse(parsed);
     return pitches;
-  } catch (_error) {
+  } catch {
     // Return generic pitches as fallback
     return candidates.map((c) => ({
       title: c.title ?? c.name ?? "Unknown",
@@ -714,7 +714,7 @@ export async function GET(request: NextRequest) {
       picks,
       message: `Generated ${picks.length} deeply personalized picks`,
     });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to generate top picks" },
       { status: 500 }

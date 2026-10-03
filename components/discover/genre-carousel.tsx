@@ -140,7 +140,7 @@ export function GenreCarousel({ disabled }: GenreCarouselProps) {
             setUserProfile(data.profile);
           }
         }
-      } catch (_error) {
+      } catch {
         // Failed to fetch profile - continue with default genre order
       }
     }

@@ -62,8 +62,6 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
           userId: args.session.user.id,
         });
       }
-
-      return;
     },
     onUpdateDocument: async (args: UpdateDocumentCallbackProps) => {
       const draftContent = await config.onUpdateDocument({
@@ -82,8 +80,6 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
           userId: args.session.user.id,
         });
       }
-
-      return;
     },
   };
 }

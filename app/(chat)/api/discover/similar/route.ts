@@ -169,7 +169,7 @@ export async function GET(request: Request) {
     const similar = buildSimilarResponse(similarRes, mediaType);
 
     return NextResponse.json({ details, similar });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch similar content" },
       { status: 500 }

@@ -545,7 +545,7 @@ export async function GET(request: Request) {
         totalItems: tasteProfile.totalItems,
       },
     });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to generate personalized pitch" },
       { status: 500 }

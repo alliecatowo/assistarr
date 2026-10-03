@@ -20,8 +20,8 @@ interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
-  start(): void;
-  stop(): void;
+  start: () => void;
+  stop: () => void;
   // biome-ignore lint/suspicious/noExplicitAny: External type
   onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
   // biome-ignore lint/suspicious/noExplicitAny: External type
@@ -39,13 +39,13 @@ interface SpeechRecognitionEvent extends Event {
 
 type SpeechRecognitionResultList = {
   readonly length: number;
-  item(index: number): SpeechRecognitionResult;
+  item: (index: number) => SpeechRecognitionResult;
   [index: number]: SpeechRecognitionResult;
 };
 
 type SpeechRecognitionResult = {
   readonly length: number;
-  item(index: number): SpeechRecognitionAlternative;
+  item: (index: number) => SpeechRecognitionAlternative;
   [index: number]: SpeechRecognitionAlternative;
   isFinal: boolean;
 };

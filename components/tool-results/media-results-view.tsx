@@ -293,7 +293,7 @@ export function MediaResultsView({
         }
 
         toast.success(data.message || "Media requested successfully");
-      } catch (_error) {
+      } catch {
         toast.error("Failed to request media");
       } finally {
         setRequestingIds((prev) => {
@@ -307,7 +307,7 @@ export function MediaResultsView({
   );
 
   const { visibleResults, hasMore, remaining, message } = useMemo(() => {
-    if (!output || !output.results || output.results.length === 0) {
+    if (!output?.results || output.results.length === 0) {
       return {
         visibleResults: [],
         hasMore: false,
@@ -333,7 +333,7 @@ export function MediaResultsView({
     setDisplayCount((prev) => prev + PAGE_SIZE);
   }, []);
 
-  if (!output || !output.results || output.results.length === 0) {
+  if (!output?.results || output.results.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
         {output?.message || "No results found."}

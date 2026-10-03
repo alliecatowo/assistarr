@@ -77,7 +77,7 @@ async function getMonitorStatus(userId: string): Promise<MonitorStatus> {
       return buildLocalStatus(userId);
     }
     return (await res.json()) as MonitorStatus;
-  } catch (_error) {
+  } catch {
     return buildLocalStatus(userId);
   }
 }
@@ -191,7 +191,7 @@ async function getForYouData(): Promise<ForYouData | null> {
       return null;
     }
     return (await res.json()) as ForYouData;
-  } catch (_error) {
+  } catch {
     return null;
   }
 }
@@ -227,7 +227,7 @@ async function getContinueWatching(
     return response.Items.map((item) =>
       mapContinueWatchingItem(item, config.baseUrl, config.apiKey)
     );
-  } catch (_error) {
+  } catch {
     return [];
   }
 }

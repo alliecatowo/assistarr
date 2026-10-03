@@ -94,7 +94,7 @@ export async function voteMessage({
 export async function getVotesByChatId({ id }: { id: string }) {
   try {
     return await db.select().from(vote).where(eq(vote.chatId, id));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get votes by chat id"
@@ -149,7 +149,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
           );
       }
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete messages by chat id after timestamp"

@@ -41,7 +41,7 @@ export const triggerSearch = ({
 
       return {
         success: true,
-        message: `Search triggered for series ID ${seriesId}${seasonNumber !== undefined ? ` season ${seasonNumber}` : ""}${episodeIds ? ` episodes ${episodeIds.join(",")}` : ""}.`,
+        message: `Search triggered for series ID ${seriesId}${seasonNumber === undefined ? "" : ` season ${seasonNumber}`}${episodeIds ? ` episodes ${episodeIds.join(",")}` : ""}.`,
       };
     },
   });

@@ -9,17 +9,11 @@ export const mockNextImage = {
 // Mock next/navigation
 export const mockNavigation = {
   useRouter: () => ({
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     push: () => {},
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     replace: () => {},
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     back: () => {},
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     forward: () => {},
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     refresh: () => {},
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     prefetch: () => {},
   }),
   usePathname: () => "/",
@@ -30,7 +24,6 @@ export const mockNavigation = {
 // Mock SWR
 export const mockSWR = {
   useSWRConfig: () => ({
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: Mock stub
     mutate: () => {},
   }),
 };

@@ -165,7 +165,7 @@ export async function fetchDiscoverySections(
     }
 
     return sections;
-  } catch (_error) {
+  } catch {
     return [];
   }
 }

@@ -210,7 +210,7 @@ export class RadarrPlugin extends BaseServicePlugin {
     try {
       await client.get("/system/status");
       return true;
-    } catch (_e) {
+    } catch {
       return false;
     }
   }

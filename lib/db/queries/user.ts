@@ -8,7 +8,7 @@ import { generateHashedPassword } from "../utils";
 export async function getUser(email: string): Promise<User[]> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get user by email"
@@ -21,7 +21,7 @@ export async function createUser(email: string, password: string) {
 
   try {
     return await db.insert(user).values({ email, password: hashedPassword });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to create user");
   }
 }
@@ -35,7 +35,7 @@ export async function createGuestUser() {
       id: user.id,
       email: user.email,
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create guest user"

@@ -332,7 +332,7 @@ export async function GET(request: Request) {
         sort,
       },
     });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch category content" },
       { status: 500 }

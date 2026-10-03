@@ -115,7 +115,7 @@ export async function GET(
       serviceName: "jellyseerr",
     });
 
-    if (!config || !config.isEnabled) {
+    if (!config?.isEnabled) {
       return NextResponse.json(
         { error: "Jellyseerr is not configured or enabled" },
         { status: 503 }

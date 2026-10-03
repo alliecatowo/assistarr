@@ -129,7 +129,7 @@ function ModelTierSelector({
       toast.success(
         `Model tier changed to ${MODEL_TIERS.find((t) => t.value === value)?.name ?? value}`
       );
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update model tier");
     } finally {
       setIsSaving(false);
@@ -255,7 +255,7 @@ function ProviderCard({
         });
         toast.error(data.error);
       }
-    } catch (_error) {
+    } catch {
       clearTimeout(timeoutId);
       setTestResult({
         status: "error",
@@ -280,7 +280,7 @@ function ProviderCard({
       });
       setApiKey(""); // Clear after successful save
       toast.success(`${provider.name} API key saved`);
-    } catch (_error) {
+    } catch {
       toast.error(`Failed to save ${provider.name} API key`);
     } finally {
       setIsSaving(false);
@@ -299,7 +299,7 @@ function ProviderCard({
       setIsEnabled(true);
       setTestResult({ status: "idle" });
       toast.success(`${provider.name} API key removed`);
-    } catch (_error) {
+    } catch {
       toast.error(`Failed to remove ${provider.name} API key`);
     } finally {
       setIsDeleting(false);
@@ -428,7 +428,7 @@ export default function AIKeysSettingsPage() {
         const data = await response.json();
         setConfigs(data);
       }
-    } catch (_error) {
+    } catch {
       clearTimeout(timeoutId);
       // Ignore error during initial load
     } finally {

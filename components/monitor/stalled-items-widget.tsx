@@ -61,7 +61,7 @@ export function StalledItemsWidget({
         <CardTitle className="text-base font-medium">Issues</CardTitle>
         {totalIssues > 0 ? (
           <Badge className="text-xs" variant="destructive">
-            {totalIssues} issue{totalIssues !== 1 ? "s" : ""}
+            {totalIssues} issue{totalIssues === 1 ? "" : "s"}
           </Badge>
         ) : (
           <Badge className="bg-green-500/15 text-green-600 dark:text-green-400 hover:bg-green-500/25 text-xs">

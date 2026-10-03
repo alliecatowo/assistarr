@@ -113,7 +113,7 @@ function MCPServerCard({
         setLatency(null);
         toast.error(result.error || "Connection failed");
       }
-    } catch (_error) {
+    } catch {
       setConnectionStatus("error");
       toast.error("Connection test failed");
     }
@@ -147,7 +147,7 @@ function MCPServerCard({
         setDiscoveredTools(null);
         setConnectionStatus("idle");
       }
-    } catch (_error) {
+    } catch {
       toast.error("Failed to save");
     } finally {
       setIsSaving(false);
@@ -163,7 +163,7 @@ function MCPServerCard({
     try {
       await onDelete(config.id);
       toast.success("MCP server removed");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to remove");
     } finally {
       setIsDeleting(false);
@@ -358,7 +358,7 @@ export default function MCPSettingsPage() {
         const data = await response.json();
         setConfigs(data);
       }
-    } catch (_error) {
+    } catch {
       // Silently fail - configs will show as empty
     } finally {
       setIsLoading(false);
