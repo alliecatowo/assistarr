@@ -3,7 +3,8 @@ import { defineConfig } from "vitepress";
 // GitHub Pages serves project sites under /<repo>/. Set DOCS_BASE=/ for a custom domain.
 export default defineConfig({
   title: "Assistarr",
-  description: "A chat assistant for your self-hosted media stack: Radarr, Sonarr, Jellyfin, Jellyseerr and qBittorrent.",
+  description:
+    "A chat assistant for your self-hosted media stack: Radarr, Sonarr, Jellyfin, Jellyseerr and qBittorrent.",
   base: process.env.DOCS_BASE ?? "/assistarr/",
   cleanUrls: true,
   lastUpdated: true,
@@ -41,9 +42,14 @@ export default defineConfig({
           { text: "Development", link: "/guide/development" },
         ],
       },
-      { text: "Reference", items: [{ text: "AI tools", link: "/reference/tools" }] },
+      {
+        text: "Reference",
+        items: [{ text: "AI tools", link: "/reference/tools" }],
+      },
     ],
-    socialLinks: [{ icon: "github", link: "https://github.com/alliecatowo/assistarr" }],
+    socialLinks: [
+      { icon: "github", link: "https://github.com/alliecatowo/assistarr" },
+    ],
     search: { provider: "local" },
   },
 });
