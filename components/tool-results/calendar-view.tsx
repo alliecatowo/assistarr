@@ -332,7 +332,7 @@ export function MovieCalendarView({
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
 
   const { hasMore, remaining, grouped, sortedDates } = useMemo(() => {
-    if (!output || !output.movies || output.movies.length === 0) {
+    if (!output?.movies || output.movies.length === 0) {
       return {
         visibleMovies: [],
         hasMore: false,
@@ -372,7 +372,7 @@ export function MovieCalendarView({
     setDisplayCount((prev) => prev + PAGE_SIZE);
   }, []);
 
-  if (!output || !output.movies || output.movies.length === 0) {
+  if (!output?.movies || output.movies.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
         {output?.message || "No upcoming movies."}
@@ -420,7 +420,7 @@ export function EpisodeCalendarView({
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
 
   const { hasMore, remaining, grouped, sortedDates } = useMemo(() => {
-    if (!output || !output.episodes || output.episodes.length === 0) {
+    if (!output?.episodes || output.episodes.length === 0) {
       return {
         visibleEpisodes: [],
         hasMore: false,
@@ -460,7 +460,7 @@ export function EpisodeCalendarView({
     setDisplayCount((prev) => prev + PAGE_SIZE);
   }, []);
 
-  if (!output || !output.episodes || output.episodes.length === 0) {
+  if (!output?.episodes || output.episodes.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
         {output?.message || "No upcoming episodes."}

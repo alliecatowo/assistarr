@@ -23,15 +23,37 @@
       "!hooks/use-mobile.ts"
     ]
   },
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedKeys": "off",
+        "useSortedInterfaceMembers": "off",
+        "useSortedAttributes": "off",
+        "useSortedProperties": "off"
+      }
+    }
+  },
   "linter": {
     "rules": {
       "suspicious": {
         "noExplicitAny": "error",
         "noUnknownAtRules": "off",
         "noConsole": "warn",
-        "noBitwiseOperators": "off"
+        "noBitwiseOperators": "off",
+        "noLeakedRender": "off",
+        "noShadow": "off",
+        "noNestedPromises": "off",
+        "noEmptyBlockStatements": "off",
+        "noUnusedExpressions": "off",
+        "noUnnecessaryConditions": "off"
       },
       "style": {
+        "useErrorCause": "off",
+        "useConsistentMethodSignatures": "off",
+        "noDescendingSpecificity": "off",
+        "noIncrementDecrement": "off",
+        "useConsistentArrowReturn": "off",
+        "useDestructuring": "off",
         "noMagicNumbers": "off",
         "noNestedTernary": "off",
         "useConsistentTypeDefinitions": "off",
@@ -39,7 +61,6 @@
         "useConsistentMemberAccessibility": "off"
       },
       "nursery": {
-        "noUnnecessaryConditions": "off",
         "useSortedClasses": "off"
       },
       "complexity": {
@@ -59,9 +80,17 @@
         "useImageSize": "off"
       },
       "performance": {
+        "noJsxPropsBind": "off",
+        "noAwaitInLoops": "off",
         "noBarrelFile": "off",
         "useTopLevelRegex": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts", "tests/**", "**/*.stories.tsx"],
+      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+    }
+  ]
 }

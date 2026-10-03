@@ -149,7 +149,6 @@ export function useMediaDetails(
         setSimilar(data.similar.map(mapToDiscoverItem));
       } catch (error) {
         if (isAbortError(error)) {
-          return;
         }
         // Failed to fetch details - will show basic info
       } finally {
@@ -221,7 +220,6 @@ export function useMediaPitch(
         setCachedPitch(tmdbId, mediaType, data.pitch, data.hasProfile);
       } catch (error) {
         if (isAbortError(error)) {
-          return;
         }
         // Failed to fetch pitch - will just show overview
       } finally {

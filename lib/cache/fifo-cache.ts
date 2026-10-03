@@ -139,11 +139,7 @@ export function rotateCache<T>(
   let existingCache = getCache<T>(key);
 
   // Handle old cache format or invalid cache
-  if (
-    !existingCache ||
-    !existingCache.items ||
-    !Array.isArray(existingCache.items)
-  ) {
+  if (!existingCache?.items || !Array.isArray(existingCache.items)) {
     existingCache = createEmptyCache<T>();
   }
 
@@ -193,8 +189,7 @@ export function isFreshSlotExpired(
 ): boolean {
   // Handle null or invalid cache
   if (
-    !cache ||
-    !cache.items ||
+    !cache?.items ||
     !Array.isArray(cache.items) ||
     cache.items.length === 0
   ) {
@@ -214,7 +209,7 @@ export function needsMoreItems(
   options: FIFOCacheOptions = {}
 ): boolean {
   // Handle null or invalid cache
-  if (!cache || !cache.items || !Array.isArray(cache.items)) {
+  if (!cache?.items || !Array.isArray(cache.items)) {
     return true;
   }
   const maxItems = options.maxItems ?? DEFAULT_MAX_ITEMS;

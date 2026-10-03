@@ -73,8 +73,8 @@ export const searchContent = ({
           results,
           message:
             results.length > 0
-              ? `Found ${results.length} result(s) for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`
-              : `No results found for "${query}"${type !== "all" ? ` (filtered by ${type})` : ""}.`,
+              ? `Found ${results.length} result(s) for "${query}"${type === "all" ? "" : ` (filtered by ${type})`}.`
+              : `No results found for "${query}"${type === "all" ? "" : ` (filtered by ${type})`}.`,
         };
       } catch (error) {
         throw ToolError.fromUnknown(

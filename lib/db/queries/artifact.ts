@@ -107,7 +107,7 @@ export async function deleteDocumentsByIdAfterTimestamp({
         .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
         .returning();
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete documents by id after timestamp"

@@ -312,7 +312,7 @@ export function ArrQueueView({ output }: ToolResultProps<ArrQueueShape>) {
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
 
   const { visibleItems, hasMore, remaining } = useMemo(() => {
-    if (!output || !output.items || output.items.length === 0) {
+    if (!output?.items || output.items.length === 0) {
       return { visibleItems: [], hasMore: false, remaining: 0 };
     }
 
@@ -328,7 +328,7 @@ export function ArrQueueView({ output }: ToolResultProps<ArrQueueShape>) {
     setDisplayCount((prev) => prev + PAGE_SIZE);
   }, []);
 
-  if (!output || !output.items || output.items.length === 0) {
+  if (!output?.items || output.items.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
         {output?.message || "No items in the download queue."}
@@ -372,7 +372,7 @@ export function TorrentQueueView({
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
 
   const { visibleTorrents, hasMore, remaining } = useMemo(() => {
-    if (!output || !output.torrents || output.torrents.length === 0) {
+    if (!output?.torrents || output.torrents.length === 0) {
       return { visibleTorrents: [], hasMore: false, remaining: 0 };
     }
 
@@ -388,7 +388,7 @@ export function TorrentQueueView({
     setDisplayCount((prev) => prev + PAGE_SIZE);
   }, []);
 
-  if (!output || !output.torrents || output.torrents.length === 0) {
+  if (!output?.torrents || output.torrents.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-2">
         {output?.message || "No torrents found."}

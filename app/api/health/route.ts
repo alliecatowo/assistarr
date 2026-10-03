@@ -75,13 +75,13 @@ export async function GET() {
   };
 
   // Only check database if env vars are present
-  if (checks.env.status !== "fail") {
-    checks.database = await checkDatabase();
-  } else {
+  if (checks.env.status === "fail") {
     checks.database = {
       status: "fail",
       message: "Skipped — missing required env vars",
     };
+  } else {
+    checks.database = await checkDatabase();
   }
 
   // Check Redis if configured

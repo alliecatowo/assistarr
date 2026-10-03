@@ -14,7 +14,7 @@ export async function createStreamId({
     await db
       .insert(stream)
       .values({ id: streamId, chatId, createdAt: new Date() });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create stream id"
@@ -32,7 +32,7 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       .execute();
 
     return streamIds.map(({ id }) => id);
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"

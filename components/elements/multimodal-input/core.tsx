@@ -160,7 +160,7 @@ function PureMultimodalInput({ className }: { className?: string }) {
       }
       const { error } = await response.json();
       toast.error(error);
-    } catch (_error) {
+    } catch {
       toast.error("Failed to upload file, please try again!");
     }
   }, []);
@@ -191,7 +191,7 @@ function PureMultimodalInput({ className }: { className?: string }) {
           ...currentAttachments,
           ...successfullyUploadedAttachments,
         ]);
-      } catch (_error) {
+      } catch {
         // Ignore errors for now
       } finally {
         setUploadQueue([]);
@@ -249,7 +249,7 @@ function PureMultimodalInput({ className }: { className?: string }) {
           ...curr,
           ...(successfullyUploadedAttachments as Attachment[]),
         ]);
-      } catch (_error) {
+      } catch {
         toast.error("Failed to upload pasted image(s)");
       } finally {
         setUploadQueue([]);
@@ -296,10 +296,10 @@ function PureMultimodalInput({ className }: { className?: string }) {
           if (!input.trim() && attachments.length === 0) {
             return;
           }
-          if (status !== "ready") {
-            toast.error("Please wait for the model to finish its response!");
-          } else {
+          if (status === "ready") {
             submitForm();
+          } else {
+            toast.error("Please wait for the model to finish its response!");
           }
         }}
       >

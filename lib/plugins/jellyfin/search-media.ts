@@ -59,7 +59,7 @@ export const searchMedia = ({
           title: item.Name,
           type: item.Type,
           year: item.ProductionYear,
-          overview: item.Overview?.substring(0, 200),
+          overview: item.Overview?.slice(0, 200),
           rating: item.CommunityRating,
           genres: item.Genres?.slice(0, 3),
           duration: item.RunTimeTicks

@@ -365,7 +365,7 @@ async function analyzeLibrary(userId: string): Promise<TasteProfile | null> {
       totalRuntimeMinutes += movieData.totalRuntimeMinutes;
       totalSizeBytes += movieData.totalSizeBytes;
       recentlyAdded.push(...movieData.recentlyAdded);
-    } catch (_e) {
+    } catch {
       // Radarr not available - continue without movies
     }
   }
@@ -383,7 +383,7 @@ async function analyzeLibrary(userId: string): Promise<TasteProfile | null> {
       totalRuntimeMinutes += seriesData.totalRuntimeMinutes;
       totalSizeBytes += seriesData.totalSizeBytes;
       recentlyAdded.push(...seriesData.recentlyAdded);
-    } catch (_e) {
+    } catch {
       // Sonarr not available - continue without TV shows
     }
   }

@@ -56,7 +56,7 @@ async function fetchJellyseerrService(
 
     const data = await response.json();
     return Array.isArray(data) ? data : null;
-  } catch (_error) {
+  } catch {
     return null;
   } finally {
     clearTimeout(timeoutId);

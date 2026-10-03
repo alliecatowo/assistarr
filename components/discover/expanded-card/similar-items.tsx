@@ -6,9 +6,7 @@ interface SimilarItemsProps {
   title?: string;
 }
 
-const NOOP_REQUEST = () => {
-  return;
-};
+const NOOP_REQUEST = () => {};
 export function SimilarItems({ items, title }: SimilarItemsProps) {
   if (items.length === 0) {
     return null;

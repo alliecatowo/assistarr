@@ -30,7 +30,6 @@ describe("demo mode servarr fixtures", () => {
     process.env.DEMO_MODE = "true";
   });
   afterEach(() => {
-    // biome-ignore lint/performance/noDelete: env cleanup
     delete process.env.DEMO_MODE;
   });
 

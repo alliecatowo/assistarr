@@ -24,7 +24,7 @@ function decryptMCPConfig(config: MCPServerConfig): MCPServerConfig {
       ...config,
       apiKey: config.apiKey ? decrypt(config.apiKey) : null,
     };
-  } catch (_error) {
+  } catch {
     // If decryption fails, it might be legacy unencrypted data
     return config;
   }

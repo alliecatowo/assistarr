@@ -57,7 +57,7 @@ export function RecommendationView({ output }: RecommendationViewProps) {
         }
 
         toast.success(data.message || "Media requested successfully");
-      } catch (_error) {
+      } catch {
         toast.error("Failed to request media");
       } finally {
         setRequestingIds((prev) => {

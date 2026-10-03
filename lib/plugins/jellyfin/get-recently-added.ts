@@ -75,7 +75,7 @@ function mapItem(item: MediaItem, baseUrl: string) {
     dateAdded: item.DateCreated
       ? new Date(item.DateCreated).toLocaleDateString()
       : null,
-    overview: item.Overview?.substring(0, 150),
+    overview: item.Overview?.slice(0, 150),
     rating: item.CommunityRating,
     genres: item.Genres?.slice(0, 3),
     duration: item.RunTimeTicks ? formatDuration(item.RunTimeTicks) : null,

@@ -374,7 +374,7 @@ export class ApiClient {
     let data: unknown;
     try {
       data = JSON.parse(text);
-    } catch (_) {
+    } catch {
       // If parsing fails, throw a more helpful error with context
       const preview = text.slice(0, 200);
       log.error(

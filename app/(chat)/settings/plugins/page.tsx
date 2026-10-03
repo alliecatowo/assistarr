@@ -338,7 +338,7 @@ function ServiceCard({
         });
         toast.error(data.error);
       }
-    } catch (_error) {
+    } catch {
       clearTimeout(timeoutId);
       setTestResult({
         status: "error",
@@ -371,7 +371,7 @@ function ServiceCard({
         isEnabled,
       });
       toast.success(`${service.name} configuration saved`);
-    } catch (_error) {
+    } catch {
       toast.error(`Failed to save ${service.name} configuration`);
     } finally {
       setIsSaving(false);
@@ -392,7 +392,7 @@ function ServiceCard({
       setPassword("");
       setIsEnabled(true);
       toast.success(`${service.name} configuration removed`);
-    } catch (_error) {
+    } catch {
       toast.error(`Failed to remove ${service.name} configuration`);
     } finally {
       setIsDeleting(false);
@@ -569,7 +569,7 @@ export default function SettingsPage() {
         const data = await response.json();
         setConfigs(data);
       }
-    } catch (_error) {
+    } catch {
       clearTimeout(timeoutId);
       // Ignore error during initial load
     } finally {

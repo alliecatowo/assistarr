@@ -66,7 +66,7 @@ function SkillCard({
       await onUpdate(skill.id, { displayName, description, instructions });
       setIsEditing(false);
       toast.success("Skill updated");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to save");
     } finally {
       setIsSaving(false);
@@ -78,7 +78,7 @@ function SkillCard({
     try {
       await onDelete(skill.id);
       toast.success("Skill deleted");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to delete");
     } finally {
       setIsDeleting(false);
@@ -88,7 +88,7 @@ function SkillCard({
   const handleToggle = async (enabled: boolean) => {
     try {
       await onUpdate(skill.id, { isEnabled: enabled });
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update");
     }
   };
@@ -269,7 +269,7 @@ Instructions for the AI go here. These will be injected into the system prompt w
       } else {
         setValidationErrors(result.errors);
       }
-    } catch (_error) {
+    } catch {
       toast.error("Failed to add skill");
     } finally {
       setIsAdding(false);
@@ -344,7 +344,7 @@ export default function SkillsSettingsPage() {
         const data = await response.json();
         setSkills(data);
       }
-    } catch (_error) {
+    } catch {
       // Silently fail - skills will show as empty
     } finally {
       setIsLoading(false);
