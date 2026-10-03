@@ -199,7 +199,7 @@ export function createChatStream(config: StreamConfig) {
         }),
         messages: modelMessages,
         stopWhen: stepCountIs(8),
-        experimental_activeTools: Object.keys(effectiveTools) as Array<
+        activeTools: Object.keys(effectiveTools) as Array<
           keyof typeof effectiveTools
         >,
         providerOptions: {
