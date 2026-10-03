@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("node:dns/promises", () => ({
+vi.mock("@/lib/net/resolve", () => ({
   // biome-ignore lint/suspicious/useAwait: mock must return a promise
-  lookup: vi.fn(async (host: string) => {
+  resolveAll: vi.fn(async (host: string) => {
     const map: Record<string, string> = {
       "public.example": "93.184.216.34",
       "rebind.example": "169.254.169.254",
@@ -11,7 +11,7 @@ vi.mock("node:dns/promises", () => ({
     if (!map[host]) {
       throw new Error("ENOTFOUND");
     }
-    return [{ address: map[host], family: 4 }];
+    return [map[host]];
   }),
 }));
 

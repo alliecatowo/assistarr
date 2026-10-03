@@ -1,5 +1,5 @@
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
+import { isIP } from "./ip";
+import { resolveAll } from "./resolve";
 
 /**
  * SSRF guard for URLs that users configure (arr services, MCP servers,
@@ -173,7 +173,7 @@ export async function assertSafeServiceUrl(raw: string): Promise<URL> {
     addresses = ["127.0.0.1"];
   } else {
     try {
-      addresses = (await lookup(bare, { all: true })).map((r) => r.address);
+      addresses = await resolveAll(bare);
     } catch {
       throw new UnsafeUrlError("Could not resolve host");
     }
