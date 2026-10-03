@@ -8,6 +8,7 @@ import {
   StarIcon,
   TvIcon,
 } from "lucide-react";
+import type { ReactElement } from "react";
 import { useCallback, useState } from "react";
 import { ExternalImage } from "@/components/ui/external-image";
 import {
@@ -213,10 +214,10 @@ export function InlineMediaLink({
  * Parse text for inline media links in the format [[Title|tmdbId|mediaType]]
  * Returns an array of text segments and InlineMediaLink components
  */
-export function parseInlineMediaLinks(text: string): (string | JSX.Element)[] {
+export function parseInlineMediaLinks(text: string): (string | ReactElement)[] {
   // Pattern: [[Title|tmdbId]] or [[Title|tmdbId|mediaType]]
   const pattern = /\[\[([^|\]]+)\|(\d+)(?:\|(movie|tv))?\]\]/g;
-  const parts: (string | JSX.Element)[] = [];
+  const parts: (string | ReactElement)[] = [];
   let lastIndex = 0;
   let keyIndex = 0;
 

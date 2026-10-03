@@ -377,7 +377,7 @@ function BrowseContent({
   page: number;
   totalPages: number;
   expandedItem: DiscoverItem | null;
-  loadMoreRef: React.RefObject<HTMLDivElement>;
+  loadMoreRef: React.RefObject<HTMLDivElement | null>;
   requestingIds: Set<number>;
   onExpand: (item: DiscoverItem) => void;
   onRequest: (tmdbId: number, mediaType: "movie" | "tv") => void;
