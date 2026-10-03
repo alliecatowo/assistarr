@@ -55,3 +55,7 @@ biome_errors.txt
 .mcp.json
 .env*
 !.env.example
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/

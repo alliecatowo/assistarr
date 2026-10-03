@@ -5,9 +5,6 @@
 #   # Edit .env with your values (AUTH_SECRET, OPENROUTER_API_KEY, etc.)
 #   docker compose up -d
 #
-# With pre-built image (no local build required):
-#   ASSISTARR_IMAGE=ghcr.io/alliecatowo/assistarr:latest docker compose up -d
-#
 # With Redis (resumable AI streams):
 #   docker compose --profile redis up -d
 #

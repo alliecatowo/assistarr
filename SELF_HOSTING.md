@@ -55,14 +55,6 @@ docker compose --profile redis up -d
 
 Then set `REDIS_URL=redis://redis:6379` in your `.env`.
 
-### Using Pre-built Image
-
-Skip the local Docker build by pulling from GHCR:
-
-```bash
-ASSISTARR_IMAGE=ghcr.io/alliecatowo/assistarr:latest docker compose up -d
-```
-
 ### With Traefik Reverse Proxy
 
 ```env

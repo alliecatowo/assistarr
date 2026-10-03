@@ -13,6 +13,8 @@
 
 <h1 align="center">Assistarr</h1>
 
+<p align="center"><a href="https://alliecatowo.github.io/assistarr/">Docs</a></p>
+
 <p align="center">
   <strong>AI-Powered Media Server Assistant</strong><br/>
   Manage your Radarr, Sonarr, Jellyfin, and Jellyseerr through natural conversation
