@@ -24,7 +24,7 @@
     "ladle": "ladle serve",
     "ladle:build": "ladle build",
     "ladle:preview": "ladle preview -p 61000",
-    "prepare": "lefthook install --reset-hooks-path"
+    "prepare": "lefthook install --reset-hooks-path || true"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.18",

@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { assertNotDemo } from "@/lib/demo/mode";
 import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
@@ -182,6 +183,7 @@ export async function upsertUserAIConfig({
   apiKey: string;
   isEnabled?: boolean;
 }): Promise<UserAIConfig> {
+  assertNotDemo();
   try {
     log.info({ userId, providerName, isEnabled }, "Upserting user AI config");
     return await withTransaction(async (tx) => {
@@ -245,6 +247,7 @@ export async function deleteUserAIConfig({
   userId: string;
   providerName: string;
 }): Promise<UserAIConfig | null> {
+  assertNotDemo();
   try {
     log.info({ userId, providerName }, "Deleting user AI config");
     const [deletedConfig] = await db
@@ -281,6 +284,7 @@ export async function updateUserModelTier({
   providerName: string;
   preferredModelTier: "lite" | "fast" | "heavy" | "thinking";
 }): Promise<UserAIConfig | null> {
+  assertNotDemo();
   try {
     log.info(
       { userId, providerName, preferredModelTier },

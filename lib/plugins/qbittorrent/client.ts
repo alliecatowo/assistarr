@@ -4,6 +4,7 @@ import {
   DEFAULT_TIMEOUT_MS,
   type RequestOptions,
 } from "../core/client";
+import { servarrFetch } from "../core/fetch";
 
 const log = createLogger("qbittorrent-client");
 
@@ -24,7 +25,7 @@ export class QBittorrentClient extends ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const response = await servarrFetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -80,7 +81,7 @@ export class QBittorrentClient extends ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const response = await servarrFetch(url, {
         headers: {
           Accept: "application/json",
           ...(cookie ? { Cookie: cookie } : {}),
@@ -112,7 +113,7 @@ export class QBittorrentClient extends ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const response = await servarrFetch(url, {
         headers: {
           Accept: "application/json",
           ...(cookie ? { Cookie: cookie } : {}),
@@ -166,7 +167,7 @@ export class QBittorrentClient extends ApiClient {
     const cookie = await this.getCookie();
 
     try {
-      const response = await fetch(url, {
+      const response = await servarrFetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",

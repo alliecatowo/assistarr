@@ -88,7 +88,8 @@ const baseEnvSchema = z.object({
  */
 const serverEnvSchema = baseEnvSchema.superRefine((data, ctx) => {
   // Skip AI provider validation in test environments
-  if (isTestEnv) {
+  // The public demo can run on the scripted model with no key
+  if (isTestEnv || process.env.DEMO_MODE === "true") {
     return;
   }
 

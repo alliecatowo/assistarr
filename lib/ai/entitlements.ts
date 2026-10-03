@@ -1,4 +1,5 @@
 import type { UserType } from "@/app/(auth)/auth";
+import { isDemoMode } from "@/lib/demo/mode";
 
 type Entitlements = {
   maxMessagesPerDay: number;
@@ -32,6 +33,12 @@ export const byokEntitlements: Entitlements = {
   maxMessagesPerMinute: 60, // 1 request per second
 };
 
+/** Tight limits for the public demo (no BYOK there). */
+const demoEntitlements: Entitlements = {
+  maxMessagesPerDay: 40,
+  maxMessagesPerMinute: 6,
+};
+
 /**
  * Get entitlements for a user, considering if they have their own API keys
  */
@@ -39,6 +46,9 @@ export function getEntitlements(
   userType: UserType,
   hasByok: boolean
 ): Entitlements {
+  if (isDemoMode()) {
+    return demoEntitlements;
+  }
   if (hasByok) {
     return byokEntitlements;
   }
