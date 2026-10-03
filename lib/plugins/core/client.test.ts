@@ -14,6 +14,8 @@ describe("ApiClient", () => {
     baseUrl: "http://test-api.com",
     apiKey: "test-api-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

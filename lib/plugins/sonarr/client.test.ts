@@ -13,6 +13,8 @@ describe("SonarrClient", () => {
     baseUrl: "http://sonarr:8989",
     apiKey: "sonarr-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

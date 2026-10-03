@@ -13,6 +13,8 @@ describe("RadarrClient", () => {
     baseUrl: "http://radarr:7878",
     apiKey: "radarr-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

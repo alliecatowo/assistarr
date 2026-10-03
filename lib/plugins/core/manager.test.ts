@@ -33,6 +33,8 @@ describe("PluginManager", () => {
     baseUrl: `http://${serviceName}:8080`,
     apiKey: `${serviceName}-api-key`,
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

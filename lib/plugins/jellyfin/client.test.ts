@@ -13,6 +13,8 @@ describe("JellyfinClient", () => {
     baseUrl: "http://jellyfin:8096",
     apiKey: "jellyfin-token",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

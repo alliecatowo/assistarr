@@ -13,6 +13,8 @@ describe("JellyseerrClient", () => {
     baseUrl: "http://jellyseerr:5055",
     apiKey: "seerr-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

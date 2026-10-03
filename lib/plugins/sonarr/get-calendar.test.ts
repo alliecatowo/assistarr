@@ -16,6 +16,8 @@ describe("Sonarr get-calendar tool", () => {
     baseUrl: "http://sonarr:8989",
     apiKey: "test-api-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

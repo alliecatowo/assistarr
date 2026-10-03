@@ -45,6 +45,8 @@ describe("Plugin System Integration", () => {
     baseUrl: `http://${serviceName}:8080`,
     apiKey: `${serviceName}-api-key`,
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -80,7 +82,7 @@ describe("Plugin System Integration", () => {
           testTool: {
             factory: ({ session, config }: ToolFactoryProps) => ({
               description: "A test tool",
-              parameters: z.object({ query: z.string() }),
+              inputSchema: z.object({ query: z.string() }),
               execute: async ({ query }) => ({
                 result: `Executed with query: ${query}`,
                 userId: session.user?.id,
@@ -121,7 +123,7 @@ describe("Plugin System Integration", () => {
               factorySpy(props);
               return {
                 description: "Tool that uses context",
-                parameters: z.object({}),
+                inputSchema: z.object({}),
                 execute: async () => ({
                   userId: props.session.user?.id,
                   serviceUrl: props.config.baseUrl,
@@ -173,7 +175,7 @@ describe("Plugin System Integration", () => {
           searchMovies: {
             factory: ({ config }: ToolFactoryProps) => ({
               description: "Search for movies",
-              parameters: z.object({ query: z.string() }),
+              inputSchema: z.object({ query: z.string() }),
               execute: async ({ query }) => {
                 // Simulate API call with config
                 const response = await mockApiCall(config.baseUrl, query);
@@ -236,7 +238,7 @@ describe("Plugin System Integration", () => {
           errorTool: {
             factory: () => ({
               description: "Tool that may error",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => {
                 try {
                   await mockApiCall();
@@ -293,7 +295,7 @@ describe("Plugin System Integration", () => {
           searchMovies: {
             factory: () => ({
               description: "Search movies",
-              parameters: z.object({ query: z.string() }),
+              inputSchema: z.object({ query: z.string() }),
               execute: async ({ query }) => ({
                 type: "movie",
                 query,
@@ -319,7 +321,7 @@ describe("Plugin System Integration", () => {
           searchShows: {
             factory: () => ({
               description: "Search TV shows",
-              parameters: z.object({ query: z.string() }),
+              inputSchema: z.object({ query: z.string() }),
               execute: async ({ query }) => ({
                 type: "tv",
                 query,
@@ -384,7 +386,7 @@ describe("Plugin System Integration", () => {
           enabledTool: {
             factory: () => ({
               description: "Enabled tool",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => ({ enabled: true }),
             }),
             displayName: "Enabled Tool",
@@ -405,7 +407,7 @@ describe("Plugin System Integration", () => {
           disabledTool: {
             factory: () => ({
               description: "Disabled tool",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => ({ disabled: true }),
             }),
             displayName: "Disabled Tool",
@@ -445,7 +447,7 @@ describe("Plugin System Integration", () => {
           chatOnlyTool: {
             factory: () => ({
               description: "Chat only",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => ({}),
             }),
             displayName: "Chat Only",
@@ -456,7 +458,7 @@ describe("Plugin System Integration", () => {
           discoverTool: {
             factory: () => ({
               description: "Discover mode",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => ({}),
             }),
             displayName: "Discover Tool",
@@ -467,7 +469,7 @@ describe("Plugin System Integration", () => {
           bothModesTool: {
             factory: () => ({
               description: "Both modes",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => ({}),
             }),
             displayName: "Both Modes",
@@ -604,7 +606,7 @@ describe("Plugin System Integration", () => {
           detailedTool: {
             factory: () => ({
               description: "Tool desc",
-              parameters: z.object({}),
+              inputSchema: z.object({}),
               execute: async () => ({}),
             }),
             displayName: "Detailed Tool",
