@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
 import { isDemoMode } from "@/lib/demo/mode";
+import { safeUploadName, sniffImageType } from "@/lib/upload-validation";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -32,6 +33,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (session.user?.type === "guest") {
+    return NextResponse.json(
+      { error: "Sign in to upload files" },
+      { status: 403 }
+    );
+  }
+
   if (request.body === null) {
     return new Response("Request body is empty", { status: 400 });
   }
@@ -54,13 +62,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
-    // Get filename from formData since Blob doesn't have name property
-    const filename = (formData.get("file") as File).name;
     const fileBuffer = await file.arrayBuffer();
 
+    // The client-declared MIME type is untrusted: check the magic bytes.
+    const detectedType = sniffImageType(new Uint8Array(fileBuffer));
+    if (!detectedType) {
+      return NextResponse.json(
+        { error: "File content is not a valid JPEG or PNG image" },
+        { status: 400 }
+      );
+    }
+
+    // Blob has no name property; take it from the File and sanitize it.
+    const filename = safeUploadName(
+      (formData.get("file") as File).name,
+      detectedType
+    );
+
     try {
-      const data = await put(`${filename}`, fileBuffer, {
+      const data = await put(filename, fileBuffer, {
         access: "public",
+        contentType: detectedType,
+        addRandomSuffix: true,
       });
 
       return NextResponse.json(data);
