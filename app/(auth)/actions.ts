@@ -1,12 +1,8 @@
 "use server";
 
-import { isDemoMode } from "@/lib/demo/mode";
-
-("use server");
-
 import { z } from "zod";
-
 import { createUser, getUser } from "@/lib/db/queries/index";
+import { isDemoMode } from "@/lib/demo/mode";
 
 import { signIn } from "./auth";
 
