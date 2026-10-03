@@ -154,6 +154,7 @@ export class SonarrPlugin extends BaseServicePlugin {
       displayName: "Rename Episode Files (Sonarr)",
       category: "management",
       description: "Rename files to match naming convention",
+      requiresApproval: true,
       modes: ["chat"],
     }),
     deleteSonarrEpisodeFile: this.defineTool(deleteEpisodeFile, {
@@ -173,6 +174,7 @@ export class SonarrPlugin extends BaseServicePlugin {
       displayName: "Mark Failed (Sonarr)",
       category: "management",
       description: "Mark a download as failed for retry",
+      requiresApproval: true,
       modes: ["chat"],
     }),
     getSonarrBlocklist: this.defineTool(getBlocklist, {
@@ -185,6 +187,7 @@ export class SonarrPlugin extends BaseServicePlugin {
       displayName: "Remove from Blocklist (Sonarr)",
       category: "queue",
       description: "Remove items from the blocklist",
+      requiresApproval: true,
       modes: ["chat"],
     }),
     getSonarrCommandStatus: this.defineTool(getCommandStatus, {
