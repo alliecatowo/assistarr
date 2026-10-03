@@ -63,10 +63,9 @@ export default defineConfig({
     {
       name: "visual",
       testMatch: /visual\/.*.spec.ts/,
-      use: {
-        ...devices["Desktop Chrome"],
-        channel: "chrome", // Use system Chrome
-      },
+      // Bundled Chromium (pinned by the Playwright version) so baselines are
+      // reproducible; system Chrome floats and renders text differently.
+      use: { ...devices["Desktop Chrome"] },
       timeout: 30_000,
     },
 
