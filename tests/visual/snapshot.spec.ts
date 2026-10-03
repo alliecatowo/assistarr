@@ -38,6 +38,7 @@ Object.keys(stories).forEach((storyKey) => {
       await page.setViewportSize(viewports.desktop);
       await page.goto(`${LADLE_URL}/?story=${storyKey}&mode=preview`);
       await page.waitForSelector("[data-storyloaded]");
+      await page.waitForLoadState("networkidle");
       // Wait for animations to settle
       await page.waitForTimeout(100);
       await expect(page).toHaveScreenshot(`${storyKey}-desktop.png`);
@@ -49,6 +50,7 @@ Object.keys(stories).forEach((storyKey) => {
         await page.setViewportSize(viewports.mobile);
         await page.goto(`${LADLE_URL}/?story=${storyKey}&mode=preview`);
         await page.waitForSelector("[data-storyloaded]");
+        await page.waitForLoadState("networkidle");
         await page.waitForTimeout(100);
         await expect(page).toHaveScreenshot(`${storyKey}-mobile.png`);
       });

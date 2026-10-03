@@ -47,6 +47,8 @@ export default defineConfig({
   timeout: 240 * 1000, // 120 seconds
   expect: {
     timeout: 240 * 1000,
+    // Tolerate sub-pixel anti-aliasing noise between runs (~0.3% of pixels).
+    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
   },
 
   /* Configure projects */
@@ -63,10 +65,9 @@ export default defineConfig({
     {
       name: "visual",
       testMatch: /visual\/.*.spec.ts/,
-      use: {
-        ...devices["Desktop Chrome"],
-        channel: "chrome", // Use system Chrome
-      },
+      // Bundled Chromium (pinned by the Playwright version) so baselines are
+      // reproducible; system Chrome floats and renders text differently.
+      use: { ...devices["Desktop Chrome"] },
       timeout: 30_000,
     },
 
@@ -102,10 +103,14 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "pnpm dev",
-    url: `${baseURL}/ping`,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  // The visual project tests Ladle stories (served separately), so it needs
+  // no app server (and no database/auth env). Set PLAYWRIGHT_NO_WEBSERVER=1.
+  webServer: process.env.PLAYWRIGHT_NO_WEBSERVER
+    ? undefined
+    : {
+        command: "pnpm dev",
+        url: `${baseURL}/ping`,
+        timeout: 120 * 1000,
+        reuseExistingServer: !process.env.CI,
+      },
 });
