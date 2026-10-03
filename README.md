@@ -1,34 +1,13 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js 16" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-</p>
+# Assistarr
 
-<p align="center">
-  <img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License" />
-  <img src="https://img.shields.io/badge/pnpm-9.12-F69220?style=flat-square&logo=pnpm&logoColor=white" alt="pnpm" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-</p>
+Chat with your self-hosted media stack. Ask in plain language and Assistarr calls real Radarr, Sonarr, Jellyfin, Jellyseerr and qBittorrent tools, shows what they did, and asks before it changes anything.
 
-<h1 align="center">Assistarr</h1>
+**[Live demo](https://assistarr.vercel.app)** (a made-up library and a scripted assistant, nothing is saved) | **[Docs](https://alliecatowo.github.io/assistarr/)** | [Self-hosting](./SELF_HOSTING.md)
 
-<p align="center"><a href="https://alliecatowo.github.io/assistarr/">Docs</a></p>
-
-<p align="center">
-  <strong>AI-Powered Media Server Assistant</strong><br/>
-  Manage your Radarr, Sonarr, Jellyfin, and Jellyseerr through natural conversation
-</p>
-
-<p align="center">
-  <a href="#features">Features</a> &bull;
-  <a href="#integrations">Integrations</a> &bull;
-  <a href="#installation">Installation</a> &bull;
-  <a href="#configuration">Configuration</a> &bull;
-  <a href="#development">Development</a>
-</p>
-
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/public/screens/chat-dark.png">
+  <img alt="Assistarr answering &quot;What is in my download queue?&quot; with Radarr and Sonarr tool calls" src="docs/public/screens/chat-light.png">
+</picture>
 
 ## Features
 
@@ -53,7 +32,7 @@
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+ (Docker image uses Node 26)
 - pnpm 9+
 - PostgreSQL 16+
 - At least one AI provider API key (OpenAI, Anthropic, or Google)

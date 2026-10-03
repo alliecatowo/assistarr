@@ -19,7 +19,9 @@ const isTestEnv = Boolean(
   process.env.VITEST ||
     process.env.PLAYWRIGHT_TEST_BASE_URL ||
     process.env.PLAYWRIGHT ||
-    process.env.CI_PLAYWRIGHT
+    process.env.CI_PLAYWRIGHT ||
+    // Docker image build: real values only exist at runtime
+    process.env.SKIP_ENV_VALIDATION === "1"
 );
 
 /**

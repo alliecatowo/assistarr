@@ -9,7 +9,8 @@
 FROM node:26-alpine AS base
 
 # Install pnpm globally
-RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+# Node 25+ no longer bundles corepack, so install pnpm directly.
+RUN npm install -g pnpm@9.12.3
 
 # ============================================
 # Dependencies Stage
@@ -21,6 +22,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -48,6 +50,11 @@ ENV SKIP_ENV_VALIDATION=1
 
 # Build the application with standalone output
 RUN pnpm build
+
+# Bundle the migration runner into one file (drizzle + postgres inlined) so the
+# runtime image needs no node_modules for it
+RUN pnpm exec esbuild lib/db/migrate.ts --bundle --platform=node --format=esm \
+    --outfile=migrate.mjs --banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);"
 
 # ============================================
 # Runtime Stage
@@ -77,18 +84,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy database migrations for runtime migration
-COPY --from=builder /app/lib/db/migrations ./lib/db/migrations
-COPY --from=builder /app/lib/db/migrate.ts ./lib/db/migrate.ts
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
-
-# Copy migration dependencies
-COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
-COPY --from=builder /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
-COPY --from=builder /app/node_modules/postgres ./node_modules/postgres
-COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
-COPY --from=builder /app/node_modules/esbuild ./node_modules/esbuild
+# Migrations are applied on start (see CMD) by the bundled runner
+COPY --from=builder --chown=nextjs:nodejs /app/lib/db/migrations ./lib/db/migrations
+COPY --from=builder --chown=nextjs:nodejs /app/migrate.mjs ./migrate.mjs
 
 # Switch to non-root user
 USER nextjs
@@ -102,4 +100,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT:-3000}/api/ready || exit 1
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node migrate.mjs && node server.js"]

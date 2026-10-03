@@ -16,7 +16,7 @@ Thank you for your interest in contributing to Assistarr! This guide will help y
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - pnpm 9.12+ (required - npm/yarn not supported)
 - PostgreSQL database (we recommend [Neon](https://neon.tech))
 - Git
