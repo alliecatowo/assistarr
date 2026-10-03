@@ -71,7 +71,7 @@ jobs:
           npx wait-on http://localhost:61000 --timeout 60000
 
       - name: Run Visual Tests
-        run: pnpm test:visual --project=visual ${{ (inputs.update_snapshots || github.event_name == 'pull_request') && '--update-snapshots' || '' }}
+        run: pnpm test:visual --project=visual ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
         env:
           PLAYWRIGHT_NO_WEBSERVER: "1"
 
@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload regenerated snapshots
         uses: actions/upload-artifact@v7
-        if: always() && (inputs.update_snapshots || github.event_name == 'pull_request')
+        if: always() && inputs.update_snapshots
         with:
           name: updated-snapshots
           path: tests/visual/snapshot.spec.ts-snapshots/
