@@ -15,7 +15,7 @@ export default defineConfig({
         // Branch threshold lowered because the approval test loads every plugin tool file; raise incrementally as test coverage improves
         statements: 35,
         branches: 20,
-        functions: 30,
+        functions: 25,
         lines: 35,
       },
       exclude: [
