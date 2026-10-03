@@ -134,13 +134,17 @@ async function testAIProviderConnection(
         break;
       }
       case "gateway": {
-        // For gateway, we can't easily test without making a model call
-        // Just verify key format
-        if (!apiKey || apiKey.length < 10) {
-          return {
-            success: false,
-            error: "Invalid AI Gateway API key format",
-          };
+        // /v1/credits requires a valid gateway key (unlike the model list).
+        const response = await fetchWithTimeout(
+          "https://ai-gateway.vercel.sh/v1/credits",
+          { headers: { Authorization: `Bearer ${apiKey}` } }
+        );
+        if (!response.ok) {
+          logger.warn(
+            { providerName, status: response.status },
+            "AI Gateway API key validation failed"
+          );
+          return { success: false, error: "Invalid AI Gateway API key" };
         }
         break;
       }
@@ -168,20 +172,28 @@ async function testAIProviderConnection(
         break;
       }
       case "anthropic": {
-        // Anthropic doesn't have a simple test endpoint
-        // Check key format
-        if (!apiKey.startsWith("sk-ant-")) {
-          return {
-            success: false,
-            error:
-              "Invalid Anthropic API key format (should start with sk-ant-)",
-          };
+        const response = await fetchWithTimeout(
+          "https://api.anthropic.com/v1/models",
+          {
+            headers: {
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            },
+          }
+        );
+        if (!response.ok) {
+          logger.warn(
+            { providerName, status: response.status },
+            "Anthropic API key validation failed"
+          );
+          return { success: false, error: "Invalid Anthropic API key" };
         }
         break;
       }
       case "google": {
         const response = await fetchWithTimeout(
-          `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+          "https://generativelanguage.googleapis.com/v1/models",
+          { headers: { "x-goog-api-key": apiKey } }
         );
         if (!response.ok) {
           logger.warn(

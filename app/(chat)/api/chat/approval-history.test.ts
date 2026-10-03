@@ -162,3 +162,40 @@ describe("buildApprovalHistory", () => {
     ).toThrow();
   });
 });
+
+describe("approval replay", () => {
+  it("cannot be replayed once the approval was consumed", () => {
+    const consumed = db({
+      id: "a1",
+      parts: [
+        {
+          type: "tool-deleteRadarrMovie",
+          toolCallId: "t1",
+          state: "output-available",
+          input: { movieId: 1 },
+          output: { ok: true },
+          approval: { id: "ap1", approved: true },
+        },
+      ] as never,
+    });
+    expect(() =>
+      buildApprovalHistory(
+        [db({ id: U, role: "user" }), consumed],
+        [
+          {
+            id: "a1",
+            role: "assistant",
+            parts: [
+              {
+                type: "tool-deleteRadarrMovie",
+                toolCallId: "t1",
+                state: "approval-responded",
+                approval: { id: "ap1", approved: true },
+              },
+            ],
+          },
+        ]
+      )
+    ).toThrow();
+  });
+});

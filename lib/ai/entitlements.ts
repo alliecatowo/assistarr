@@ -11,8 +11,8 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    * For users without an account
    */
   guest: {
-    maxMessagesPerDay: 1000, // Increased for local development
-    maxMessagesPerMinute: 20, // Higher limit for development
+    maxMessagesPerDay: 50,
+    maxMessagesPerMinute: 10,
   },
 
   /*

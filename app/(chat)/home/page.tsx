@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
@@ -65,21 +66,11 @@ async function HomePage() {
   );
 }
 
-async function getMonitorStatus(userId: string): Promise<MonitorStatus> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const statusUrl = baseUrl ? `${baseUrl}/api/status` : "/api/status";
-
-  try {
-    const res = await fetch(statusUrl, {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      return buildLocalStatus(userId);
-    }
-    return (await res.json()) as MonitorStatus;
-  } catch {
-    return buildLocalStatus(userId);
-  }
+function getMonitorStatus(userId: string): Promise<MonitorStatus> {
+  // Build in-process: the HTTP route needs the user's cookie, which a
+  // server-side fetch does not carry (that used to bounce through guest
+  // creation in a redirect loop).
+  return buildLocalStatus(userId);
 }
 
 async function buildLocalStatus(userId: string): Promise<MonitorStatus> {
@@ -180,13 +171,19 @@ async function checkServiceOnline(
 }
 
 async function getForYouData(): Promise<ForYouData | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const forYouUrl = baseUrl
-    ? `${baseUrl}/api/discover/for-you`
-    : "/api/discover/for-you";
+  // Only ever send the session cookie to our own origin, never to a host taken
+  // from request headers.
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    `http://localhost:${process.env.PORT ?? 3000}`;
 
   try {
-    const res = await fetch(forYouUrl, { cache: "no-store" });
+    const cookie = (await headers()).get("cookie") ?? "";
+    const res = await fetch(`${baseUrl}/api/discover/for-you`, {
+      cache: "no-store",
+      headers: { cookie },
+      redirect: "manual",
+    });
     if (!res.ok) {
       return null;
     }

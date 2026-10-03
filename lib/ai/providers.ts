@@ -1,5 +1,5 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { gateway } from "@ai-sdk/gateway";
+import { createGateway, gateway } from "@ai-sdk/gateway";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
@@ -13,6 +13,7 @@ import type { UserAIConfig } from "../db/schema";
 import { isDemoMode, shouldUseScriptedModel } from "../demo/mode";
 import { scriptedModel } from "../demo/scripted-model";
 import { env, getAIProvider } from "../env";
+import { ChatSDKError } from "../errors";
 import { getModelForTier, type ModelTier } from "./models";
 
 const DEMO_MODEL_ID =
@@ -68,8 +69,7 @@ function createProviderFromUserConfig(config: UserAIConfig) {
     case "openrouter":
       return createOpenRouter({ apiKey: config.apiKey });
     case "gateway":
-      // Gateway doesn't support custom keys, fall through to system
-      return null;
+      return createGateway({ apiKey: config.apiKey });
     case "openai":
       return createOpenAI({ apiKey: config.apiKey });
     case "anthropic":
@@ -81,43 +81,51 @@ function createProviderFromUserConfig(config: UserAIConfig) {
   }
 }
 
+const NATIVE_PROVIDER_PREFIX: Record<string, string> = {
+  openai: "openai/",
+  anthropic: "anthropic/",
+  google: "google/",
+};
+
 /**
- * Get a model from a user-provided config
+ * True when the user's own key can serve this model. Aggregators (OpenRouter,
+ * the AI Gateway) serve any model id; direct providers only their own models.
+ */
+export function isModelServedByUserConfig(
+  modelId: string,
+  config: Pick<UserAIConfig, "providerName">
+): boolean {
+  if (
+    config.providerName === "openrouter" ||
+    config.providerName === "gateway"
+  ) {
+    return true;
+  }
+  const prefix = NATIVE_PROVIDER_PREFIX[config.providerName];
+  return Boolean(prefix) && modelId.startsWith(prefix);
+}
+
+/**
+ * Get a model from a user-provided config. Never falls back to the app's own
+ * key: a user who supplied a key either gets that key or an error.
  */
 function getModelFromUserConfig(modelId: string, config: UserAIConfig) {
   const provider = createProviderFromUserConfig(config);
 
-  if (!provider) {
-    // Fall back to system provider
-    return getModelFromSystemProvider(modelId);
+  if (!(provider && isModelServedByUserConfig(modelId, config))) {
+    throw new ChatSDKError(
+      "bad_request:api",
+      "The selected model is not available with your API key. Pick a model from your provider."
+    );
   }
 
-  // Map model IDs to provider-specific formats if needed
   switch (config.providerName) {
-    case "openrouter":
-      // OpenRouter uses the same model IDs
-      return provider(modelId);
     case "openai":
-      // Map common model names to OpenAI-specific IDs
-      if (modelId.includes("gpt")) {
-        return provider(modelId.replace("openai/", ""));
-      }
-      // For non-OpenAI models, fall back to system
-      return getModelFromSystemProvider(modelId);
     case "anthropic":
-      // Map common model names to Anthropic-specific IDs
-      if (modelId.includes("claude")) {
-        return provider(modelId.replace("anthropic/", ""));
-      }
-      // For non-Anthropic models, fall back to system
-      return getModelFromSystemProvider(modelId);
     case "google":
-      // Map common model names to Google-specific IDs
-      if (modelId.includes("gemini")) {
-        return provider(modelId.replace("google/", ""));
-      }
-      // For non-Google models, fall back to system
-      return getModelFromSystemProvider(modelId);
+      return provider(
+        modelId.slice(NATIVE_PROVIDER_PREFIX[config.providerName].length)
+      );
     default:
       return provider(modelId);
   }
