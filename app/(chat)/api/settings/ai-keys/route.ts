@@ -7,6 +7,7 @@ import {
   getUserAIConfigs,
   upsertUserAIConfig,
 } from "@/lib/db/queries/user-ai-config";
+import { demoWriteBlockedResponse } from "@/lib/demo/mode";
 import { logger } from "@/lib/logger";
 import { HEALTH_CHECK_TIMEOUT_MS } from "@/lib/plugins/core/client";
 
@@ -241,6 +242,11 @@ export async function GET() {
 
 // POST - Save AI config (upsert)
 export async function POST(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -299,6 +305,11 @@ export async function POST(request: Request) {
 
 // PUT - Test connection only (does not save)
 export async function PUT(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -341,6 +352,11 @@ export async function PUT(request: Request) {
 
 // DELETE - Remove AI config
 export async function DELETE(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

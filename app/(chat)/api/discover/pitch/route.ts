@@ -4,6 +4,7 @@ import { auth } from "@/app/(auth)/auth";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { getServiceConfig } from "@/lib/db/queries/service-config";
 import type { ServiceConfig } from "@/lib/db/schema";
+import { limitLlmRoute } from "@/lib/llm-route-limit";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { RadarrClient } from "@/lib/plugins/radarr/client";
 import type { RadarrMovie } from "@/lib/plugins/radarr/types";
@@ -473,6 +474,11 @@ export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limited = await limitLlmRoute(session.user.id, "pitch");
+  if (limited) {
+    return limited;
   }
 
   const { searchParams } = new URL(request.url);

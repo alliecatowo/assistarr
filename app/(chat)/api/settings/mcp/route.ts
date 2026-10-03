@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { createMCPConfig, getMCPConfigs } from "@/lib/db/queries/mcp-config";
+import { demoWriteBlockedResponse } from "@/lib/demo/mode";
 import { createLogger } from "@/lib/logger";
 import { checkMCPHealth } from "@/lib/mcp";
 import { assertSafeServiceUrl, UnsafeUrlError } from "@/lib/net/ssrf";
@@ -44,6 +45,11 @@ export async function GET() {
 
 // POST - Create new MCP config
 export async function POST(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -85,6 +91,11 @@ export async function POST(request: Request) {
 
 // PUT - Test MCP connection (no save)
 export async function PUT(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

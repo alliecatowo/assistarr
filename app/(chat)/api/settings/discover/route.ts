@@ -1,4 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
+import { demoWriteBlockedResponse } from "@/lib/demo/mode";
 import { ChatSDKError } from "@/lib/errors";
 import { assertSafeServiceUrl, safeFetch } from "@/lib/net/ssrf";
 import { HEALTH_CHECK_TIMEOUT_MS } from "@/lib/plugins/core/client";
@@ -73,6 +74,11 @@ function buildBaseUrl(config: JellyseerrServiceConfig): string {
 }
 
 export async function POST(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
 
   if (!session?.user) {

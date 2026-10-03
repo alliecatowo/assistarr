@@ -7,6 +7,7 @@ import {
   upsertServiceConfig,
 } from "@/lib/db/queries/service-config";
 import type { ServiceConfig } from "@/lib/db/schema";
+import { demoWriteBlockedResponse } from "@/lib/demo/mode";
 import { assertSafeServiceUrl, UnsafeUrlError } from "@/lib/net/ssrf";
 import { JellyfinClient } from "@/lib/plugins/jellyfin/client";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
@@ -77,6 +78,11 @@ export async function GET() {
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validation branches
 export async function POST(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -144,6 +150,11 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -215,6 +226,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const demoBlocked = demoWriteBlockedResponse();
+  if (demoBlocked) {
+    return demoBlocked;
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -35,3 +35,17 @@ export function assertNotDemo(): void {
     );
   }
 }
+
+/**
+ * Route-handler form of assertNotDemo: a 403 response in demo mode, else null.
+ * Defence in depth on top of the proxy's path blocklist.
+ */
+export function demoWriteBlockedResponse(): Response | null {
+  if (!isDemoMode()) {
+    return null;
+  }
+  return new ChatSDKError(
+    "forbidden:settings",
+    "This is a read-only public demo. Install Assistarr yourself to change settings."
+  ).toResponse();
+}

@@ -1,4 +1,6 @@
-"use server";
+import { isDemoMode } from "@/lib/demo/mode";
+
+("use server");
 
 import { z } from "zod";
 
@@ -55,6 +57,9 @@ export const register = async (
   _: RegisterActionState,
   formData: FormData
 ): Promise<RegisterActionState> => {
+  if (isDemoMode()) {
+    return { status: "failed" };
+  }
   try {
     const validatedData = authFormSchema.parse({
       email: formData.get("email"),
