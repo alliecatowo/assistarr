@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
+import { isDemoMode } from "@/lib/demo/mode";
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -18,6 +19,13 @@ const FileSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: "Uploads are disabled in the public demo" },
+      { status: 403 }
+    );
+  }
+
   const session = await auth();
 
   if (!session) {

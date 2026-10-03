@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { assertNotDemo } from "@/lib/demo/mode";
 import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
@@ -133,6 +134,7 @@ export async function createMCPConfig({
   headers?: Record<string, string>;
   isEnabled?: boolean;
 }): Promise<MCPServerConfig> {
+  assertNotDemo();
   try {
     log.info(
       { userId, name, url, transport, isEnabled },
@@ -200,6 +202,7 @@ export async function updateMCPConfig({
   availableTools?: MCPToolInfo[] | null;
   lastHealthCheck?: Date | null;
 }): Promise<MCPServerConfig | null> {
+  assertNotDemo();
   try {
     log.info({ userId, id, name, url, isEnabled }, "Updating MCP config");
 
@@ -275,6 +278,7 @@ export async function deleteMCPConfig({
   userId: string;
   id: string;
 }): Promise<MCPServerConfig | null> {
+  assertNotDemo();
   try {
     log.info({ userId, id }, "Deleting MCP config");
     const [deletedConfig] = await db

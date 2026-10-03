@@ -1,4 +1,6 @@
 import { and, eq } from "drizzle-orm";
+import { assertNotDemo, isDemoMode } from "@/lib/demo/mode";
+import { demoServiceConfigs } from "@/lib/demo/service-configs";
 import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
@@ -45,6 +47,9 @@ export async function getServiceConfigs({
 }: {
   userId: string;
 }): Promise<ServiceConfig[]> {
+  if (isDemoMode()) {
+    return demoServiceConfigs(userId);
+  }
   try {
     log.debug({ userId }, "Fetching service configs");
     const configs = await db
@@ -69,6 +74,12 @@ export async function getServiceConfig({
   userId: string;
   serviceName: string;
 }): Promise<ServiceConfig | null> {
+  if (isDemoMode()) {
+    return (
+      demoServiceConfigs(userId).find((c) => c.serviceName === serviceName) ??
+      null
+    );
+  }
   try {
     log.debug({ userId, serviceName }, "Fetching service config");
     const [config] = await db
@@ -116,6 +127,7 @@ export async function upsertServiceConfig({
   password?: string | null;
   isEnabled?: boolean;
 }): Promise<ServiceConfig> {
+  assertNotDemo();
   try {
     log.info(
       { userId, serviceName, baseUrl, isEnabled },
@@ -210,6 +222,7 @@ export async function deleteServiceConfig({
   userId: string;
   serviceName: string;
 }): Promise<ServiceConfig | null> {
+  assertNotDemo();
   try {
     log.info({ userId, serviceName }, "Deleting service config");
     const [deletedConfig] = await db

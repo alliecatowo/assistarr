@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
+import { isDemoMode } from "./lib/demo/mode";
 
 /**
  * Header names for correlation ID propagation
@@ -85,6 +86,24 @@ export async function proxy(request: NextRequest) {
     );
     response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
     return response;
+  }
+
+  // Public demo: read-only settings, guest-only accounts.
+  if (isDemoMode()) {
+    const isWrite = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+    const blocked =
+      (isWrite &&
+        (pathname.startsWith("/api/settings") ||
+          pathname.startsWith("/api/files") ||
+          pathname === "/register" ||
+          pathname === "/login")) ||
+      pathname === "/register";
+    if (blocked) {
+      return NextResponse.json(
+        { error: "Disabled in the public demo" },
+        { status: 403 }
+      );
+    }
   }
 
   const isGuest = guestRegex.test(token?.email ?? "");

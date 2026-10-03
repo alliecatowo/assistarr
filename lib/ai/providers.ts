@@ -10,9 +10,13 @@ import {
 } from "ai";
 import { isTestEnvironment } from "../constants";
 import type { UserAIConfig } from "../db/schema";
+import { isDemoMode, shouldUseScriptedModel } from "../demo/mode";
+import { scriptedModel } from "../demo/scripted-model";
 import { env, getAIProvider } from "../env";
 import { getModelForTier, type ModelTier } from "./models";
 
+const DEMO_MODEL_ID =
+  process.env.DEMO_MODEL_ID ?? "google/gemini-2.5-flash-lite";
 const THINKING_SUFFIX_REGEX = /-thinking$/;
 
 /**
@@ -170,6 +174,15 @@ export function getLanguageModel(modelId: string, userConfig?: UserAIConfig) {
     return myProvider.languageModel(modelId);
   }
 
+  if (shouldUseScriptedModel()) {
+    return scriptedModel;
+  }
+
+  // Public demo with a real key: pin a cheap model, ignore the user's choice.
+  if (isDemoMode()) {
+    return getModelFromSystemProvider(DEMO_MODEL_ID);
+  }
+
   const isReasoningModel =
     modelId.includes("reasoning") || modelId.endsWith("-thinking");
 
@@ -189,6 +202,12 @@ export function getLanguageModel(modelId: string, userConfig?: UserAIConfig) {
  * Get the title generation model (uses system keys)
  */
 export function getTitleModel() {
+  if (shouldUseScriptedModel()) {
+    return scriptedModel;
+  }
+  if (isDemoMode()) {
+    return getModelFromSystemProvider(DEMO_MODEL_ID);
+  }
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
@@ -199,6 +218,12 @@ export function getTitleModel() {
  * Get the artifact model (uses system keys)
  */
 export function getArtifactModel() {
+  if (shouldUseScriptedModel()) {
+    return scriptedModel;
+  }
+  if (isDemoMode()) {
+    return getModelFromSystemProvider(DEMO_MODEL_ID);
+  }
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }

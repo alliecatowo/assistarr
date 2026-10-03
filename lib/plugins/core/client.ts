@@ -2,6 +2,7 @@ import type { z } from "zod";
 import type { ServiceConfig } from "@/lib/db/schema";
 import { createLogger } from "@/lib/logger";
 import { HttpError, type RetryOptions, withRetry } from "@/lib/utils/retry";
+import { servarrFetch } from "./fetch";
 
 const log = createLogger("api-client");
 
@@ -162,7 +163,7 @@ export class ApiClient {
       const { controller, cleanup } = createTimeoutController(timeoutMs);
 
       try {
-        const response = await fetch(url, {
+        const response = await servarrFetch(url, {
           headers,
           signal: controller.signal,
         });
@@ -209,7 +210,7 @@ export class ApiClient {
       const { controller, cleanup } = createTimeoutController(timeoutMs);
 
       try {
-        const response = await fetch(url, {
+        const response = await servarrFetch(url, {
           method: "POST",
           headers,
           body: JSON.stringify(body),
@@ -258,7 +259,7 @@ export class ApiClient {
       const { controller, cleanup } = createTimeoutController(timeoutMs);
 
       try {
-        const response = await fetch(url, {
+        const response = await servarrFetch(url, {
           method: "PUT",
           headers,
           body: JSON.stringify(body),
@@ -308,7 +309,7 @@ export class ApiClient {
       const { controller, cleanup } = createTimeoutController(timeoutMs);
 
       try {
-        const response = await fetch(url, {
+        const response = await servarrFetch(url, {
           method: "DELETE",
           headers,
           body: body ? JSON.stringify(body) : undefined,

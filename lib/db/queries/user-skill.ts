@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { assertNotDemo } from "@/lib/demo/mode";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
 import { db } from "../db";
@@ -95,6 +96,7 @@ export async function createUserSkill({
   source?: "user" | "plugin" | "builtin";
   pluginName?: string;
 }): Promise<UserSkill> {
+  assertNotDemo();
   try {
     log.info(
       { userId, name, displayName, source, pluginName },
@@ -154,6 +156,7 @@ export async function updateUserSkill({
   instructions?: string;
   isEnabled?: boolean;
 }): Promise<UserSkill | null> {
+  assertNotDemo();
   try {
     log.info(
       { userId, id, name, displayName, isEnabled },
@@ -221,6 +224,7 @@ export async function deleteUserSkill({
   userId: string;
   id: string;
 }): Promise<UserSkill | null> {
+  assertNotDemo();
   try {
     log.info({ userId, id }, "Deleting user skill");
     const [deletedSkill] = await db
@@ -279,6 +283,7 @@ export async function upsertPluginSkill({
   instructions: string;
   pluginName: string;
 }): Promise<UserSkill> {
+  assertNotDemo();
   try {
     log.info({ userId, name, pluginName }, "Upserting plugin skill");
 
