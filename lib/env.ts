@@ -132,7 +132,7 @@ export type ServerEnv = z.infer<typeof serverEnvSchema>;
  * Format Zod validation errors for clear console output
  */
 function formatEnvErrors(error: z.ZodError): string {
-  const errors = error.errors.map((err) => {
+  const errors = error.issues.map((err) => {
     const path = err.path.length > 0 ? err.path.join(".") : "env";
     return `  - ${path}: ${err.message}`;
   });

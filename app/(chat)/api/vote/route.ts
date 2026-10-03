@@ -11,7 +11,7 @@ const voteSchema = z.object({
   chatId: z.string().min(1, "chatId is required"),
   messageId: z.string().min(1, "messageId is required"),
   type: z.enum(["up", "down"], {
-    errorMap: () => ({ message: "type must be 'up' or 'down'" }),
+    error: "type must be 'up' or 'down'",
   }),
 });
 
@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
   } catch (err) {
     const message =
       err instanceof z.ZodError
-        ? err.errors.map((e) => e.message).join(", ")
+        ? err.issues.map((e) => e.message).join(", ")
         : "Invalid request body";
     return new ChatSDKError("bad_request:api", message).toResponse();
   }
