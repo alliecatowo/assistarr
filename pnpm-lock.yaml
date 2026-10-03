@@ -140,7 +140,7 @@ importers:
         version: 1.2.11(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@sentry/nextjs':
         specifier: ^11.4.0
-        version: 11.4.0(@babel/core@7.29.7)(next@16.3.8(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@26.6.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))
+        version: 11.4.0(@babel/core@7.29.7)(next@16.3.8(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@26.6.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))
       '@vercel/analytics':
         specifier: ^2.0.1
         version: 2.0.1(next@16.3.8(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@26.6.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
@@ -385,6 +385,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.11
         version: 0.31.11
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       jsdom:
         specifier: ^30.1.1
         version: 30.1.1(@noble/hashes@1.8.0)
@@ -9564,7 +9567,7 @@ snapshots:
       '@sentry/replay': 11.4.0
       '@sentry/replay-canvas': 11.4.0
 
-  '@sentry/bundler-plugins@11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))':
+  '@sentry/bundler-plugins@11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))':
     dependencies:
       '@sentry/core': 11.4.0
       dotenv: 17.4.2
@@ -9576,7 +9579,7 @@ snapshots:
     optionalDependencies:
       '@babel/core': 7.29.7
       rollup: 4.64.0
-      webpack: 5.104.1(lightningcss@1.32.0)(postcss@8.5.28)
+      webpack: 5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)
 
   '@sentry/conventions@0.25.0': {}
 
@@ -9588,15 +9591,15 @@ snapshots:
     dependencies:
       '@sentry/core': 11.4.0
 
-  '@sentry/nextjs@11.4.0(@babel/core@7.29.7)(next@16.3.8(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@26.6.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))':
+  '@sentry/nextjs@11.4.0(@babel/core@7.29.7)(next@16.3.8(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@26.6.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@rollup/plugin-commonjs': 28.0.1(rollup@4.64.0)
       '@sentry/browser-utils': 11.4.0
-      '@sentry/bundler-plugins': 11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))
+      '@sentry/bundler-plugins': 11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))
       '@sentry/conventions': 0.25.0
       '@sentry/core': 11.4.0
-      '@sentry/node': 11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))
+      '@sentry/node': 11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))
       '@sentry/opentelemetry': 11.4.0(@opentelemetry/api@1.9.1)
       '@sentry/react': 11.4.0(react@19.3.0)
       '@sentry/server-runtime-injection': 11.4.0
@@ -9611,10 +9614,10 @@ snapshots:
       - react-router
       - webpack
 
-  '@sentry/node@11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))':
+  '@sentry/node@11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@sentry/bundler-plugins': 11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))
+      '@sentry/bundler-plugins': 11.4.0(@babel/core@7.29.7)(rollup@4.64.0)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))
       '@sentry/conventions': 0.25.0
       '@sentry/core': 11.4.0
       '@sentry/opentelemetry': 11.4.0(@opentelemetry/api@1.9.1)
@@ -13970,14 +13973,15 @@ snapshots:
 
   tapable@2.3.3: {}
 
-  terser-webpack-plugin@5.6.1(lightningcss@1.32.0)(postcss@8.5.28)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28)):
+  terser-webpack-plugin@5.6.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.5.0
       terser: 5.51.2
-      webpack: 5.104.1(lightningcss@1.32.0)(postcss@8.5.28)
+      webpack: 5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)
     optionalDependencies:
+      esbuild: 0.28.2
       lightningcss: 1.32.0
       postcss: 8.5.28
     optional: true
@@ -14330,7 +14334,7 @@ snapshots:
   webpack-sources@3.6.0:
     optional: true
 
-  webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28):
+  webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -14354,7 +14358,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.5.0
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(lightningcss@1.32.0)(postcss@8.5.28)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.28))
+      terser-webpack-plugin: 5.6.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.28))
       watchpack: 2.5.2
       webpack-sources: 3.6.0
     transitivePeerDependencies:

@@ -2,11 +2,11 @@
 
 ## Overview
 
-Assistarr is a Next.js 15 chat-based AI assistant for managing home media servers. It integrates with Radarr, Sonarr, Jellyfin, and Jellyseerr to help users manage their media libraries through natural conversation.
+Assistarr is a Next.js 16 chat-based AI assistant for managing home media servers. It integrates with Radarr, Sonarr, Jellyfin, and Jellyseerr to help users manage their media libraries through natural conversation.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16 (App Router), React 19, TypeScript 7
 - **AI**: Vercel AI SDK with multi-provider support (OpenAI, Anthropic, Google)
 - **Database**: PostgreSQL with Drizzle ORM
 - **Auth**: NextAuth.js
@@ -98,7 +98,7 @@ pnpm db:migrate
 ### AI not responding after tool calls
 
 The system prompt includes instructions to always respond after tools. If this happens, check:
-- Step limit in `route.ts` (currently 8)
+- Step limit in `app/(chat)/api/chat/stream-handler.ts` (currently 8)
 - System prompt in `prompts.ts`
 
 ### Tool errors showing ugly UI
@@ -203,14 +203,14 @@ export const WithSidebar: Story = () => (
 ### Visual Regression Testing
 
 ```bash
-# Generate/update baseline screenshots
-pnpm ladle:build
-pnpm ladle:preview &
-pnpm exec playwright test tests/visual/ --update-snapshots
-
-# Run regression tests
-pnpm test:visual
+# Run regression tests (needs ladle:build + ladle:preview running)
+PLAYWRIGHT_NO_WEBSERVER=1 pnpm test:visual --project=visual
 ```
+
+Baselines are Linux screenshots from the CI runner (bundled Chromium); local
+fonts differ, so do not regenerate them locally. To update them, run the
+"Visual Regression Tests" workflow manually with `update_snapshots` enabled,
+download the `updated-snapshots` artifact and commit its PNGs.
 
 ### Key Files
 
@@ -218,5 +218,5 @@ pnpm test:visual
 |------|---------|
 | `.ladle/config.mjs` | Ladle configuration |
 | `.ladle/components.tsx` | Global providers (theme, Tailwind) |
-| `.ladle/mocks/index.ts` | Mock data for stories |
+| `.ladle/mocks/index.tsx` | Mock data for stories |
 | `tests/visual/snapshot.spec.ts` | Playwright visual tests |

@@ -27,6 +27,8 @@ features:
 
 <div class="landing">
 
+![Assistarr chat answering a download-queue question with Radarr and Sonarr tool calls](/screens/chat-light.png)
+
 ## Try it
 
 [Try the live demo](https://assistarr.vercel.app). It opens straight into the chat as a guest, against a made-up library and a scripted assistant, so no media server or account is needed. Ask what is downloading, what is coming up on the calendar, or to search for a title, and Assistarr calls the same Radarr and Sonarr tools it uses on a real server. The demo is read-only: nothing you do is saved, and settings are locked. To use it with your own services and a real model, install it yourself below.
