@@ -63,7 +63,8 @@ export async function POST(request: Request) {
       "Chat request received"
     );
 
-    const { session, userAIConfig } = await validateSessionAndRateLimit();
+    const { session, userAIConfig } =
+      await validateSessionAndRateLimit(selectedChatModel);
     const isToolApprovalFlow = Boolean(messages);
 
     const { messagesFromDb, titlePromise } = await loadChatAndMessages(

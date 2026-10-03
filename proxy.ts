@@ -79,6 +79,13 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!token) {
+    // API clients without a session get a 401. Only page navigations are
+    // bounced through guest creation, so scripts and crawlers hitting /api/*
+    // can no longer mint a guest account (and quota) per request.
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const redirectUrl = encodeURIComponent(request.url);
 
     const response = NextResponse.redirect(
