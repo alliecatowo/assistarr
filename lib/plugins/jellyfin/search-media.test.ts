@@ -17,6 +17,8 @@ describe("Jellyfin search-media tool", () => {
     baseUrl: "http://jellyfin:8096",
     apiKey: "test-api-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

@@ -16,6 +16,8 @@ describe("Radarr get-calendar tool", () => {
     baseUrl: "http://radarr:7878",
     apiKey: "test-api-key",
     isEnabled: true,
+    username: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
