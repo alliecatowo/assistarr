@@ -22,14 +22,19 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
 
 export async function updateMessage({
   id,
+  chatId,
   parts,
 }: {
   id: string;
+  chatId: string;
   parts: DBMessage["parts"];
 }) {
   try {
     log.debug({ messageId: id }, "Updating message");
-    return await db.update(message).set({ parts }).where(eq(message.id, id));
+    return await db
+      .update(message)
+      .set({ parts })
+      .where(and(eq(message.id, id), eq(message.chatId, chatId)));
   } catch (_error) {
     log.error({ error: _error, messageId: id }, "Failed to update message");
     throw new ChatSDKError("bad_request:database", "Failed to update message");

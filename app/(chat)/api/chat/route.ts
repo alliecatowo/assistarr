@@ -14,6 +14,8 @@ import {
 import { env } from "@/lib/env";
 import { ChatSDKError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import type { ChatMessage } from "@/lib/types";
+import { buildApprovalHistory } from "./approval-history";
 import { buildUIMessages, loadChatAndMessages } from "./chat-loader";
 import { saveUserMessage } from "./message-persistence";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
@@ -65,7 +67,9 @@ export async function POST(request: Request) {
 
     const { session, userAIConfig } =
       await validateSessionAndRateLimit(selectedChatModel);
-    const isToolApprovalFlow = Boolean(messages);
+    // A request is a tool-approval continuation only when it carries `messages`
+    // and no stand-alone `message`. The history itself always comes from the DB.
+    const isToolApprovalFlow = Boolean(messages) && !message;
 
     const { messagesFromDb, titlePromise } = await loadChatAndMessages(
       id,
@@ -75,18 +79,21 @@ export async function POST(request: Request) {
       selectedVisibilityType
     );
 
-    const uiMessages = buildUIMessages(
-      isToolApprovalFlow,
-      messages,
-      messagesFromDb,
-      message
-    );
+    let uiMessages: ChatMessage[];
+    let newUserMessage = message;
+    if (isToolApprovalFlow) {
+      const history = buildApprovalHistory(messagesFromDb, messages ?? []);
+      uiMessages = history.uiMessages;
+      newUserMessage = history.newUserMessage;
+    } else {
+      uiMessages = buildUIMessages(messagesFromDb, message);
+    }
 
     const geo = geolocation(request);
     const requestHints = buildRequestHints(geo);
 
-    if (message?.role === "user") {
-      await saveUserMessage(id, message);
+    if (newUserMessage?.role === "user") {
+      await saveUserMessage(id, newUserMessage);
     }
 
     // Fetch configs for service tools, MCP servers, and skills

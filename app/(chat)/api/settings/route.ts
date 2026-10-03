@@ -7,6 +7,7 @@ import {
   upsertServiceConfig,
 } from "@/lib/db/queries/service-config";
 import type { ServiceConfig } from "@/lib/db/schema";
+import { assertSafeServiceUrl, UnsafeUrlError } from "@/lib/net/ssrf";
 import { JellyfinClient } from "@/lib/plugins/jellyfin/client";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { QBittorrentClient } from "@/lib/plugins/qbittorrent/client";
@@ -74,6 +75,7 @@ export async function GET() {
   return NextResponse.json(configs);
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validation branches
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -89,6 +91,8 @@ export async function POST(request: Request) {
     } else {
       body = apiKeySchema.parse(json);
     }
+
+    await assertSafeServiceUrl(body.baseUrl);
 
     const tempConfig: ServiceConfig = {
       id: "temp",
@@ -126,6 +130,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(config);
   } catch (error) {
+    if (error instanceof UnsafeUrlError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
@@ -151,6 +158,8 @@ export async function PUT(request: Request) {
     } else {
       body = apiKeySchema.parse(json);
     }
+
+    await assertSafeServiceUrl(body.baseUrl);
 
     const tempConfig: ServiceConfig = {
       id: "temp",
@@ -186,6 +195,12 @@ export async function PUT(request: Request) {
       latency,
     });
   } catch (error) {
+    if (error instanceof UnsafeUrlError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid data" },
