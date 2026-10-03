@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
+  agentRules: false,
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
     remotePatterns: [

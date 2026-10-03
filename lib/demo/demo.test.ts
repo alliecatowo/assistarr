@@ -108,7 +108,10 @@ describe("scripted model", () => {
     ]);
     const calls = parts.filter((p) => p.type === "tool-call");
     expect(calls.map((c) => c.toolName)).toEqual(["getRadarrQueue"]);
-    expect(parts.at(-1)?.finishReason).toBe("tool-calls");
+    expect(parts.at(-1)?.finishReason).toEqual({
+      unified: "tool-calls",
+      raw: undefined,
+    });
   });
 
   it("summarises tool results", async () => {
@@ -136,5 +139,31 @@ describe("scripted model", () => {
       .map((p) => p.delta)
       .join("");
     expect(text).toContain("The General");
+  });
+});
+
+describe("scripted model with the ai sdk", () => {
+  it("runs the planned tool and then summarises its result", async () => {
+    const { stepCountIs, streamText, tool } = await import("ai");
+    const { z } = await import("zod");
+    let executed = 0;
+    const result = streamText({
+      model: scriptedModel,
+      prompt: "what is in my download queue",
+      stopWhen: stepCountIs(4),
+      tools: {
+        getRadarrQueue: tool({
+          description: "queue",
+          inputSchema: z.object({}),
+          execute: () => {
+            executed += 1;
+            return { items: [] };
+          },
+        }),
+      },
+    });
+    const text = await result.text;
+    expect(executed).toBe(1);
+    expect(text.length).toBeGreaterThan(0);
   });
 });
