@@ -22,6 +22,7 @@ export const PlasmaOrbSizes: Story = () => (
     <PlasmaOrb size={96} />
   </div>
 );
+PlasmaOrbSizes.meta = { skip: true }; // animated canvas: not pixel-stable
 
 // Plasma Orb - on dark background
 export const PlasmaOrbDark: Story = () => (
@@ -29,6 +30,7 @@ export const PlasmaOrbDark: Story = () => (
     <PlasmaOrb size={80} />
   </div>
 );
+PlasmaOrbDark.meta = { skip: true }; // animated canvas: not pixel-stable
 
 // Streaming Indicator - default
 export const StreamingIndicatorDefault: Story = () => (
@@ -68,6 +70,7 @@ export const CombinedLoadingState: Story = () => (
     </div>
   </div>
 );
+CombinedLoadingState.meta = { skip: true }; // animated canvas: not pixel-stable
 
 // Loading message simulation
 export const LoadingMessageSimulation: Story = () => (

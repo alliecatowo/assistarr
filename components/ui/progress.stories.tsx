@@ -62,6 +62,7 @@ export const Animated: Story = () => {
     </div>
   );
 };
+Animated.meta = { skip: true }; // timer-driven: not pixel-stable
 
 // Download context
 export const DownloadContext: Story = () => (

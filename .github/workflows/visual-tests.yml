@@ -1,6 +1,12 @@
 name: Visual Regression Tests
 
 on:
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: Regenerate baseline screenshots (download them from the run artifacts)
+        type: boolean
+        default: false
   pull_request:
     branches: [main, master]
     paths:
@@ -8,6 +14,8 @@ on:
       - ".ladle/**"
       - "app/globals.css"
       - "tests/visual/**"
+      - "playwright.config.ts"
+      - ".github/workflows/visual-tests.yml"
 
 jobs:
   visual-test:
@@ -15,13 +23,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: lts/*
+          node-version: 24
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -34,7 +42,7 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v6
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -45,14 +53,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Build Ladle
@@ -64,7 +71,9 @@ jobs:
           npx wait-on http://localhost:61000 --timeout 60000
 
       - name: Run Visual Tests
-        run: pnpm test:visual --project=visual
+        run: pnpm test:visual --project=visual ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
+        env:
+          PLAYWRIGHT_NO_WEBSERVER: "1"
 
       - name: Upload snapshot diffs
         uses: actions/upload-artifact@v7
@@ -74,6 +83,14 @@ jobs:
           path: |
             tests/visual/snapshot.spec.ts-snapshots/
             test-results/
+          retention-days: 7
+
+      - name: Upload regenerated snapshots
+        uses: actions/upload-artifact@v7
+        if: always() && inputs.update_snapshots
+        with:
+          name: updated-snapshots
+          path: tests/visual/snapshot.spec.ts-snapshots/
           retention-days: 7
 
       - name: Upload Ladle build
