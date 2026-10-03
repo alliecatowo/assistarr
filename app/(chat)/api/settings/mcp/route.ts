@@ -4,6 +4,7 @@ import { auth } from "@/app/(auth)/auth";
 import { createMCPConfig, getMCPConfigs } from "@/lib/db/queries/mcp-config";
 import { createLogger } from "@/lib/logger";
 import { checkMCPHealth } from "@/lib/mcp";
+import { assertSafeServiceUrl, UnsafeUrlError } from "@/lib/net/ssrf";
 
 const log = createLogger("api:settings:mcp");
 
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     const body = createMCPSchema.parse(json);
+    await assertSafeServiceUrl(body.url);
 
     const config = await createMCPConfig({
       userId: session.user.id,
@@ -71,6 +73,9 @@ export async function POST(request: Request) {
       );
     }
 
+    if (error instanceof UnsafeUrlError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     const message =
       error instanceof Error ? error.message : "Failed to create MCP config";
     log.error({ error }, "Failed to create MCP config");

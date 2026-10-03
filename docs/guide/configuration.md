@@ -15,6 +15,7 @@ Copy `.env.example` to `.env.local` (from source) or `.env` (Docker). The file d
 | Variable | Description |
 |---|---|
 | `ENCRYPTION_KEY` | Encrypts service credentials stored in the database. Changing it makes existing encrypted service configs unreadable. |
+| `ALLOW_PRIVATE_SERVICE_URLS` | Set `true` to let users point services and MCP servers at private addresses (localhost, LAN, container names). Required for most self-hosting; the Docker compose file defaults it to `true`. Link-local/cloud-metadata addresses are always blocked. Leave `false` on shared or public deployments. |
 | `REDIS_URL` | Enables resumable AI streams. |
 | `NEXTAUTH_URL` | Public URL, if not `http://localhost:3000`. |
 | `ASSISTARR_PORT` | Host port in Docker (default `3000`). |

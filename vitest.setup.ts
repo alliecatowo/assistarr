@@ -64,3 +64,9 @@ if (typeof window !== "undefined") {
     thresholds: [],
   }));
 }
+
+// Unit tests use fake service hostnames with a mocked fetch. Resolve them all to
+// a public address so the SSRF guard's DNS check does not need a network.
+vi.mock("@/lib/net/resolve", () => ({
+  resolveAll: vi.fn(async () => ["93.184.216.34"]),
+}));

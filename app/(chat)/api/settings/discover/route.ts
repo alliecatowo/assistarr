@@ -1,5 +1,6 @@
 import { auth } from "@/app/(auth)/auth";
 import { ChatSDKError } from "@/lib/errors";
+import { assertSafeServiceUrl, safeFetch } from "@/lib/net/ssrf";
 import { HEALTH_CHECK_TIMEOUT_MS } from "@/lib/plugins/core/client";
 
 interface JellyseerrServiceConfig {
@@ -41,14 +42,17 @@ async function fetchJellyseerrService(
   );
 
   try {
-    const response = await fetch(`${baseUrl}/api/v1/settings/${servicePath}`, {
-      method: "GET",
-      headers: {
-        "X-Api-Key": apiKey,
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-    });
+    const response = await safeFetch(
+      `${baseUrl}/api/v1/settings/${servicePath}`,
+      {
+        method: "GET",
+        headers: {
+          "X-Api-Key": apiKey,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+      }
+    );
 
     if (!response.ok) {
       return null;
@@ -85,6 +89,8 @@ export async function POST(request: Request) {
         "jellyseerrBaseUrl and jellyseerrApiKey are required"
       ).toResponse();
     }
+
+    await assertSafeServiceUrl(jellyseerrBaseUrl);
 
     // Normalize the base URL (remove trailing slash)
     const normalizedBaseUrl = jellyseerrBaseUrl.replace(/\/$/, "");
