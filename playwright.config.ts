@@ -47,6 +47,8 @@ export default defineConfig({
   timeout: 240 * 1000, // 120 seconds
   expect: {
     timeout: 240 * 1000,
+    // Tolerate sub-pixel anti-aliasing noise between runs (~0.3% of pixels).
+    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
   },
 
   /* Configure projects */
