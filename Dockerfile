@@ -6,7 +6,7 @@
 # ============================================
 
 # Base image with Node.js LTS
-FROM node:20-alpine AS base
+FROM node:26-alpine AS base
 
 # Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
@@ -53,7 +53,7 @@ RUN pnpm build
 # Runtime Stage
 # Minimal production image
 # ============================================
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 
 WORKDIR /app
 
