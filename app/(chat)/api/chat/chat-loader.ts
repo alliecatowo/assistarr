@@ -8,7 +8,7 @@ import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
-import type { Message, UserMessage } from "./schema";
+import type { UserMessage } from "./schema";
 
 export type ChatLoadResult = {
   messagesFromDb: DBMessage[];
@@ -34,9 +34,10 @@ export async function loadChatAndMessages(
     if (chat.userId !== userId) {
       throw new ChatSDKError("forbidden:chat");
     }
-    if (!isToolApprovalFlow) {
-      messagesFromDb = await getMessagesByChatId({ id });
-    }
+    messagesFromDb = await getMessagesByChatId({ id });
+  } else if (isToolApprovalFlow) {
+    // Approval responses only make sense on an existing, owned chat.
+    throw new ChatSDKError("bad_request:api");
   } else if (message?.role === "user") {
     await saveChat({
       id,
@@ -51,31 +52,19 @@ export async function loadChatAndMessages(
 }
 
 /**
- * Builds the UI messages array from DB messages or incoming messages
+ * Builds the UI messages array from DB messages (plus the new user message).
+ * Tool-approval requests are handled by buildApprovalHistory instead.
  * @throws Error if messages format is invalid
  */
 export function buildUIMessages(
-  isToolApprovalFlow: boolean,
-  messages: Message[] | undefined,
   messagesFromDb: DBMessage[],
   message: UserMessage | undefined
 ): ChatMessage[] {
-  if (isToolApprovalFlow) {
-    if (!messages || !Array.isArray(messages)) {
-      throw new Error(
-        "Invalid messages format: expected array for tool approval flow"
-      );
-    }
-    // Messages from tool approval flow are already validated by zod schema
-    // and conform to the ChatMessage structure
-    return messages as ChatMessage[];
-  }
   if (!message) {
     throw new Error(
       "Invalid message format: message is required for non-tool-approval flow"
     );
   }
-  // Convert user message to ChatMessage format
   const userMessage: ChatMessage = {
     id: message.id,
     role: message.role,

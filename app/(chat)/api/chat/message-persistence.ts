@@ -55,6 +55,7 @@ export async function persistMessages(
       if (existingMsg) {
         await updateMessage({
           id: finishedMsg.id,
+          chatId,
           parts: finishedMsg.parts,
         });
       } else {
