@@ -133,11 +133,11 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@types/d3-scale": "^4.0.8",
-    "@types/node": "^22.8.6",
+    "@types/node": "^26.6.4",
     "@types/papaparse": "^5.5.2",
     "@types/pdf-parse": "^1.1.5",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/sync-fetch": "^0.4.4",
     "@vitest/coverage-v8": "^4.1.11",
@@ -151,7 +151,7 @@
     "sync-fetch": "^0.7.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^5.6.3",
+    "typescript": "^7.0.2",
     "ultracite": "7.12.2",
     "vitest": "^4.1.11"
   },
@@ -188,6 +188,9 @@
       "uuid@9": "^11.1.1",
       "vite@6": "^6.4.3",
       "ws@8": "^8.22.0"
+    },
+    "patchedDependencies": {
+      "@ladle/react": "patches/@ladle__react.patch"
     }
   }
 }

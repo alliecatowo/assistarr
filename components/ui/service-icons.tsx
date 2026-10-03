@@ -6,6 +6,7 @@
  * extended without modifying existing code.
  */
 
+import type { ReactElement } from "react";
 import type { ServiceIconId } from "@/lib/plugins/registry";
 import { cn } from "@/lib/utils";
 
@@ -197,7 +198,7 @@ function GenericIcon({
  */
 const ICON_COMPONENTS: Record<
 	ServiceIconId,
-	(props: Omit<ServiceIconProps, "iconId">) => JSX.Element
+	(props: Omit<ServiceIconProps, "iconId">) => ReactElement
 > = {
 	radarr: RadarrIcon,
 	sonarr: SonarrIcon,
@@ -240,7 +241,7 @@ export function ServiceIcon({
  */
 export function getServiceIconComponent(
 	iconId: ServiceIconId,
-): (props: Omit<ServiceIconProps, "iconId">) => JSX.Element {
+): (props: Omit<ServiceIconProps, "iconId">) => ReactElement {
 	return ICON_COMPONENTS[iconId] ?? ICON_COMPONENTS.generic;
 }
 

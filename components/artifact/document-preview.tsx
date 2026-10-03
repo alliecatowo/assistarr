@@ -158,7 +158,7 @@ const PureHitboxLayer = ({
   result,
   setArtifact,
 }: {
-  hitboxRef: React.RefObject<HTMLDivElement>;
+  hitboxRef: React.RefObject<HTMLDivElement | null>;
   // biome-ignore lint/suspicious/noExplicitAny: Generic preview data
   result: any;
   setArtifact: (

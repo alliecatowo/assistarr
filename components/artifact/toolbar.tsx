@@ -12,6 +12,7 @@ import {
   type Dispatch,
   memo,
   type ReactNode,
+  type RefObject,
   type SetStateAction,
   useEffect,
   useRef,
@@ -316,12 +317,14 @@ const PureToolbar = ({
 }) => {
   const { sendMessage, status, stop, setMessages } = useChatContext();
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useOnClickOutside(toolbarRef, () => {
+  useOnClickOutside(toolbarRef as RefObject<HTMLDivElement>, () => {
     setIsToolbarVisible(false);
     setSelectedTool(null);
   });
