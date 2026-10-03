@@ -102,10 +102,14 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "pnpm dev",
-    url: `${baseURL}/ping`,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  // The visual project tests Ladle stories (served separately), so it needs
+  // no app server (and no database/auth env). Set PLAYWRIGHT_NO_WEBSERVER=1.
+  webServer: process.env.PLAYWRIGHT_NO_WEBSERVER
+    ? undefined
+    : {
+        command: "pnpm dev",
+        url: `${baseURL}/ping`,
+        timeout: 120 * 1000,
+        reuseExistingServer: !process.env.CI,
+      },
 });
