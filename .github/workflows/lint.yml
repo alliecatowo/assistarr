@@ -15,14 +15,14 @@ jobs:
     name: Lint
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v7
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-      - name: Use Node.js 24
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up toolchain (mise)
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          node-version: 24
-          cache: "pnpm"
+          install: true
+          cache: true
+
       - name: Install dependencies
         run: pnpm install
       - name: Run lint
@@ -33,18 +33,18 @@ jobs:
     runs-on: ubuntu-22.04
     needs: lint
     steps:
-      - uses: actions/checkout@v7
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-      - name: Use Node.js 24
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up toolchain (mise)
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          node-version: 24
-          cache: "pnpm"
+          install: true
+          cache: true
+
       - name: Install dependencies
         run: pnpm install
       - name: Cache Next.js build
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .next
           key: nextjs-build-${{ hashFiles('package.json', 'pnpm-lock.yaml', 'app/**', 'components/**', 'lib/**') }}
@@ -61,20 +61,20 @@ jobs:
     runs-on: ubuntu-22.04
     needs: lint
     steps:
-      - uses: actions/checkout@v7
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-      - name: Use Node.js 24
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up toolchain (mise)
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          node-version: 24
-          cache: "pnpm"
+          install: true
+          cache: true
+
       - name: Install dependencies
         run: pnpm install
       - name: Run tests
         run: pnpm test -- --run --coverage
       - name: Upload coverage
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -84,6 +84,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: lint
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build image
         run: docker build -t assistarr:ci .
