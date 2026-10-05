@@ -114,4 +114,14 @@ describe("GET /api/health", () => {
       "no-cache, no-store, must-revalidate"
     );
   });
+
+  it("is healthy in demo mode without an AI provider key", async () => {
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.AI_GATEWAY_API_KEY;
+    process.env.DEMO_MODE = "true";
+    const { GET } = await import("./route");
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+  });
 });

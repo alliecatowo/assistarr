@@ -135,7 +135,7 @@ const PurePreviewMessage = ({
         )}
 
         <div
-          className={cn("flex flex-col", {
+          className={cn("flex min-w-0 flex-col", {
             "gap-2 md:gap-4": message.role === "assistant",
             "w-full":
               (message.role === "assistant" &&
