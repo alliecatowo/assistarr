@@ -4,7 +4,14 @@ import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
 import { isDemoMode } from "@/lib/demo/mode";
+import { RateLimiter } from "@/lib/rate-limit";
 import { safeUploadName, sniffImageType } from "@/lib/upload-validation";
+
+// Per-user upload quota: public blobs cost storage, so cap the rate.
+const uploadLimiter = new RateLimiter({
+  windowMs: 60 * 60 * 1000,
+  maxRequests: Number(process.env.UPLOADS_PER_HOUR_PER_USER ?? 20),
+});
 
 // Use Blob instead of File since File is not available in Node.js environment
 const FileSchema = z.object({
@@ -37,6 +44,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Sign in to upload files" },
       { status: 403 }
+    );
+  }
+
+  const quota = await uploadLimiter.check(`upload:${session.user.id}`);
+  if (!quota.allowed) {
+    return NextResponse.json(
+      { error: "Upload limit reached. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(quota.resetIn / 1000)) },
+      }
     );
   }
 

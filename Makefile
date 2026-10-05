@@ -68,7 +68,7 @@ install:
 check-env:
 	@echo "Checking required environment variables..."
 	@missing=0; \
-	for var in POSTGRES_URL AUTH_SECRET; do \
+	for var in POSTGRES_URL AUTH_SECRET ENCRYPTION_KEY; do \
 		if [ -z "$${!var}" ]; then \
 			echo "  ✗ $$var is not set"; \
 			missing=1; \

@@ -39,3 +39,27 @@ export function safeUploadName(
     .slice(0, 64);
   return `${stem || "upload"}.${EXTENSIONS[type]}`;
 }
+
+const BLOB_HOST_SUFFIX = ".public.blob.vercel-storage.com";
+
+/**
+ * Chat file parts may only reference files this app uploaded: https, the
+ * Vercel Blob public host, no embedded credentials, default port. Anything else
+ * would let a client make the model provider fetch arbitrary (internal) URLs.
+ */
+export function isAllowedFileUrl(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  return (
+    url.protocol === "https:" &&
+    url.hostname.toLowerCase().endsWith(BLOB_HOST_SUFFIX) &&
+    url.hostname.length > BLOB_HOST_SUFFIX.length &&
+    !url.username &&
+    !url.password &&
+    (url.port === "" || url.port === "443")
+  );
+}

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createLogger } from "@/lib/logger";
+import { isWeakSecret } from "@/lib/secret-strength";
 
 const log = createLogger("env");
 
@@ -40,8 +41,8 @@ const baseEnvSchema = z.object({
         .string()
         .min(1, "AUTH_SECRET is required")
         .refine(
-          (v) => !v.startsWith("change-me"),
-          "AUTH_SECRET is still the .env.example placeholder; generate one with: openssl rand -base64 32"
+          (v) => !isWeakSecret(v),
+          "AUTH_SECRET is too short (min 32 characters) or still a placeholder; generate one with: openssl rand -base64 32"
         ),
 
   // AI Providers (at least one required - validated below)
@@ -52,7 +53,8 @@ const baseEnvSchema = z.object({
     .optional()
     .describe("AI provider to use (auto-detected if not specified)"),
 
-  // Encryption key for credential encryption (optional - for future use)
+  // Encrypts stored service/MCP/AI credentials. Required in production
+  // (see superRefine below); there is no plaintext fallback.
   ENCRYPTION_KEY: z.string().optional(),
 
   // Redis for resumable streams (optional)
@@ -95,6 +97,22 @@ const baseEnvSchema = z.object({
  * Full schema with cross-field validation for AI providers
  */
 const serverEnvSchema = baseEnvSchema.superRefine((data, ctx) => {
+  // Production must be able to encrypt stored credentials. The public demo
+  // answers from fixtures and refuses to store credentials, so it is exempt.
+  if (
+    !isTestEnv &&
+    data.NODE_ENV === "production" &&
+    process.env.DEMO_MODE !== "true" &&
+    isWeakSecret(data.ENCRYPTION_KEY)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "ENCRYPTION_KEY is required in production (min 32 characters, not a placeholder); generate one with: openssl rand -base64 32",
+      path: ["ENCRYPTION_KEY"],
+    });
+  }
+
   // Skip AI provider validation in test environments
   // The public demo can run on the scripted model with no key
   if (isTestEnv || process.env.DEMO_MODE === "true") {

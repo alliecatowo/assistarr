@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { auth } from "@/app/(auth)/auth";
+import { collectFileUrls, deleteBlobs } from "@/lib/blob-cleanup";
 import {
   deleteAllChatsByUserId,
   getChatsByUserId,
+  getMessagePartsByUserId,
 } from "@/lib/db/queries/index";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -46,7 +48,11 @@ export async function DELETE() {
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
 
+  const fileUrls = collectFileUrls(
+    await getMessagePartsByUserId({ userId: session.user.id })
+  );
   const result = await deleteAllChatsByUserId({ userId: session.user.id });
+  await deleteBlobs(fileUrls);
 
   return Response.json(result, { status: 200 });
 }

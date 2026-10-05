@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("ready");
 
 const VERSION = process.env.npm_package_version || "unknown";
 
@@ -12,7 +15,9 @@ const VERSION = process.env.npm_package_version || "unknown";
  * GET /api/ready
  *
  * 200: {"status":"ok","version":"3.1.0","timestamp":"..."}
- * 503: {"status":"not-ready","missing":["POSTGRES_URL"],"timestamp":"..."}
+ * 503: {"status":"not-ready","timestamp":"..."}
+ *
+ * Public by design; the names of missing variables are logged, not returned.
  */
 export function GET() {
   const required = ["POSTGRES_URL", "AUTH_SECRET"] as const;
@@ -32,10 +37,10 @@ export function GET() {
   }
 
   if (missing.length > 0) {
+    log.error({ missing }, "Readiness check failed");
     return NextResponse.json(
       {
         status: "not-ready",
-        missing,
         timestamp: new Date().toISOString(),
       },
       {

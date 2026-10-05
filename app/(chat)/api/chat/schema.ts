@@ -1,15 +1,20 @@
 import { z } from "zod";
+import { isAllowedFileUrl } from "@/lib/upload-validation";
 
 const textPartSchema = z.object({
   type: z.enum(["text"]),
   text: z.string().min(1).max(2000),
 });
 
+const blobFileUrl = z.string().url().refine(isAllowedFileUrl, {
+  message: "File URL must be an https URL on the app's blob storage host",
+});
+
 const filePartSchema = z.object({
   type: z.enum(["file"]),
   mediaType: z.enum(["image/jpeg", "image/png"]),
   name: z.string().min(1).max(100),
-  url: z.string().url(),
+  url: blobFileUrl,
 });
 
 const partSchema = z.union([textPartSchema, filePartSchema]);

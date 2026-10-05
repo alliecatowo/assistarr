@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { assertNotDemo } from "@/lib/demo/mode";
-import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
+import { openSecret, sealSecret } from "../../crypto";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
 import { db } from "../db";
@@ -13,34 +13,34 @@ import {
 const log = createLogger("db:mcp-config");
 
 /**
- * Decrypts sensitive fields in an MCP config if encryption is configured.
+ * Decrypts sensitive fields in an MCP config. Throws on a v2 value that does
+ * not decrypt; pre-v2 rows are re-sealed in the background.
  */
 function decryptMCPConfig(config: MCPServerConfig): MCPServerConfig {
-  if (!isEncryptionConfigured()) {
-    return config;
+  if (!config.apiKey) {
+    return { ...config, apiKey: null };
   }
-  try {
-    return {
-      ...config,
-      apiKey: config.apiKey ? decrypt(config.apiKey) : null,
-    };
-  } catch {
-    // If decryption fails, it might be legacy unencrypted data
-    return config;
+  const opened = openSecret(config.apiKey, config.userId);
+  if (opened.legacy) {
+    db.update(mcpServerConfig)
+      .set({ apiKey: sealSecret(opened.value, config.userId) })
+      .where(eq(mcpServerConfig.id, config.id))
+      .catch((error) =>
+        log.warn({ error, id: config.id }, "Failed to upgrade MCP config")
+      );
   }
+  return { ...config, apiKey: opened.value };
 }
 
-/**
- * Encrypts an API key if encryption is configured.
- */
-function encryptApiKey(apiKey: string | null | undefined): string | null {
+/** Encrypts an API key; throws if ENCRYPTION_KEY is not usable. */
+function encryptApiKey(
+  apiKey: string | null | undefined,
+  userId: string
+): string | null {
   if (!apiKey) {
     return null;
   }
-  if (!isEncryptionConfigured()) {
-    return apiKey;
-  }
-  return encrypt(apiKey);
+  return sealSecret(apiKey, userId);
 }
 
 export async function getMCPConfigs({
@@ -150,7 +150,7 @@ export async function createMCPConfig({
       );
     }
 
-    const encryptedApiKey = encryptApiKey(apiKey);
+    const encryptedApiKey = encryptApiKey(apiKey, userId);
 
     const [newConfig] = await db
       .insert(mcpServerConfig)
@@ -231,7 +231,7 @@ export async function updateMCPConfig({
       updateData.transport = transport;
     }
     if (apiKey !== undefined) {
-      updateData.apiKey = encryptApiKey(apiKey);
+      updateData.apiKey = encryptApiKey(apiKey, userId);
     }
     if (headers !== undefined) {
       updateData.headers = headers;

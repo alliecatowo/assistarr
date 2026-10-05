@@ -12,12 +12,12 @@ describe("guest creation limit", () => {
 
   it("caps guest creation per IP and isolates IPs", async () => {
     let ok = 0;
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 45; i++) {
       if (await allowGuestCreation()) {
         ok++;
       }
     }
-    expect(ok).toBe(10);
+    expect(ok).toBe(30);
     expect(await guestCreationAllowed()).toBe(false);
     ip.value = "198.51.100.200";
     expect(await guestCreationAllowed()).toBe(true);

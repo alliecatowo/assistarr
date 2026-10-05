@@ -15,10 +15,10 @@ import {
 import { fetchDiscoverySections } from "@/lib/discover/fetch-discovery-sections";
 import {
   calculateProgressPercentage,
-  getImageUrl,
   JellyfinClient,
   ticksToMinutes,
 } from "@/lib/plugins/jellyfin/client";
+import { getProxiedImageUrl } from "@/lib/plugins/jellyfin/image-proxy";
 import type { ItemsResponse, MediaItem } from "@/lib/plugins/jellyfin/types";
 import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { QBittorrentClient } from "@/lib/plugins/qbittorrent/client";
@@ -222,7 +222,7 @@ async function getContinueWatching(
     );
 
     return response.Items.map((item) =>
-      mapContinueWatchingItem(item, config.baseUrl, config.apiKey)
+      mapContinueWatchingItem(item, config.baseUrl)
     );
   } catch {
     return [];
@@ -246,8 +246,7 @@ async function resolveJellyfinUserId(client: JellyfinClient): Promise<string> {
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: complex mapping function with many media type branches
 function mapContinueWatchingItem(
   item: MediaItem,
-  baseUrl: string,
-  apiKey?: string
+  baseUrl: string
 ): ContinueWatchingItem {
   const positionTicks = item.UserData?.PlaybackPositionTicks ?? 0;
   const totalTicks = item.RunTimeTicks ?? 0;
@@ -278,7 +277,7 @@ function mapContinueWatchingItem(
         : item.Type === "Movie"
           ? "Movie"
           : item.Type,
-    imageUrl: getImageUrl(baseUrl, item.Id, "Primary", 500, apiKey),
+    imageUrl: getProxiedImageUrl(item.Id, "Primary", 500),
     progress: progressPercentage,
     remaining: remainingMinutes ? `${remainingMinutes}m left` : undefined,
     lastWatched: item.UserData?.LastPlayedDate ?? null,

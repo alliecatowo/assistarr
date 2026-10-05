@@ -1,8 +1,10 @@
 import { auth } from "@/app/(auth)/auth";
+import { getServiceConfig } from "@/lib/db/queries/service-config";
 import { demoWriteBlockedResponse } from "@/lib/demo/mode";
 import { ChatSDKError } from "@/lib/errors";
 import { assertSafeServiceUrl, safeFetch } from "@/lib/net/ssrf";
 import { HEALTH_CHECK_TIMEOUT_MS } from "@/lib/plugins/core/client";
+import { resolveSecret } from "@/lib/settings/mask";
 
 interface JellyseerrServiceConfig {
   id: number;
@@ -87,7 +89,17 @@ export async function POST(request: Request) {
 
   try {
     const body: DiscoverRequest = await request.json();
-    const { jellyseerrBaseUrl, jellyseerrApiKey } = body;
+    const { jellyseerrBaseUrl } = body;
+    const submittedKey = body.jellyseerrApiKey;
+    const stored = submittedKey
+      ? await getServiceConfig({
+          userId: session.user.id,
+          serviceName: "jellyseerr",
+        })
+      : null;
+    const jellyseerrApiKey = submittedKey
+      ? resolveSecret(submittedKey, stored?.apiKey)
+      : submittedKey;
 
     if (!jellyseerrBaseUrl || !jellyseerrApiKey) {
       return new ChatSDKError(

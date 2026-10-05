@@ -203,3 +203,20 @@ export async function getMessageCountByUserId({
     );
   }
 }
+
+/** Message parts for every chat a user owns (used to find uploaded files). */
+export async function getMessagePartsByUserId({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select({ parts: message.parts })
+      .from(message)
+      .innerJoin(chat, eq(message.chatId, chat.id))
+      .where(eq(chat.userId, userId));
+  } catch (_error) {
+    log.error({ error: _error, userId }, "Failed to get message parts");
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get message parts"
+    );
+  }
+}
