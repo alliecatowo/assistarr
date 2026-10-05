@@ -8,7 +8,8 @@ Assistarr runs on any Linux host with Docker 24+ and Compose v2. Plan for 1 GB o
 git clone https://github.com/alliecatowo/assistarr.git
 cd assistarr
 cp .env.example .env
-# fill in AUTH_SECRET, POSTGRES_PASSWORD and an AI provider key (for example OPENROUTER_API_KEY)
+# set POSTGRES_PASSWORD, an AI provider key (for example OPENROUTER_API_KEY),
+# and AUTH_SECRET + ENCRYPTION_KEY (each: openssl rand -base64 32)
 docker compose up -d
 ```
 
