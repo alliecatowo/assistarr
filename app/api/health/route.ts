@@ -138,9 +138,10 @@ function checkEnv(): CheckResult {
   }
 
   // Check AI provider (at least one required)
-  const hasAiProvider = AI_PROVIDER_ENV_VARS.some((key) =>
-    Boolean(process.env[key])
-  );
+  // The public demo runs on a scripted model and needs no provider key.
+  const hasAiProvider =
+    process.env.DEMO_MODE === "true" ||
+    AI_PROVIDER_ENV_VARS.some((key) => Boolean(process.env[key]));
   if (hasAiProvider) {
     for (const key of AI_PROVIDER_ENV_VARS) {
       if (process.env[key]) {

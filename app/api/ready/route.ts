@@ -31,7 +31,9 @@ export function GET() {
     }
   }
 
-  const hasAi = aiProviders.some((k) => Boolean(process.env[k]));
+  const hasAi =
+    process.env.DEMO_MODE === "true" ||
+    aiProviders.some((k) => Boolean(process.env[k]));
   if (!hasAi) {
     missing.push(`one of: ${aiProviders.join(", ")}`);
   }
