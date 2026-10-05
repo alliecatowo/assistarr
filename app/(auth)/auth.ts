@@ -2,7 +2,9 @@ import { compare } from "bcrypt-ts";
 import NextAuth, { type DefaultSession } from "next-auth";
 import type { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
+import { loginAttemptAllowed } from "@/lib/auth-limit";
 import { TIMING_SAFE_HASH } from "@/lib/constants";
+import { credentialsSchema } from "@/lib/credentials";
 import { createGuestUser, getUser } from "@/lib/db/queries/index";
 import { allowGuestCreation } from "@/lib/guest-limit";
 import { authConfig } from "./auth.config";
@@ -42,7 +44,21 @@ export const {
     Credentials({
       credentials: {},
       // biome-ignore lint/suspicious/noExplicitAny: Auth types are complex
-      async authorize({ email, password }: any) {
+      async authorize(raw: any) {
+        // Validates and normalizes; also guards non-string and >72 byte input.
+        const parsed = credentialsSchema.safeParse({
+          email: raw?.email,
+          password: raw?.password,
+        });
+        if (!parsed.success) {
+          return null;
+        }
+        const { email, password } = parsed.data;
+
+        if (!(await loginAttemptAllowed(email))) {
+          return null;
+        }
+
         const users = await getUser(email);
 
         if (users.length === 0) {

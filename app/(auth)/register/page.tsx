@@ -30,6 +30,11 @@ export default function Page() {
       toast({ type: "error", description: "Account already exists!" });
     } else if (state.status === "failed") {
       toast({ type: "error", description: "Failed to create account!" });
+    } else if (state.status === "rate_limited") {
+      toast({
+        type: "error",
+        description: "Too many sign-up attempts. Try again later.",
+      });
     } else if (state.status === "invalid_data") {
       toast({
         type: "error",

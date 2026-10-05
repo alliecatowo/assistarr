@@ -68,12 +68,15 @@ export class JellyfinClient extends ApiClient {
 }
 
 // Standalone exports for tools
+/**
+ * Direct Jellyfin image URL. Never carries credentials; for images the browser
+ * must load with auth use getProxiedImageUrl (image-proxy.ts) instead.
+ */
 export function getImageUrl(
   baseUrl: string,
   itemId: string,
   type = "Primary",
-  maxWidth?: number,
-  apiKey?: string
+  maxWidth?: number
 ): string {
   const params = new URLSearchParams({
     quality: "90",
@@ -81,10 +84,6 @@ export function getImageUrl(
 
   if (maxWidth) {
     params.set("maxWidth", maxWidth.toString());
-  }
-
-  if (apiKey) {
-    params.set("api_key", apiKey);
   }
 
   return `${baseUrl}/Items/${itemId}/Images/${type}?${params.toString()}`;

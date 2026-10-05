@@ -29,10 +29,12 @@ const inMemoryStore = new Map<string, number[]>();
 
 // Redis client singleton
 let redisClient: RedisClientType | null = null;
-let redisConnectionFailed = false;
+let redisFailedAt = 0;
+const REDIS_RETRY_MS = 30_000;
 
 async function getRedisClient(): Promise<RedisClientType | null> {
-  if (redisConnectionFailed) {
+  // A failure only disables Redis for a cooldown, then it is retried.
+  if (redisFailedAt && Date.now() - redisFailedAt < REDIS_RETRY_MS) {
     return null;
   }
 
@@ -49,18 +51,19 @@ async function getRedisClient(): Promise<RedisClientType | null> {
 
     redisClient.on("error", (err) => {
       log.error({ err }, "Redis client error");
-      redisConnectionFailed = true;
+      redisFailedAt = Date.now();
       redisClient = null;
     });
 
     await redisClient.connect();
+    redisFailedAt = 0;
     return redisClient;
   } catch (error) {
     log.warn(
       { err: error },
       "Failed to connect to Redis, using in-memory rate limiting"
     );
-    redisConnectionFailed = true;
+    redisFailedAt = Date.now();
     return null;
   }
 }

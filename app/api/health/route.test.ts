@@ -84,21 +84,16 @@ describe("GET /api/health", () => {
     expect(body.checks.env.status).toBe("fail");
   });
 
-  it("includes services object in response", async () => {
+  it("does not expose per-user service data, env names or error text", async () => {
+    process.env.AUTH_SECRET = "";
     const { GET } = await import("./route");
     const response = await GET();
-    const body = await response.json();
+    const text = JSON.stringify(await response.json());
 
-    expect(body.services).toBeDefined();
-    expect(typeof body.services).toBe("object");
-    // Services are null (DB available but no service rows in test mock)
-    // or have configured property
-    for (const service of ["jellyfin", "radarr", "sonarr", "jellyseerr"]) {
-      const status = body.services[service];
-      if (status !== null) {
-        expect(status).toHaveProperty("configured");
-      }
-    }
+    expect(text).not.toContain("services");
+    expect(text).not.toContain("AUTH_SECRET");
+    expect(text).not.toContain("POSTGRES_URL");
+    expect(text).not.toContain("message");
   });
 
   it("omits redis check when REDIS_URL is not set", async () => {

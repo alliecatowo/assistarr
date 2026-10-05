@@ -3,12 +3,14 @@ import { createUIMessageStreamResponse, generateId } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
+import { collectFileUrls, deleteBlobs } from "@/lib/blob-cleanup";
 import {
   createStreamId,
   deleteChatById,
   getChatById,
   getEnabledMCPConfigs,
   getEnabledUserSkills,
+  getMessagesByChatId,
   getServiceConfigs,
 } from "@/lib/db/queries/index";
 import { env } from "@/lib/env";
@@ -203,6 +205,8 @@ export async function DELETE(request: Request) {
 
   logger.info({ chatId: id, userId: session.user.id }, "Deleting chat");
 
+  const fileUrls = collectFileUrls(await getMessagesByChatId({ id }));
   const deletedChat = await deleteChatById({ id });
+  await deleteBlobs(fileUrls);
   return Response.json(deletedChat, { status: 200 });
 }

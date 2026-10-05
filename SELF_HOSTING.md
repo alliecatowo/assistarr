@@ -41,7 +41,7 @@ open http://localhost:3000
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `NEXTAUTH_URL` | `http://localhost:3000` | Public URL for auth callbacks |
-| `ENCRYPTION_KEY` | — | Encrypts service API keys in DB |
+| `ENCRYPTION_KEY` | required in production | Encrypts service API keys in DB (`openssl rand -base64 32`, min 32 chars) |
 | `ASSISTARR_PORT` | `3000` | Host port to expose |
 | `REDIS_URL` | — | Enable resumable AI streams |
 

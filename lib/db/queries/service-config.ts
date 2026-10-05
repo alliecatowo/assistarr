@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { assertNotDemo, isDemoMode } from "@/lib/demo/mode";
 import { demoServiceConfigs } from "@/lib/demo/service-configs";
-import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
+import { type OpenedSecret, openSecret, sealSecret } from "../../crypto";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
 import { db } from "../db";
@@ -10,36 +10,56 @@ import { withTransaction } from "../utils";
 
 const log = createLogger("db:service-config");
 
-function decryptField(value: string | null | undefined): string {
-  if (!value) {
-    return "";
-  }
-  if (!isEncryptionConfigured()) {
-    return value;
-  }
-  try {
-    return decrypt(value) ?? "";
-  } catch {
-    return value;
-  }
-}
-
-function encryptField(value: string | null | undefined): string | null {
+function sealField(
+  value: string | null | undefined,
+  userId: string
+): string | null {
   if (!value) {
     return null;
   }
-  if (!isEncryptionConfigured()) {
-    return value;
+  return sealSecret(value, userId);
+}
+
+function openField(
+  value: string | null | undefined,
+  userId: string
+): OpenedSecret | null {
+  if (!value) {
+    return null;
   }
-  return encrypt(value);
+  return openSecret(value, userId);
 }
 
 function decryptServiceConfig(config: ServiceConfig): ServiceConfig {
+  const apiKey = openField(config.apiKey, config.userId);
+  const password = openField(config.password, config.userId);
+
+  if (apiKey?.legacy || password?.legacy) {
+    // Re-seal pre-v2 rows (plaintext or old ciphertext) in the background.
+    upgradeLegacyRow(config, apiKey, password).catch((error) =>
+      log.warn({ error, id: config.id }, "Failed to upgrade service config")
+    );
+  }
+
   return {
     ...config,
-    apiKey: decryptField(config.apiKey) ?? "",
-    password: decryptField(config.password),
+    apiKey: apiKey?.value ?? "",
+    password: password?.value ?? null,
   };
+}
+
+async function upgradeLegacyRow(
+  config: ServiceConfig,
+  apiKey: OpenedSecret | null,
+  password: OpenedSecret | null
+): Promise<void> {
+  await db
+    .update(serviceConfig)
+    .set({
+      apiKey: sealField(apiKey?.value, config.userId) ?? "",
+      password: sealField(password?.value, config.userId),
+    })
+    .where(eq(serviceConfig.id, config.id));
 }
 
 export async function getServiceConfigs({
@@ -135,8 +155,8 @@ export async function upsertServiceConfig({
     );
     // For services like qBittorrent that use username/password instead of API key,
     // we need to ensure apiKey is never null (database constraint)
-    const encryptedApiKey = encryptField(apiKey) ?? "";
-    const encryptedPassword = encryptField(password);
+    const encryptedApiKey = sealField(apiKey, userId) ?? "";
+    const encryptedPassword = sealField(password, userId);
 
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: transaction handles many service config branches
     return await withTransaction(async (tx) => {

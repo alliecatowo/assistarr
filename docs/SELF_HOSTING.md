@@ -38,6 +38,7 @@ AUTH_SECRET=$(openssl rand -base64 32)
 # Create .env.local
 cat > .env.local << EOF
 AUTH_SECRET=${AUTH_SECRET}
+ENCRYPTION_KEY=$(openssl rand -base64 32)
 OPENROUTER_API_KEY=your-openrouter-api-key
 EOF
 ```
@@ -79,7 +80,7 @@ At least one AI provider must be configured:
 |----------|-------------|---------|
 | `POSTGRES_URL` | PostgreSQL connection string | Provided by docker-compose |
 | `REDIS_URL` | Redis connection string for resumable streams | Provided by docker-compose |
-| `ENCRYPTION_KEY` | Key for encrypting service credentials | Auto-generated |
+| `ENCRYPTION_KEY` | Key for encrypting service credentials. Required in production (min 32 chars, `openssl rand -base64 32`) | none |
 | `NODE_ENV` | Environment mode | `production` |
 
 ### Sentry Error Tracking (Optional)

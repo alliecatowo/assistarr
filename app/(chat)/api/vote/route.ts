@@ -2,6 +2,7 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import {
   getChatById,
+  getMessageById,
   getVotesByChatId,
   voteMessage,
 } from "@/lib/db/queries/index";
@@ -77,6 +78,13 @@ export async function PATCH(request: Request) {
 
   if (chat.userId !== session.user.id) {
     return new ChatSDKError("forbidden:vote").toResponse();
+  }
+
+  // The message must belong to this (owned) chat; otherwise a user could
+  // attach votes to arbitrary message ids.
+  const [targetMessage] = await getMessageById({ id: messageId });
+  if (!targetMessage || targetMessage.chatId !== chatId) {
+    return new ChatSDKError("not_found:vote").toResponse();
   }
 
   await voteMessage({

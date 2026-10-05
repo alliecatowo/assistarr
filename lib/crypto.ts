@@ -5,6 +5,8 @@ import {
   scryptSync,
 } from "node:crypto";
 
+import { isWeakSecret } from "./secret-strength";
+
 // AES-256-GCM configuration
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12; // GCM standard IV length (96 bits)
@@ -26,9 +28,10 @@ function getEncryptionKey(): string {
         "Please generate a secure key using: openssl rand -base64 32"
     );
   }
-  if (key.length < 32) {
+  if (isWeakSecret(key)) {
     throw new Error(
-      "ENCRYPTION_KEY must be at least 32 characters long for adequate security."
+      "ENCRYPTION_KEY must be at least 32 characters and not a placeholder. " +
+        "Generate one with: openssl rand -base64 32"
     );
   }
   return key;
@@ -135,6 +138,93 @@ export function decrypt(encryptedData: string): string {
  * @returns true if ENCRYPTION_KEY is set and meets minimum requirements
  */
 export function isEncryptionConfigured(): boolean {
-  const key = process.env.ENCRYPTION_KEY;
-  return !!key && key.length >= 32;
+  return !isWeakSecret(process.env.ENCRYPTION_KEY);
+}
+
+// ---------------------------------------------------------------------------
+// Versioned secret storage (v2)
+//
+// Format: "v2:" + base64(iv + authTag + ciphertext)
+// - The key is derived once per process (not once per field per request).
+// - `aad` (the owning user id) is bound into the GCM tag, so a ciphertext
+//   copied into another user's row fails to decrypt.
+// - There is no plaintext fallback: sealing without a valid ENCRYPTION_KEY
+//   throws, and a v2 value that fails to decrypt throws.
+// ---------------------------------------------------------------------------
+
+const V2_PREFIX = "v2:";
+const V2_SALT = "assistarr/secret/v2";
+let cachedV2Key: { source: string; key: Buffer } | null = null;
+
+function getV2Key(): Buffer {
+  const source = getEncryptionKey();
+  if (cachedV2Key?.source !== source) {
+    cachedV2Key = { source, key: scryptSync(source, V2_SALT, KEY_LENGTH) };
+  }
+  return cachedV2Key.key;
+}
+
+/** Encrypts a secret for storage. Throws if ENCRYPTION_KEY is unusable. */
+export function sealSecret(plaintext: string, aad: string): string {
+  const key = getV2Key();
+  const iv = randomBytes(IV_LENGTH);
+  const cipher = createCipheriv(ALGORITHM, key, iv, {
+    authTagLength: AUTH_TAG_LENGTH,
+  });
+  cipher.setAAD(Buffer.from(aad, "utf8"));
+  const ciphertext = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
+  const combined = Buffer.concat([iv, cipher.getAuthTag(), ciphertext]);
+  return V2_PREFIX + combined.toString("base64");
+}
+
+export interface OpenedSecret {
+  value: string;
+  /** True when the stored value predates v2 and should be re-sealed. */
+  legacy: boolean;
+}
+
+/**
+ * Decrypts a stored secret.
+ * - v2 values must decrypt (wrong key, wrong owner or tampering throws).
+ * - Un-prefixed values are rows written before v2: tried as the old
+ *   ciphertext format, otherwise treated as legacy plaintext and flagged
+ *   `legacy` so the caller re-seals them.
+ */
+export function openSecret(stored: string, aad: string): OpenedSecret {
+  if (stored.startsWith(V2_PREFIX)) {
+    const combined = Buffer.from(stored.slice(V2_PREFIX.length), "base64");
+    if (combined.length < IV_LENGTH + AUTH_TAG_LENGTH) {
+      throw new Error("Invalid encrypted data: data too short");
+    }
+    const iv = combined.subarray(0, IV_LENGTH);
+    const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
+    const ciphertext = combined.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
+    try {
+      const decipher = createDecipheriv(ALGORITHM, getV2Key(), iv, {
+        authTagLength: AUTH_TAG_LENGTH,
+      });
+      decipher.setAAD(Buffer.from(aad, "utf8"));
+      decipher.setAuthTag(authTag);
+      const plaintext = Buffer.concat([
+        decipher.update(ciphertext),
+        decipher.final(),
+      ]);
+      return { value: plaintext.toString("utf8"), legacy: false };
+    } catch {
+      throw new Error(
+        "Decryption failed: data may be corrupted, belong to another user or use a different ENCRYPTION_KEY"
+      );
+    }
+  }
+
+  // Pre-v2 rows. A valid key is still required to read or upgrade them.
+  getEncryptionKey();
+  try {
+    return { value: decrypt(stored), legacy: true };
+  } catch {
+    return { value: stored, legacy: true };
+  }
 }

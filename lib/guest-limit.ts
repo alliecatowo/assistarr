@@ -3,7 +3,7 @@ import { RateLimiter } from "@/lib/rate-limit";
 
 // New guest accounts per IP. Each guest is a DB row and a fresh message quota.
 const GUEST_CREATIONS_PER_HOUR = Number(
-  process.env.GUEST_CREATIONS_PER_HOUR_PER_IP ?? 10
+  process.env.GUEST_CREATIONS_PER_HOUR_PER_IP ?? 30
 );
 
 const limiter = new RateLimiter({

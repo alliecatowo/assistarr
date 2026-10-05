@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import {
   deleteServiceConfig,
+  getServiceConfig,
   getServiceConfigs,
   upsertServiceConfig,
 } from "@/lib/db/queries/service-config";
@@ -14,6 +15,7 @@ import { JellyseerrClient } from "@/lib/plugins/jellyseerr/client";
 import { QBittorrentClient } from "@/lib/plugins/qbittorrent/client";
 import { RadarrClient } from "@/lib/plugins/radarr/client";
 import { SonarrClient } from "@/lib/plugins/sonarr/client";
+import { maskServiceConfig, resolveSecret } from "@/lib/settings/mask";
 
 const baseSettingsSchema = z.object({
   serviceName: z.string(),
@@ -29,6 +31,48 @@ const credentialsSchema = baseSettingsSchema.extend({
   username: z.string().min(1),
   password: z.string().min(1),
 });
+
+type ServiceBody =
+  | z.infer<typeof apiKeySchema>
+  | z.infer<typeof credentialsSchema>;
+
+class MaskedSecretError extends z.ZodError {}
+
+/**
+ * Parse and validate a service payload, check its URL, and swap any masked
+ * secret placeholder for the user's stored secret.
+ */
+async function parseServiceBody(
+  request: Request,
+  userId: string
+): Promise<ServiceBody> {
+  const json = await request.json();
+  const body: ServiceBody =
+    json.serviceName === "qbittorrent"
+      ? credentialsSchema.parse(json)
+      : apiKeySchema.parse(json);
+
+  await assertSafeServiceUrl(body.baseUrl);
+
+  const stored = await getServiceConfig({
+    userId,
+    serviceName: body.serviceName,
+  });
+  if ("apiKey" in body) {
+    body.apiKey = resolveSecret(body.apiKey, stored?.apiKey);
+  }
+  if ("password" in body) {
+    body.password = resolveSecret(body.password, stored?.password);
+  }
+  if (
+    ("apiKey" in body && !body.apiKey) ||
+    ("password" in body && !body.password)
+  ) {
+    // Placeholder sent but nothing stored to restore.
+    throw new MaskedSecretError([]);
+  }
+  return body;
+}
 
 async function checkServiceHealth(config: ServiceConfig): Promise<boolean> {
   try {
@@ -73,7 +117,7 @@ export async function GET() {
   }
 
   const configs = await getServiceConfigs({ userId: session.user.id });
-  return NextResponse.json(configs);
+  return NextResponse.json(configs.map(maskServiceConfig));
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validation branches
@@ -89,16 +133,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const json = await request.json();
-
-    let body: z.infer<typeof apiKeySchema> | z.infer<typeof credentialsSchema>;
-    if (json.serviceName === "qbittorrent") {
-      body = credentialsSchema.parse(json);
-    } else {
-      body = apiKeySchema.parse(json);
-    }
-
-    await assertSafeServiceUrl(body.baseUrl);
+    const body = await parseServiceBody(request, session.user.id);
 
     const tempConfig: ServiceConfig = {
       id: "temp",
@@ -134,7 +169,7 @@ export async function POST(request: Request) {
       isEnabled: body.isEnabled ?? true,
     });
 
-    return NextResponse.json(config);
+    return NextResponse.json(maskServiceConfig(config));
   } catch (error) {
     if (error instanceof UnsafeUrlError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -161,16 +196,7 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const json = await request.json();
-
-    let body: z.infer<typeof apiKeySchema> | z.infer<typeof credentialsSchema>;
-    if (json.serviceName === "qbittorrent") {
-      body = credentialsSchema.parse(json);
-    } else {
-      body = apiKeySchema.parse(json);
-    }
-
-    await assertSafeServiceUrl(body.baseUrl);
+    const body = await parseServiceBody(request, session.user.id);
 
     const tempConfig: ServiceConfig = {
       id: "temp",

@@ -1,18 +1,23 @@
 "use server";
 
 import { z } from "zod";
+import { registrationAllowed } from "@/lib/auth-limit";
+import { credentialsSchema } from "@/lib/credentials";
 import { createUser, getUser } from "@/lib/db/queries/index";
 import { isDemoMode } from "@/lib/demo/mode";
 
 import { signIn } from "./auth";
 
-const authFormSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+const authFormSchema = credentialsSchema;
 
 export type LoginActionState = {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
+  status:
+    | "idle"
+    | "in_progress"
+    | "success"
+    | "failed"
+    | "invalid_data"
+    | "rate_limited";
 };
 
 export const login = async (
@@ -48,7 +53,8 @@ export type RegisterActionState = {
     | "success"
     | "failed"
     | "user_exists"
-    | "invalid_data";
+    | "invalid_data"
+    | "rate_limited";
 };
 
 export const register = async (
@@ -63,6 +69,10 @@ export const register = async (
       email: formData.get("email"),
       password: formData.get("password"),
     });
+
+    if (!(await registrationAllowed())) {
+      return { status: "rate_limited" };
+    }
 
     const [user] = await getUser(validatedData.email);
 

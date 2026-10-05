@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { assertNotDemo } from "@/lib/demo/mode";
-import { decrypt, encrypt, isEncryptionConfigured } from "../../crypto";
+import { openSecret, sealSecret } from "../../crypto";
 import { ChatSDKError } from "../../errors";
 import { createLogger } from "../../logger";
 import { db } from "../db";
@@ -10,32 +10,25 @@ import { withTransaction } from "../utils";
 const log = createLogger("db:user-ai-config");
 
 /**
- * Decrypts the API key in a user AI config if encryption is configured.
- * Falls back to returning the config as-is for legacy unencrypted data.
+ * Decrypts the API key in a user AI config. Throws on a v2 value that does
+ * not decrypt; pre-v2 rows are re-sealed in the background.
  */
 function decryptConfig(config: UserAIConfig): UserAIConfig {
-  if (!isEncryptionConfigured()) {
-    return config;
+  const opened = openSecret(config.apiKey, config.userId);
+  if (opened.legacy) {
+    db.update(userAIConfig)
+      .set({ apiKey: sealSecret(opened.value, config.userId) })
+      .where(eq(userAIConfig.id, config.id))
+      .catch((error) =>
+        log.warn({ error, id: config.id }, "Failed to upgrade AI config")
+      );
   }
-  try {
-    return {
-      ...config,
-      apiKey: decrypt(config.apiKey),
-    };
-  } catch {
-    // Return as-is if decryption fails (legacy unencrypted data)
-    return config;
-  }
+  return { ...config, apiKey: opened.value };
 }
 
-/**
- * Encrypts an API key if encryption is configured.
- */
-function encryptApiKey(apiKey: string): string {
-  if (!isEncryptionConfigured()) {
-    return apiKey;
-  }
-  return encrypt(apiKey);
+/** Encrypts an API key; throws if ENCRYPTION_KEY is not usable. */
+function encryptApiKey(apiKey: string, userId: string): string {
+  return sealSecret(apiKey, userId);
 }
 
 export async function getUserAIConfigs({
@@ -197,7 +190,7 @@ export async function upsertUserAIConfig({
           )
         );
 
-      const encryptedApiKey = encryptApiKey(apiKey);
+      const encryptedApiKey = encryptApiKey(apiKey, userId);
 
       if (existingConfig) {
         const [updatedConfig] = await tx

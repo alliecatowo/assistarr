@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
 import { isDemoMode } from "./lib/demo/mode";
+import { GUEST_MARKER } from "./lib/shared-constants";
 
 /**
  * Header names for correlation ID propagation
@@ -13,6 +14,7 @@ const CORRELATION_ID_HEADERS = [
   "traceparent",
 ] as const;
 const RESPONSE_CORRELATION_HEADER = "x-correlation-id";
+const PROBE_PATHS = new Set(["/api/health", "/api/ready"]);
 
 /**
  * Extract existing correlation ID from request headers
@@ -42,6 +44,56 @@ function generateCorrelationId(): string {
   return crypto.randomUUID();
 }
 
+function cookiesRequiredResponse(correlationId: string): Response {
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cookies required - Assistarr</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;color:#222}@media(prefers-color-scheme:dark){body{background:#111;color:#eee}}</style></head><body><h1>Cookies required</h1><p>Assistarr starts a temporary guest session using a cookie, but your browser or client did not keep it. Enable cookies for this site and <a href="/">try again</a>.</p></body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      [RESPONSE_CORRELATION_HEADER]: correlationId,
+    },
+  });
+}
+
+function handleNoSession(request: NextRequest, correlationId: string) {
+  // API clients without a session get a 401. Only page navigations are
+  // bounced through guest creation, so scripts and crawlers hitting /api/*
+  // can no longer mint a guest account (and quota) per request.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // The guest route marks the URL it sends the browser back to. Seeing the
+  // marker without a session means the client discards cookies (curl -L,
+  // some crawlers, blocked cookies); stop instead of minting a guest per hop.
+  if (request.nextUrl.searchParams.has(GUEST_MARKER)) {
+    return cookiesRequiredResponse(correlationId);
+  }
+
+  const redirectUrl = encodeURIComponent(request.url);
+  const response = NextResponse.redirect(
+    new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
+  );
+  response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
+  return response;
+}
+
+/** Drop the one-shot marker added by the guest route from the visible URL. */
+function stripGuestMarker(request: NextRequest, correlationId: string) {
+  if (
+    !request.nextUrl.searchParams.has(GUEST_MARKER) ||
+    request.method !== "GET"
+  ) {
+    return null;
+  }
+  const clean = request.nextUrl.clone();
+  clean.searchParams.delete(GUEST_MARKER);
+  const response = NextResponse.redirect(clean);
+  response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -55,6 +107,14 @@ export async function proxy(request: NextRequest) {
    */
   if (pathname.startsWith("/ping")) {
     const response = new Response("pong", { status: 200 });
+    response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
+    return response;
+  }
+
+  // Container/orchestrator probes carry no cookie and must not be redirected
+  // or 401'd. Both routes expose pass/fail only (see their docs).
+  if (PROBE_PATHS.has(pathname)) {
+    const response = NextResponse.next();
     response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
     return response;
   }
@@ -79,20 +139,12 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!token) {
-    // API clients without a session get a 401. Only page navigations are
-    // bounced through guest creation, so scripts and crawlers hitting /api/*
-    // can no longer mint a guest account (and quota) per request.
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    return handleNoSession(request, correlationId);
+  }
 
-    const redirectUrl = encodeURIComponent(request.url);
-
-    const response = NextResponse.redirect(
-      new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
-    );
-    response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
-    return response;
+  const markerRedirect = stripGuestMarker(request, correlationId);
+  if (markerRedirect) {
+    return markerRedirect;
   }
 
   // Public demo: read-only settings, guest-only accounts.

@@ -32,6 +32,11 @@ export default function Page() {
         type: "error",
         description: "Invalid credentials!",
       });
+    } else if (state.status === "rate_limited") {
+      toast({
+        type: "error",
+        description: "Too many attempts. Try again in a few minutes.",
+      });
     } else if (state.status === "invalid_data") {
       toast({
         type: "error",

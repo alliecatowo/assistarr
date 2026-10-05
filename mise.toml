@@ -1,4 +1,4 @@
 [tools]
-pnpm = "latest"
+pnpm = "9.12.3"
 uv = "latest"
-node = "latest"
+node = "24"

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { safeUploadName, sniffImageType } from "./upload-validation";
+import {
+  isAllowedFileUrl,
+  safeUploadName,
+  sniffImageType,
+} from "./upload-validation";
 
 const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]);
 const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0]);
@@ -36,5 +40,29 @@ describe("safeUploadName", () => {
     expect(safeUploadName(`${"a".repeat(200)}.png`, "image/png").length).toBe(
       68
     );
+  });
+});
+
+describe("isAllowedFileUrl", () => {
+  const ok = "https://abc123.public.blob.vercel-storage.com/pic-xyz.png";
+
+  it("accepts https urls on the app's blob host", () => {
+    expect(isAllowedFileUrl(ok)).toBe(true);
+    expect(isAllowedFileUrl(`${ok}?download=1`)).toBe(true);
+  });
+
+  it.each([
+    ["http scheme", "http://abc.public.blob.vercel-storage.com/a.png"],
+    ["internal address", "https://169.254.169.254/latest/meta-data"],
+    ["localhost", "https://localhost/a.png"],
+    ["other host", "https://evil.example.com/a.png"],
+    ["suffix trick", "https://public.blob.vercel-storage.com.evil.com/a.png"],
+    ["bare suffix host", "https://.public.blob.vercel-storage.com/a.png"],
+    ["embedded creds", "https://u:p@abc.public.blob.vercel-storage.com/a.png"],
+    ["odd port", "https://abc.public.blob.vercel-storage.com:8443/a.png"],
+    ["data url", "data:image/png;base64,AAAA"],
+    ["not a url", "nope"],
+  ])("rejects %s", (_name, url) => {
+    expect(isAllowedFileUrl(url)).toBe(false);
   });
 });
