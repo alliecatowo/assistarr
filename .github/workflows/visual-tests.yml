@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up toolchain (mise)
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           install: true
           cache: true
@@ -73,7 +73,7 @@ jobs:
           PLAYWRIGHT_NO_WEBSERVER: "1"
 
       - name: Upload snapshot diffs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
           name: visual-test-diffs
@@ -83,7 +83,7 @@ jobs:
           retention-days: 7
 
       - name: Upload regenerated snapshots
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always() && inputs.update_snapshots
         with:
           name: updated-snapshots
@@ -91,7 +91,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Ladle build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: ladle-build
