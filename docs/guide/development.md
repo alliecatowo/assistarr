@@ -1,6 +1,6 @@
 # Development
 
-Stack: Next.js 15 (App Router), React 19, Vercel AI SDK, NextAuth, Drizzle ORM on Postgres, Tailwind CSS 4 and shadcn/ui, pnpm, Biome.
+Stack: Next.js 16 (App Router), React 19, Vercel AI SDK, NextAuth, Drizzle ORM on Postgres, Tailwind CSS 4 and shadcn/ui, pnpm, Biome.
 
 ## Commands
 

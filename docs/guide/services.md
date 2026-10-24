@@ -10,4 +10,4 @@ Service connections are per user. After logging in, open **Settings** and add ea
 | Jellyseerr | Server URL and API key |
 | qBittorrent | WebUI URL and credentials |
 
-Use URLs reachable from the Assistarr server (container names inside Docker, not `localhost`). Set `ENCRYPTION_KEY` to store credentials encrypted. See [AI tools](/reference/tools) for what the assistant can do with each service.
+Use URLs reachable from the Assistarr server (container names inside Docker, not `localhost`). Credentials are stored encrypted with `ENCRYPTION_KEY`. See [AI tools](/reference/tools) for what the assistant can do with each service.

@@ -26,10 +26,30 @@ export default defineConfig({
     "plans/**",
     "archive/**",
   ],
+  head: [
+    [
+      "link",
+      { rel: "icon", href: "/assistarr/logo.svg", type: "image/svg+xml" },
+    ],
+    ["link", { rel: "preconnect", href: "https://fonts.googleapis.com" }],
+    [
+      "link",
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
+    ],
+    [
+      "link",
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap",
+      },
+    ],
+  ],
   themeConfig: {
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
+      { text: "How it works", link: "/guide/how-it-works" },
       { text: "Tools", link: "/reference/tools" },
+      { text: "Demo", link: "https://assistarr.vercel.app" },
     ],
     sidebar: [
       {
@@ -39,6 +59,13 @@ export default defineConfig({
           { text: "Self-hosting with Docker", link: "/guide/self-hosting" },
           { text: "Configuration", link: "/guide/configuration" },
           { text: "Connecting your services", link: "/guide/services" },
+          { text: "The public demo", link: "/guide/demo" },
+        ],
+      },
+      {
+        text: "Internals",
+        items: [
+          { text: "How it works", link: "/guide/how-it-works" },
           { text: "Development", link: "/guide/development" },
         ],
       },

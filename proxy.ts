@@ -15,6 +15,18 @@ const CORRELATION_ID_HEADERS = [
 ] as const;
 const RESPONSE_CORRELATION_HEADER = "x-correlation-id";
 const PROBE_PATHS = new Set(["/api/health", "/api/ready"]);
+// Static files the signed-out landing page needs. Without this, an <img>
+// request would be bounced through guest creation and burn the guest limit.
+const PUBLIC_ASSET_PATHS = new Set(["/logo.svg", "/favicon.svg"]);
+const PUBLIC_ASSET_PREFIXES = ["/landing/"];
+
+function isPublicAsset(pathname: string): boolean {
+  return (
+    PUBLIC_ASSET_PATHS.has(pathname) ||
+    (PUBLIC_ASSET_PREFIXES.some((prefix) => pathname.startsWith(prefix)) &&
+      !pathname.includes(".."))
+  );
+}
 
 /**
  * Extract existing correlation ID from request headers
@@ -71,6 +83,19 @@ function handleNoSession(request: NextRequest, correlationId: string) {
     return cookiesRequiredResponse(correlationId);
   }
 
+  // Public demo: first-time visitors at / get the landing page. The guest
+  // session starts only when they choose "Try the demo" (/api/auth/guest),
+  // never as a side effect of viewing /.
+  if (
+    isDemoMode() &&
+    request.nextUrl.pathname === "/" &&
+    request.method === "GET"
+  ) {
+    const response = NextResponse.next();
+    response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
+    return response;
+  }
+
   const redirectUrl = encodeURIComponent(request.url);
   const response = NextResponse.redirect(
     new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
@@ -92,6 +117,20 @@ function stripGuestMarker(request: NextRequest, correlationId: string) {
   const response = NextResponse.redirect(clean);
   response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
   return response;
+}
+
+/** Writes to settings/files and any signup/login are refused on the public demo. */
+function isBlockedInDemo(request: NextRequest): boolean {
+  const { pathname } = request.nextUrl;
+  const isWrite = !["GET", "HEAD", "OPTIONS"].includes(request.method);
+  return (
+    (isWrite &&
+      (pathname.startsWith("/api/settings") ||
+        pathname.startsWith("/api/files") ||
+        pathname === "/register" ||
+        pathname === "/login")) ||
+    pathname === "/register"
+  );
 }
 
 export async function proxy(request: NextRequest) {
@@ -117,6 +156,10 @@ export async function proxy(request: NextRequest) {
     const response = NextResponse.next();
     response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
     return response;
+  }
+
+  if (isPublicAsset(pathname)) {
+    return NextResponse.next();
   }
 
   if (pathname.startsWith("/api/auth")) {
@@ -148,27 +191,24 @@ export async function proxy(request: NextRequest) {
   }
 
   // Public demo: read-only settings, guest-only accounts.
-  if (isDemoMode()) {
-    const isWrite = !["GET", "HEAD", "OPTIONS"].includes(request.method);
-    const blocked =
-      (isWrite &&
-        (pathname.startsWith("/api/settings") ||
-          pathname.startsWith("/api/files") ||
-          pathname === "/register" ||
-          pathname === "/login")) ||
-      pathname === "/register";
-    if (blocked) {
-      return NextResponse.json(
-        { error: "Disabled in the public demo" },
-        { status: 403 }
-      );
-    }
+  if (isDemoMode() && isBlockedInDemo(request)) {
+    return NextResponse.json(
+      { error: "Disabled in the public demo" },
+      { status: 403 }
+    );
   }
 
   const isGuest = guestRegex.test(token?.email ?? "");
 
   if (token && !isGuest && ["/login", "/register"].includes(pathname)) {
     const response = NextResponse.redirect(new URL("/", request.url));
+    response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
+    return response;
+  }
+
+  // A visitor who already has a session skips the landing page.
+  if (pathname === "/" && request.method === "GET") {
+    const response = NextResponse.redirect(new URL("/home", request.url));
     response.headers.set(RESPONSE_CORRELATION_HEADER, correlationId);
     return response;
   }

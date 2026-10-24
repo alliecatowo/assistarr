@@ -1,12 +1,13 @@
 # Getting started
 
-Assistarr is a Next.js 15 app with a Postgres database. There is no hosted version and no published package: you run it yourself, either with Docker Compose (see [Self-hosting](/guide/self-hosting)) or from source as below.
+Assistarr is a Next.js 16 app with a Postgres database. There is no hosted version and no published package: you run it yourself, either with Docker Compose (see [Self-hosting](/guide/self-hosting)) or from source as below.
 
 ## Prerequisites
 
-- Node.js 20 or newer
-- pnpm 9 or newer
+- Node.js 24 (the version the project pins in `mise.toml`)
+- pnpm 9
 - PostgreSQL 16 or newer
+- Two secrets of 32+ characters: `AUTH_SECRET` and `ENCRYPTION_KEY` (`openssl rand -base64 32`)
 - One AI provider key (OpenRouter, Vercel AI Gateway, or a direct OpenAI, Anthropic or Google key)
 
 ## Run from source

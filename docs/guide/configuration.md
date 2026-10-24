@@ -6,16 +6,17 @@ Copy `.env.example` to `.env.local` (from source) or `.env` (Docker). The file d
 
 | Variable | Description |
 |---|---|
-| `AUTH_SECRET` | Session encryption secret. Generate with `openssl rand -base64 32`. |
+| `AUTH_SECRET` | Session encryption secret, min 32 characters. Generate with `openssl rand -base64 32`. |
 | `POSTGRES_URL` (source) or `POSTGRES_PASSWORD` (Docker) | Database connection. Docker builds the URL from `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`. |
+| `ENCRYPTION_KEY` | Required in production, min 32 characters; placeholders are rejected (the app will not start without it). Encrypts service credentials stored in the database. Changing it makes existing encrypted service configs unreadable. |
 | An AI provider key | `OPENROUTER_API_KEY` or `AI_GATEWAY_API_KEY`. Direct `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY` are also supported. |
 
 ## Optional
 
 | Variable | Description |
 |---|---|
-| `ENCRYPTION_KEY` | Required in production (min 32 characters; placeholders are rejected). Encrypts service credentials stored in the database. Changing it makes existing encrypted service configs unreadable. |
 | `ALLOW_PRIVATE_SERVICE_URLS` | Set `true` to let users point services and MCP servers at private addresses (localhost, LAN, container names). Required for most self-hosting; the Docker compose file defaults it to `true`. Link-local/cloud-metadata addresses are always blocked. Leave `false` on shared or public deployments. |
+| `DEMO_MODE` | `true` turns the deployment into a read-only public demo; see [the public demo](/guide/demo). Leave unset for a real install. |
 | `REDIS_URL` | Enables resumable AI streams. |
 | `NEXTAUTH_URL` | Public URL, if not `http://localhost:3000`. |
 | `ASSISTARR_PORT` | Host port in Docker (default `3000`). |
